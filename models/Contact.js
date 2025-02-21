@@ -1,12 +1,9 @@
-// models/Contact.js
-
 const mongoose = require('mongoose');
 
 const contactSchema = new mongoose.Schema({
-    section: { type: String, required: true, unique: true },
-    content: { type: String, required: true }
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    message: { type: String, required: true }
 });
 
-const Contact = mongoose.model('Contact', contactSchema);
-
-module.exports = Contact;
+module.exports = mongoose.model('Contact', contactSchema);
