@@ -1,169 +1,177 @@
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const mongoose = require('mongoose');
-const Contact = require('./models/Contact'); // Ensure the path is correct
-const User = require('./models/User');
-const bcrypt = require('bcryptjs');
+const { ServicesHeader, DefaultServicesContent, Service1, Service2, Footer } = require('./models/ServicesHeader');  // Import models
+
 const app = express();
-const port = 3001; // Ensure your frontend is sending requests to this port
+const port = 4001;
 
-// Enable CORS and middleware
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/myDatabase')
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('Failed to connect to MongoDB', err));
+
+// Middleware to handle CORS and file uploads
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // For handling JSON requests
+app.use(express.urlencoded({ extended: true })); // For handling URL-encoded data
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/mywebsite')
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.log('❌ Error connecting to MongoDB:', err));
+// Multer setup for handling file uploads
+const upload = multer({ dest: 'uploads/' });
 
+// ------------------------
+// Route to update Services Header
+// ------------------------
+app.put("/api/content/services-header", upload.single('services-header-image'), async (req, res) => {
+    console.log("Updating Services Header:", req.body);  // Log incoming request
 
-// 🛠️ FIXED: Move this route ABOVE `app.listen()`
-app.post("/contact", async (req, res) => {
+    // Validate 'services-header-title' exists
+    if (!req.body["services-header-title"]) {
+      return res.status(400).json({ error: "services-header-title is required" });
+    }
+
     try {
-        console.log("📩 Received request body:", req.body); // Debug request body
+      const headerImage = req.file ? req.file.path : "";  // Set image path if file exists
 
-        const { name, email, message } = req.body;
+      const servicesHeader = new ServicesHeader({
+        servicesHeaderTitle: req.body["services-header-title"],
+        servicesHeaderImage: headerImage
+      });
 
-        // Check if all fields are provided
-        if (!name || !email || !message) {
-            return res.status(400).json({ success: false, message: "All fields are required!" });
-        }
+      await servicesHeader.save();
+      console.log("Services Header updated:", servicesHeader);
 
-        // Save the contact message in the database
-        const contact = new Contact({ name, email, message });
-        await contact.save();
-
-        res.json({ success: true, message: "Message sent successfully!" });
+      res.status(200).json({ message: "Services header updated successfully" });
     } catch (error) {
-        console.error("❌ Server error:", error); // Log the actual error
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
+      console.error("Error updating services header:", error);
+      res.status(500).json({ error: "Failed to update services header", details: error.message });
     }
 });
 
-// Route to fetch contact content
-app.get('/contact-content', async (req, res) => {
+// ------------------------
+// Route to update Default Services Content
+// ------------------------
+app.put('/api/content/services', upload.single('default-services-image'), async (req, res) => {
+    console.log('Updating Default Services Content:', req.body);  // Log incoming request
+
+    // Validate that required data exists
+    if (!req.body["default-services-title"] || !req.body["default-services-content"]) {
+      return res.status(400).json({ error: "Both 'default-services-title' and 'default-services-content' are required" });
+    }
+
     try {
-        const content = await Contact.find();
-        res.json(content);
+      const defaultImage = req.file ? req.file.path : "";
+
+      const defaultServicesContent = new DefaultServicesContent({
+        title: req.body["default-services-title"],
+        content: req.body["default-services-content"],
+        image: defaultImage
+      });
+
+      await defaultServicesContent.save();
+      console.log('Default Services Content updated:', defaultServicesContent);
+
+      res.status(200).json({ message: 'Default services content updated successfully' });
     } catch (error) {
-        console.error("❌ Error fetching content:", error);
-        res.status(500).json({ message: "Server error" });
+      console.error("Error updating default services content:", error);
+      res.status(500).json({ error: "Failed to update default services content", details: error.message });
     }
 });
 
-// Route to update contact content
-app.post('/update-contact-content', async (req, res) => {
+// ------------------------
+// Route to update Service 1
+// ------------------------
+app.put('/api/services/1', upload.single('service-img-1'), async (req, res) => {
+    console.log('Updating Service 1:', req.body);  // Log incoming request
+
+    if (!req.body["service-title-1"] || !req.body["service-description-1"]) {
+      return res.status(400).json({ error: "Both 'service-title-1' and 'service-description-1' are required" });
+    }
+
     try {
-        const { section, content } = req.body;
+      const serviceImage1 = req.file ? req.file.path : "";
 
-        if (!section || !content) {
-            return res.status(400).json({ success: false, message: "Missing data!" });
-        }
+      const service1Data = new Service1({
+        title: req.body["service-title-1"],
+        description: req.body["service-description-1"],
+        image: serviceImage1
+      });
 
-        const updatedContent = await Contact.findOneAndUpdate(
-            { section },
-            { content },
-            { new: true, upsert: true }
-        );
+      await service1Data.save();
+      console.log('Service 1 updated:', service1Data);
 
-        console.log("✅ Updated content:", updatedContent);
-        res.json({ success: true, message: "Content updated!", updatedContent });
+      res.status(200).json({ message: 'Service 1 updated successfully' });
     } catch (error) {
-        console.error("❌ Error updating content:", error);
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
+      console.error("Error updating service 1:", error);
+      res.status(500).json({ error: "Failed to update service 1", details: error.message });
     }
 });
 
-// 🆕 Route to fetch home header content
-app.get('/home-header', async (req, res) => {
-    try {
-        const content = await Contact.findOne({ section: "home-header" });
-        res.json(content || { section: "home-header", content: "Default Home Header" });
-    } catch (error) {
-        console.error("❌ Error fetching home header:", error);
-        res.status(500).json({ message: "Server error" });
+// ------------------------
+// Route to update Service 2
+// ------------------------
+app.put('/api/services/2', upload.single('service-img-2'), async (req, res) => {
+    console.log('Updating Service 2:', req.body);  // Log incoming request
+    
+    // Validate required fields: title and description
+    if (!req.body["service-title-2"] || !req.body["service-description-2"]) {
+      return res.status(400).json({ error: "Both 'service-title-2' and 'service-description-2' are required" });
     }
-});
-
-// 🆕 Route to update home header content
-app.post('/update-home-header', async (req, res) => {
-    try {
-        const { content } = req.body;
-
-        if (!content) {
-            return res.status(400).json({ success: false, message: "Missing content!" });
-        }
-
-        const updatedHeader = await Contact.findOneAndUpdate(
-            { section: "home-header" },
-            { content },
-            { new: true, upsert: true }
-        );
-
-        console.log("✅ Updated home header:", updatedHeader);
-        res.json({ success: true, message: "Home header updated!", updatedHeader });
-    } catch (error) {
-        console.error("❌ Error updating home header:", error);
-        res.status(500).json({ success: false, message: "Server error", error: error.message });
-    }
-});
-// POST /signup route
-app.post('/signup', async (req, res) => {
-    try {
-      const { name, email, password, confirmPassword } = req.body;
   
-      // Check if passwords match
-      if (password !== confirmPassword) {
-        return res.status(400).json({ success: false, message: "Passwords do not match!" });
-      }
+    try {
+      // Get the image path if file is uploaded
+      const serviceImage2 = req.file ? req.file.path : "";
   
-       // Hash the password before saving
-        const hashedPassword = await bcrypt.hash(password, 10); // Salt rounds set to 10
-
-        // Create new user
-        const newUser = new User({ name, email, password: hashedPassword });
-        await newUser.save();
-      res.json({ success: true, message: "User signed up successfully!" });
+      // Handle the optional link field: if it's not provided, set it to null or an empty string
+      const serviceLink2 = req.body["service-link-2"] || "";  // Default to empty string if not provided
+  
+      // Create data object for service 2
+      const service2Data = {
+        title: req.body["service-title-2"],
+        description: req.body["service-description-2"],
+        image: serviceImage2,
+        link: serviceLink2  // Add the optional field to the data
+      };
+  
+      // Example: Replace with your model logic to save the data to the database
+      // await Service2Model.create(service2Data);
+  
+      console.log('Service 2 updated:', service2Data);
+  
+      res.status(200).json({ message: 'Service 2 updated successfully' });
     } catch (error) {
-      console.error("❌ Error during signup:", error);
-      res.status(500).json({ success: false, message: "Server error", error: error.message });
+      console.error("Error updating service 2:", error);
+      res.status(500).json({ error: "Failed to update service 2", details: error.message });
     }
   });
-  app.post('/login', async (req, res) => {
-    console.log("📤 Login request received");
+  
+// ------------------------
+// Route to update Footer
+// ------------------------
+app.put('/api/content/footer', async (req, res) => {
+    console.log('Updating Footer:', req.body);
+
+    if (!req.body["footer-text"]) {
+      return res.status(400).json({ error: "Footer text is required" });
+    }
+
     try {
-        const { email, password } = req.body;
+      const footerData = new Footer({
+        footerText: req.body["footer-text"]
+      });
 
-        // Find user by email
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ success: false, message: 'User not found' });
-        }
+      await footerData.save();
+      console.log('Footer updated:', footerData);
 
-        // Check if the password is correct
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(400).json({ success: false, message: 'Incorrect password' });
-        }
-
-        // Return success response
-        res.json({
-            success: true,
-            message: 'Login successful',
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-            },
-        });
+      res.status(200).json({ message: 'Footer updated successfully' });
     } catch (error) {
-        console.error('❌ Error during login:', error); // Log the error for debugging
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+      console.error("Error updating footer:", error);
+      res.status(500).json({ error: "Failed to update footer", details: error.message });
     }
 });
 
 // Start the server
 app.listen(port, () => {
-    console.log(`🚀 Server running at http://localhost:${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 });
