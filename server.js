@@ -1,78 +1,146 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const multer = require('multer');
 const path = require('path');
-
+const mongoose = require('mongoose');
+const HomeContent = require('./models/HomeContent'); // Import Mongoose Model
+const Message = require('./models/message');  // Correct import path
+ // Import Message model
 const app = express();
 
-// Middleware
+// ✅ Connect to MongoDB
+mongoose.connect("mongodb://localhost:27017/servicesDB")
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch(err => console.error("❌ MongoDB connection error:", err));
+
+// ✅ Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static('uploads'));
 
-// Set up storage engine for images and videos
+// ✅ File Upload Setup (Multer)
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, './uploads/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
+  destination: 'uploads/', 
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Mongoose models
-const Content = mongoose.model('Content', new mongoose.Schema({
-    section: { type: String, required: true },
-    content: { type: String, required: true },
-    image: String,
-    video: String,
-}));
+// ✅ API: Update Home Content (Header, Services, Footer)
+app.post('/api/content', upload.single('image'), async (req, res) => {
+  try {
+    const { section, title, description, footerText } = req.body;
+    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;  // Normalize file path for cross-platform compatibility
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/futuretech', { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((err) => console.log(err));
+    // Prepare the data to update based on section
+    const updateData = {};
 
-// Routes
-// GET route to retrieve Home page content
-app.get('/api/content/home-content', async (req, res) => {
-    try {
-        const content = await Content.findOne({ section: 'home' });
-        res.json(content);
-    } catch (err) {
-        res.status(500).json({ success: false, message: 'Error fetching content', error: err });
+    // Handle different sections
+    if (section === "header") {
+      updateData["header"] = {
+        title: title || "Default Header Title", // Default if title is not provided
+        content: description || "",  // Default empty content
+        image: imagePath || "No image"  // Default to "No image" if no image provided
+      };
+    } else if (section === "footer") {
+      updateData["footer"] = { footerText: footerText || "© 2025 FutureTechTalent. All Rights Reserved." };
+    } else if (section === "services") {
+      // Push new service to the services array
+      updateData["$push"] = { services: { title, description, image: imagePath || "No image" } };
+    } else {
+      return res.status(400).json({ message: "Invalid section specified." });  // Return error if section is invalid
     }
-});
 
-// PUT route to update content
-app.put('/api/content/home-content', upload.fields([{ name: 'image' }, { name: 'video' }]), async (req, res) => {
-    try {
-        const { content } = req.body;
-        const homeContent = await Content.findOne({ section: 'home' });
+    // Find the document in MongoDB and update it (upsert will create a new document if none is found)
+    const updatedContent = await HomeContent.findOneAndUpdate(
+      {},  // Find the first document in the collection (empty filter {})
+      updateData,  // The data to update
+      { new: true, upsert: true }  // Return the updated document and create if not found
+    );
 
-        if (!homeContent) {
-            return res.status(404).json({ message: 'Home content not found' });
-        }
+    // Respond with the updated content
+    res.status(200).json({ message: `${section} updated successfully!`, data: updatedContent });
 
-        homeContent.content = content;
-        if (req.files['image']) {
-            homeContent.image = req.files['image'][0].path;
-        }
-        if (req.files['video']) {
-            homeContent.video = req.files['video'][0].path;
-        }
-
-        await homeContent.save();
-        res.json({ success: true, message: 'Home content updated successfully' });
-    } catch (err) {
-        res.status(500).json({ success: false, message: 'Error updating content', error: err });
-    }
+  } catch (error) {
+    console.error('❌ Error updating content:', error);
+    res.status(500).json({ message: 'Failed to update content' });
+  }
 });
 
-// Similar PUT routes can be added for other sections such as 'about-us', 'services', etc.
+// ✅ API: Fetch Home Content (Header, Services, Footer)
+app.get('/api/content', async (req, res) => {
+  try {
+    const content = await HomeContent.findOne();
+    if (!content) {
+      return res.status(404).json({ message: 'No content found' });
+    }
+    res.json(content);
+  } catch (error) {
+    console.error('❌ Error fetching content:', error);
+    res.status(500).json({ message: 'Failed to fetch content' });
+  }
+});
 
-app.listen(5000, () => {
-    console.log('Server is running on http://localhost:5000');
+// ✅ API: Fetch Header Content
+app.get('/api/content/header', async (req, res) => {
+  try {
+    const content = await HomeContent.findOne();
+    res.json(content?.header || { title: "Default Title", image: "default-logo.png" });
+  } catch (error) {
+    console.error('❌ Error fetching header:', error);
+    res.status(500).json({ message: 'Failed to fetch header' });
+  }
+});
+
+// ✅ API: Fetch Services
+app.get('/api/services', async (req, res) => {
+  try {
+    const content = await HomeContent.findOne();
+    res.json(content?.services || []);
+  } catch (error) {
+    console.error('❌ Error fetching services:', error);
+    res.status(500).json({ message: 'Failed to fetch services' });
+  }
+});
+
+// API to store a chat message
+app.post('/api/chat', async (req, res) => {
+  const { userMessage, sender } = req.body;
+
+  // Check if both userMessage and sender are provided
+  if (!userMessage || !sender) {
+      return res.status(400).json({ error: 'Message and sender are required' });
+  }
+
+  try {
+      // Create a new message document and save it
+      const message = new Message({ userMessage, sender });
+      await message.save();  // Save the message to MongoDB
+
+      res.status(200).json({ message: 'Message saved successfully' });
+  } catch (error) {
+      console.error("❌ Error saving message:", error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+// ✅ API: Fetch Footer
+app.get('/api/content/footer', async (req, res) => {
+  try {
+    const content = await HomeContent.findOne();
+    res.json(content?.footer || { content: "© 2025 FutureTechTalent. All Rights Reserved." });
+  } catch (error) {
+    console.error('❌ Error fetching footer:', error);
+    res.status(500).json({ message: 'Failed to fetch footer' });
+  }
+});
+
+// ✅ Start Server
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

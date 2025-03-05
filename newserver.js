@@ -7,7 +7,7 @@ const multer = require("multer");
 
 // Import models
 const Footer = require("./models/Footer"); // Ensure this file exists
-const Header = require("./models/Header"); // New model for Header
+const Header = require("./models/Header"); // Import Header model
 
 const app = express();
 const port = 4001;
@@ -18,7 +18,7 @@ app.use(cors());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // MongoDB Connection
-mongoose.connect("mongodb://localhost:27017/servicesDB", { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect("mongodb://localhost:27017/servicesDB")
     .then(() => console.log("✅ Connected to MongoDB"))
     .catch(err => console.error("❌ MongoDB connection error:", err));
 
@@ -142,16 +142,16 @@ app.put("/api/header", async (req, res) => {
 
 // API endpoint to get header text (GET)
 app.get("/api/header", async (req, res) => {
-  console.log("GET /api/header request received");  // Add this log
-  try {
-      const header = await Header.findOne();
-      if (!header) {
-          return res.status(404).json({ message: "Header text not found" });
-      }
-      res.json({ headerText: header.headerText });
-  } catch (error) {
-      res.status(500).json({ message: "Error fetching header text", error: error.message });
-  }
+    console.log("GET /api/header request received");  // Add this log
+    try {
+        const header = await Header.findOne();
+        if (!header) {
+            return res.status(404).json({ message: "Header text not found" });
+        }
+        res.json({ headerText: header.headerText });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching header text", error: error.message });
+    }
 });
 
 // ------------------------
