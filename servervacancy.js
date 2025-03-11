@@ -123,6 +123,54 @@ app.post('/api/footer', async (req, res) => {
     }
 });
 
+
+// ✅ Define Header Schema
+const headerSchema = new mongoose.Schema({
+    title: { type: String, default: "Admin Dashboard - Vacancy Management" },
+    logoUrl: { type: String, default: "/uploads/default-logo.png" },
+});
+
+const Header = mongoose.model("Header", headerSchema);
+
+// ✅ API: Get Header Details
+app.get("/api/header", async (req, res) => {
+    try {
+        let header = await Header.findOne();
+        if (!header) {
+            header = new Header();
+            await header.save();
+        }
+        res.json(header);
+    } catch (error) {
+        console.error("❌ Error fetching header:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// ✅ API: Update Header
+app.post("/api/header", upload.single("logo"), async (req, res) => {
+    try {
+        let header = await Header.findOne();
+        if (!header) header = new Header();
+
+        // Update Title
+        if (req.body.title) header.title = req.body.title;
+
+        // Update Logo (if uploaded)
+        if (req.file) {
+            if (header.logoUrl !== "/uploads/default-logo.png") {
+                fs.unlinkSync("." + header.logoUrl); // Delete old logo file
+            }
+            header.logoUrl = "/uploads/" + req.file.filename;
+        }
+
+        await header.save();
+        res.json({ message: "✅ Header updated successfully", header });
+    } catch (error) {
+        console.error("❌ Error updating header:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 // Start the server
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
