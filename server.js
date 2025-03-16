@@ -7,7 +7,12 @@ const HomeContent = require('./models/HomeContent'); // Import Mongoose Model
 const Message = require('./models/message');  // Correct import path
  // Import Message model
 const app = express();
+require('dotenv').config();
 
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // Serve static files from the 'public' folder inside the backend directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -25,10 +30,18 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// ✅ Connect to MongoDB
-mongoose.connect("mongodb://localhost:27017/servicesDB")
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+const mongoose = require('mongoose');
+
+// Use environment variables for sensitive information like MongoDB URI
+const mongoURI = process.env.MONGO_URI;
+
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch(err => {
+    console.log('Error connecting to MongoDB:', err);
+  });
 
 // ✅ Middleware
 app.use(cors());
@@ -156,8 +169,4 @@ app.get('/api/content/footer', async (req, res) => {
   }
 });
 
-// ✅ Start Server
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+
