@@ -1,0 +1,175 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f4f4f4;
+}
+
+/* Header */
+header {
+  background: #002147;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 22px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background: #2c3e50;
+  color: white;
+  height: 100vh;
+  padding: 20px;
+  position: fixed;
+  top: 60px; /* To avoid overlap with the header */
+  left: 0;
+}
+
+.sidebar h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  margin: 15px 0;
+}
+
+.sidebar ul li a {
+  text-decoration: none;
+  color: white;
+  display: block;
+  padding: 10px;
+  border-radius: 5px;
+  transition: 0.3s;
+}
+
+.sidebar ul li a:hover {
+  background: #34495e;
+}
+
+/* Main Content */
+main {
+  margin-left: 270px;
+  margin-top: 80px; /* To prevent overlap with the header */
+  padding: 20px;
+  width: calc(100% - 270px);
+  flex-grow: 1;
+}
+
+/* Buttons */
+.btn {
+  background: #002147;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+  border-radius: 5px;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  background: #002147;
+}
+
+/* Forms */
+.post-form {
+  background: white;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.post-form input,
+.post-form textarea,
+.post-form button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.post-form textarea {
+  height: 100px;
+  resize: none;
+}
+
+/* Vacancy List */
+.vacancy-container {
+  margin-top: 20px;
+}
+
+.job {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.job img {
+  max-width: 100%;
+  margin-top: 10px;
+}
+
+/* Footer */
+footer {
+  background: #002147;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  margin-top: auto;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+      width: 200px;
+  }
+  
+  main {
+      margin-left: 220px;
+      width: calc(100% - 220px);
+  }
+}
+
+@media (max-width: 600px) {
+  .sidebar {
+      position: absolute;
+      width: 100%;
+      height: auto;
+  }
+  
+  main {
+      margin-left: 0;
+      width: 100%;
+      padding-top: 60px;
+  }
+  
+  footer {
+      position: relative;
+  }
+}

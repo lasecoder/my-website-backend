@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Scholarships</title>
+    <link rel="stylesheet" href="admin_dashboard.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Admin Dashboard</h3>
+        <ul>
+            <li><a href="admin_dashboard.html">Home Page</a></li>
+            <li><a href="client_scholarships.html" target="_blank">View Scholarships</a></li>
+        </ul>
+    </div>
+
+    <header id="dynamic-header"></header>
+
+    <div class="main-content">
+        <h2>Manage Header</h2>
+        <div id="header-content-container">
+            <p id="header-display"></p>
+            <button id="edit-header-button">Edit Header</button>
+            <!-- Add textarea for editing header -->
+            <textarea id="header-textarea" rows="4" style="display:none;"></textarea>
+            <button id="save-header-button" style="display:none;">Save Header</button>
+
+            <!-- Logo Section -->
+            <h3>Manage Logo</h3>
+            <div id="logo-section">
+                
+                <img id="header-logo" src="" alt="Current Logo" width="150">
+                <button id="edit-logo-button">Edit Logo</button>
+                <input type="file" id="logo-file-input" style="display:none;" accept="image/*">
+                <button id="save-logo-button" style="display:none;">Save Logo</button>
+            </div>
+        </div>
+
+        <h2>Manage Footer</h2>
+        <div id="footer-content-container">
+            <p id="footer-display"></p>
+            <button id="edit-footer-button">Edit Footer</button>
+            <!-- Add textarea for editing footer -->
+            <textarea id="footer-textarea" rows="4" style="display:none;"></textarea>
+            <button id="save-footer-button" style="display:none;">Save Footer</button>
+        </div>
+
+        <h2>Manage Scholarships</h2>
+        <form id="scholarship-form" enctype="multipart/form-data">
+            <label for="title">Scholarship Title:</label>
+            <input type="text" id="title" name="title" required><br>
+            
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="4" required></textarea><br>
+            
+            <label for="image">Image:</label>
+            <input type="file" id="image" name="image" accept="image/*" required><br>
+            
+            <button type="submit">Add Scholarship</button>
+        </form>
+
+        <h2>Existing Scholarships</h2>
+        <div id="scholarship-list"></div>
+    </div>
+
+    <footer id="dynamic-footer"></footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const scholarshipForm = document.getElementById("scholarship-form");
+            const headerContentContainer = document.getElementById("header-content-container");
+            const footerContentContainer = document.getElementById("footer-content-container");
+            const scholarshipList = document.getElementById("scholarship-list");
+            const API_URL = "http://localhost:5000/api"; // Change this URL according to your backend
+
+            // Load scholar header content
+            async function loadScholarHeader() {
+                try {
+                    const response = await fetch(`${API_URL}/scholar-header`);
+                    const data = await response.json();
+                    if (data && data.header) {
+                        document.getElementById("header-display").innerText = data.header; // Display the header content
+                    }
+                } catch (error) {
+                    console.error("Error fetching scholar header:", error);
+                }
+            }
+
+            // Load scholar footer content
+            async function loadScholarFooter() {
+                try {
+                    const response = await fetch(`${API_URL}/scholar-footer`);
+                    const data = await response.json();
+                    if (data && data.footer) {
+                        document.getElementById("footer-display").innerText = data.footer; // Display the footer content
+                    }
+                } catch (error) {
+                    console.error("Error fetching scholar footer:", error);
+                }
+            }
+
+            async function loadLogo() {
+    try {
+        const response = await fetch('http://localhost:5000/api/logo');
+        if (response.ok) {
+            const data = await response.json();
+            const logoUrl = data.logoUrl;
+
+            // Display the logo in your header
+            const logoImage = document.createElement('img');
+            logoImage.src = logoUrl;
+            logoImage.alt = 'Logo';
+            document.getElementById('dynamic-header').appendChild(logoImage);
+        } else {
+            console.log('Logo not found');
+        }
+    } catch (error) {
+        console.error('Error fetching logo:', error);
+    }
+}
+
+
+            // Function to save scholar header content
+            async function saveScholarHeaderContent() {
+                const newHeaderContent = document.getElementById("header-textarea").value;
+
+                try {
+                    const response = await fetch(`${API_URL}/scholar-header`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ header: newHeaderContent })  // Send only the content
+                    });
+
+                    if (response.ok) {
+                        alert("Scholar Header updated successfully!");
+                        loadScholarHeader();  // Reload the updated header
+                        toggleHeaderEdit(false); // Hide the textarea after saving
+                    } else {
+                        alert("Failed to update scholar header.");
+                    }
+                } catch (error) {
+                    console.error("Error saving scholar header content:", error);
+                }
+            }
+
+            // Function to save scholar footer content
+            async function saveScholarFooterContent() {
+                const newFooterContent = document.getElementById("footer-textarea").value;
+
+                try {
+                    const response = await fetch(`${API_URL}/scholar-footer`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ footer: newFooterContent })  // Send only the content
+                    });
+
+                    if (response.ok) {
+                        alert("Scholar Footer updated successfully!");
+                        loadScholarFooter();  // Reload the updated footer
+                        toggleFooterEdit(false); // Hide the textarea after saving
+                    } else {
+                        alert("Failed to update scholar footer.");
+                    }
+                } catch (error) {
+                    console.error("Error saving scholar footer content:", error);
+                }
+            }
+
+            // Function to save new logo
+            async function saveLogo() {
+                const logoFile = document.getElementById("logo-file-input").files[0];
+
+                if (!logoFile) {
+                    alert("Please select a logo image.");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("logo", logoFile);
+
+                try {
+                    const response = await fetch(`${API_URL}/logo`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        alert("Logo updated successfully!");
+                        loadLogo();  // Reload the updated logo
+                        toggleLogoEdit(false); // Hide the file input after saving
+                    } else {
+                        alert('Failed to update logo.');
+                    }
+                } catch (error) {
+                    console.error('Error saving logo:', error);
+                    alert('Error saving logo.');
+                }
+            }
+
+            // Toggle visibility for header editing
+            document.getElementById("edit-header-button").addEventListener("click", () => {
+                toggleHeaderEdit(true);
+            });
+
+            document.getElementById("save-header-button").addEventListener("click", saveScholarHeaderContent);
+
+            // Toggle visibility for footer editing
+            document.getElementById("edit-footer-button").addEventListener("click", () => {
+                toggleFooterEdit(true);
+            });
+
+            document.getElementById("save-footer-button").addEventListener("click", saveScholarFooterContent);
+
+            // Toggle visibility for logo editing
+            document.getElementById("edit-logo-button").addEventListener("click", () => {
+                toggleLogoEdit(true);
+            });
+
+            document.getElementById("save-logo-button").addEventListener("click", saveLogo);
+
+            function toggleHeaderEdit(editMode) {
+                const displayText = document.getElementById("header-display");
+                const textArea = document.getElementById("header-textarea");
+                const saveButton = document.getElementById("save-header-button");
+
+                displayText.style.display = editMode ? "none" : "block";
+                textArea.style.display = editMode ? "block" : "none";
+                saveButton.style.display = editMode ? "inline" : "none";
+
+                if (editMode) {
+                    textArea.value = displayText.innerText; // Pre-fill textarea with current header content
+                }
+            }
+
+            function toggleFooterEdit(editMode) {
+                const displayText = document.getElementById("footer-display");
+                const textArea = document.getElementById("footer-textarea");
+                const saveButton = document.getElementById("save-footer-button");
+
+                displayText.style.display = editMode ? "none" : "block";
+                textArea.style.display = editMode ? "block" : "none";
+                saveButton.style.display = editMode ? "inline" : "none";
+
+                if (editMode) {
+                    textArea.value = displayText.innerText; // Pre-fill textarea with current footer content
+                }
+            }
+
+            function toggleLogoEdit(editMode) {
+                const logoImage = document.getElementById("header-logo");
+                const fileInput = document.getElementById("logo-file-input");
+                const saveButton = document.getElementById("save-logo-button");
+
+                logoImage.style.display = editMode ? "none" : "block";
+                fileInput.style.display = editMode ? "block" : "none";
+                saveButton.style.display = editMode ? "inline" : "none";
+            }
+
+            // Manage Scholarships
+            async function displayScholarships() {
+                try {
+                    const response = await fetch(`${API_URL}/scholarships`);
+                    const scholarships = await response.json();
+                    scholarshipList.innerHTML = "";
+
+                    scholarships.forEach(scholarship => {
+                        const div = document.createElement("div");
+                        div.innerHTML = `
+                            <h3>${scholarship.title}</h3>
+                            <p>${scholarship.description}</p>
+                            <img src="http://localhost:5000${scholarship.image}" width="150">
+                            <button onclick="deleteScholarship('${scholarship._id}')">Delete</button>
+                        `;
+                        scholarshipList.appendChild(div);
+                    });
+                } catch (error) {
+                    console.error("Error fetching scholarships:", error);
+                    alert("Error loading scholarships.");
+                }
+            }
+
+            // Add new scholarship
+            scholarshipForm.addEventListener("submit", async function(event) {
+                event.preventDefault();
+
+                const title = document.getElementById("title").value;
+                const description = document.getElementById("description").value;
+                const image = document.getElementById("image").files[0];
+
+                if (!image) {
+                    alert("Please select an image");
+                    return;
+                }
+        
+                const formData = new FormData();
+                formData.append("title", title);
+                formData.append("description", description);
+                formData.append("image", image);
+
+                try {
+                    const response = await fetch(`${API_URL}/scholarships`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        alert('Scholarship added successfully!');
+                        displayScholarships();
+                        scholarshipForm.reset();
+                    } else {
+                        alert('Failed to add scholarship.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error adding scholarship.');
+                }
+            });
+
+            // Delete scholarship
+            window.deleteScholarship = async function(scholarshipId) {
+                if (!confirm("Are you sure you want to delete this scholarship?")) return;
+
+                try {
+                    const response = await fetch(`${API_URL}/scholarships/${scholarshipId}`, { method: 'DELETE' });
+
+                    if (response.ok) {
+                        alert('Scholarship deleted successfully!');
+                        displayScholarships();
+                    } else {
+                        alert('Failed to delete scholarship.');
+                    }
+                } catch (error) {
+                    console.error('Error deleting scholarship:', error);
+                    alert('Failed to delete scholarship.');
+                }
+            };
+
+            // Initial loading
+            loadScholarHeader();
+            loadScholarFooter();
+            loadLogo();
+            displayScholarships();
+        });
+    </script>
+</body>
+</html>

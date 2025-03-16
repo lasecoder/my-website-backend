@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Vacancies - Client View</title>
+    <link rel="stylesheet" href="D:/book/my-blog/css/vacancies.css"> <!-- External styles -->
+</head>
+<body>
+    <header>
+        <div class="container">
+            <img id="header-logo" class="header-logo" alt="Company Logo" style="display:none;">
+            <h1 id="header-title">Available Job Vacancies</h1>
+        </div>
+        <div class="back-home">
+            <!-- Use relative URL for "Back Home" link -->
+            <a href="D:\book\my-blog\public\index.html" class="back-home-btn">Back Home</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Vacancy Listings -->
+        <section class="vacancy-list">
+            <div id="vacancy-container"></div>
+        </section>
+    </main>
+
+    <footer id="footer">
+        <!-- Footer content will be displayed here dynamically -->
+    </footer>
+
+    <script>
+        // Function to fetch and display the header content
+        async function fetchHeader() {
+            try {
+                const response = await fetch("http://localhost:5000/api/header");
+                if (!response.ok) {
+                    throw new Error("Error fetching header content");
+                }
+
+                const headerData = await response.json();
+                const headerTitle = document.getElementById("header-title");
+                const logoElement = document.getElementById("header-logo");
+
+                // Update title
+                document.title = headerData.title || "Job Vacancies";
+                headerTitle.textContent = headerData.title || "Available Job Vacancies";
+
+                // Update logo if available
+                if (headerData.logoUrl) {
+                    logoElement.src = "http://localhost:5000" + headerData.logoUrl;
+                    logoElement.style.display = "block";
+                } else {
+                    logoElement.style.display = "none";
+                }
+            } catch (error) {
+                console.error("❌ Error fetching header:", error);
+            }
+        }
+
+        // Function to fetch and display vacancies
+        async function fetchVacancies() {
+            try {
+                const response = await fetch("http://localhost:5000/api/vacancies");
+                if (!response.ok) {
+                    throw new Error("Error fetching vacancies");
+                }
+
+                const vacancies = await response.json();
+                const container = document.getElementById("vacancy-container");
+                container.innerHTML = ""; // Clear previous content
+
+                if (vacancies.length === 0) {
+                    container.innerHTML = "<p>No job vacancies available at the moment.</p>";
+                } else {
+                    vacancies.forEach(vacancy => {
+                        container.innerHTML += `
+                            <div class="job">
+                                <h3>${vacancy.title}</h3>
+                                <p>${vacancy.description}</p>
+                                ${vacancy.imageUrl ? `<img src="http://localhost:5000${vacancy.imageUrl}" alt="Vacancy Image" class="vacancy-image">` : ""}
+                            </div>
+                        `;
+                    });
+                }
+            } catch (error) {
+                console.error("❌ Error fetching vacancies:", error);
+            }
+        }
+
+        // Function to fetch and display the footer content
+        async function fetchFooter() {
+            try {
+                const response = await fetch("http://localhost:5000/api/footer");
+                if (!response.ok) {
+                    throw new Error("Error fetching footer content");
+                }
+
+                const footerData = await response.json();
+                document.getElementById("footer").innerHTML = footerData.footerContent || "Default footer content";
+            } catch (error) {
+                console.error("❌ Error fetching footer:", error);
+            }
+        }
+
+        // Load all data when the page loads
+        window.onload = () => {
+            fetchHeader();
+            fetchVacancies();
+            fetchFooter();
+        };
+
+        // Periodically update the content every 10 seconds
+        setInterval(() => {
+            fetchHeader();
+            fetchVacancies();
+            fetchFooter();
+        }, 10000);
+    </script>
+</body>
+</html>

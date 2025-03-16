@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>New News </h1>
+    </header>
+
+    <div id="post-content">
+        <!-- Individual post content will be displayed here -->
+        <article class="post">
+            <h3>How to Start a Cybersecurity</h3>
+            <img src="D:\book\my-blog\images\cyber.jpg" alt="Cybersecurity Image">
+                 <p>Starting a cybersecurity project can be an exciting and valuable experience. With the growing importance of online safety, data protection, and secure practices, there has never been a better time to share your knowledge in the field of cybersecurity.</p>
+                 
+                </article>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+
+        // Fetch the specific post based on the ID from the URL
+        fetch(`/post?id=${postId}`)
+            .then(response => response.json())
+            .then(post => {
+                const postContent = document.getElementById('post-content');
+                postContent.innerHTML = `
+                    <h2>${post.title}</h2>
+                    <p>${post.content}</p>
+                `;
+            })
+            .catch(error => console.error('Error fetching post:', error));
+    </script>
+</body>
+</html>

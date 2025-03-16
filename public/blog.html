@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog</title>
+    <link rel="stylesheet" href="D:/book/my-blog/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container_blog">
+            <div class="header-left">
+                <a href="index.html">
+                    <img id="blog-logo" src="" alt="Logo">
+                </a>
+                <h1 id="blog-header">Our Blog</h1>
+            </div>
+        </div>
+        <div class="home">
+            <a href="index.html" class="back-home-btn">←Home</a>
+        </div>
+        
+        <!-- Search Section -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search for posts..." />
+            <button onclick="searchPosts()">Search</button>
+        </div>
+    </header>
+    
+    <section class="blog">
+        <div class="posts-container" id="posts-container"></div>
+    </section>
+
+    <footer>
+        <p id="footer-text">&copy; 2025 Your Business. All Rights Reserved.</p>
+    </footer>
+    
+    <script>
+      // Load saved header title and logo when the page loads
+function loadHeaderAndFooter() {
+    let savedHeader = localStorage.getItem("headerTitle");
+    let savedLogo = localStorage.getItem("blogLogo");
+    let savedFooter = localStorage.getItem("footerText");
+
+    if (savedHeader) {
+        document.getElementById("blog-header").innerText = savedHeader;
+    }
+
+    if (savedLogo) {
+        document.getElementById("blog-logo").src = savedLogo;
+    }
+
+    if (savedFooter) {
+        document.getElementById("footer-text").innerText = savedFooter;
+    }
+}
+
+// Global variable to store all posts for search functionality
+let allPosts = [];
+
+// Function to fetch and display posts
+async function fetchPosts() {
+    try {
+        const response = await fetch("http://localhost:5000/api/posts"); // Fetch all posts
+        const posts = await response.json();
+        allPosts = posts; // Store all posts globally
+        displayPosts(allPosts); // Display all posts initially
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+    }
+}
+
+// Function to display posts in the container
+function displayPosts(posts) {
+    const container = document.getElementById("posts-container");
+    container.innerHTML = ""; // Clear existing posts
+
+    if (posts.length === 0) {
+        container.innerHTML = "<p>No posts found.</p>";
+        return;
+    }
+
+    posts.forEach(post => {
+        container.innerHTML += `
+            <div class="post" id="post-${post._id}">
+                <h3>${post.title}</h3>
+                <p>${post.content}</p>
+                ${post.image ? `<img src="http://localhost:5000/${post.image}" alt="Post Image" width="200">` : ""}
+                ${post.video ? `<video controls width="200" src="http://localhost:5000/${post.video}"></video>` : ""}
+            </div>
+        `;
+    });
+}
+
+// Function to filter posts based on search input
+function searchPosts() {
+    const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+    const filteredPosts = allPosts.filter(post =>
+        post.title.toLowerCase().includes(searchQuery) || 
+        post.content.toLowerCase().includes(searchQuery)
+    );
+    displayPosts(filteredPosts); // Display filtered posts
+}
+
+// Load everything when the page loads
+window.onload = function () {
+    loadHeaderAndFooter();
+    fetchPosts();
+};
+    </script>
+</body>
+</html>

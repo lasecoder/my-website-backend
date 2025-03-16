@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="D:/book/my-blog/css/style.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="about-header">
+        <div class="overlay">
+            <h1 id="headerTitle">About Us</h1>
+        </div>
+    </header>
+
+    <!-- About Content -->
+    <section class="about-content">
+        <h1>Welcome to Our Website!</h1>
+        <h2 id="companyDescription"></h2>
+        <p id="aboutText">We are passionate about sharing ideas, thoughts, and stories with you. Our goal is to create a space where we can express ourselves and connect with our readers.</p>
+
+        <h3>Our Mission</h3>
+        <p id="missionStatement">We strive to inform, entertain, and engage through the power of writing. Our content aims to spark curiosity, inspire conversations, and build a strong community.</p>
+        
+        <h3>Meet Our Team</h3>
+        <div class="team-container" id="teamContainer">
+            <!-- Team Members will be added here dynamically -->
+        </div>
+
+        <h3>Contact Us</h3>
+        <div class="contact-container" id="contactInfo">
+            <!-- Contact info will be displayed here dynamically -->
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; 2025 FutureTechTalent Business Solutions. All Rights Reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const savedData = JSON.parse(localStorage.getItem("aboutUsData"));
+            if (savedData) {
+                document.querySelector("#headerTitle").textContent = savedData.headerText;
+                document.querySelector("#companyDescription").textContent = savedData.contentText;
+                document.querySelector("#missionStatement").textContent = savedData.missionText;
+
+                const teamContainer = document.querySelector("#teamContainer");
+                savedData.teamMembers.forEach(member => {
+                    const memberDiv = document.createElement("div");
+                    memberDiv.classList.add("team-member");
+                    memberDiv.innerHTML = `
+                        <img src="${member.imageSrc}" alt="${member.name}">
+                        <p><strong>${member.name}</strong> - ${member.role}</p>
+                    `;
+                    teamContainer.appendChild(memberDiv);
+                });
+
+                const contactInfo = document.querySelector("#contactInfo");
+                contactInfo.innerHTML = `
+                    <p><strong>Address:</strong> ${savedData.contactInfo.address}</p>
+                    <p><strong>Phone:</strong> <a href="tel:${savedData.contactInfo.phone}">${savedData.contactInfo.phone}</a></p>
+                    <p><strong>Email:</strong> <a href="mailto:${savedData.contactInfo.email}">${savedData.contactInfo.email}</a></p>
+                    <p><strong>Social Media:</strong></p>
+                    <ul>
+                        <li><a href="${savedData.contactInfo.twitter}" target="_blank">Twitter</a></li>
+                        <li><a href="${savedData.contactInfo.facebook}" target="_blank">Facebook</a></li>
+                        <li><a href="${savedData.contactInfo.linkedin}" target="_blank">LinkedIn</a></li>
+                    </ul>
+                `;
+            }
+        });
+    </script>
+
+</body>
+</html>

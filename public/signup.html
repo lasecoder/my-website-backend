@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="D:\book\my-blog\css\singup-styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <form id="signup-form">
+            <h2>Sign Up</h2>
+            
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Create a password" required>
+
+            <label for="confirmPassword">Confirm Password:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+
+            <button type="submit" class="btn">Sign Up</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+            // Debugging: Log the request payload
+            console.log("📤 Sending Data:", { name, email, password, confirmPassword });
+
+            fetch('http://localhost:3001/signup', {  // ✅ Fixed API URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password, confirmPassword }),
+            })
+            .then(response => {
+                console.log("📥 Response Status:", response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log("✅ Server Response:", data);
+                alert(data.message);
+                if (data.success) {
+                    window.location.href = 'login.html';
+                }
+            })
+            .catch(error => {
+                console.error("❌ Fetch Error:", error);
+                alert("Signup failed. Please try again.");
+            });
+        });
+    </script>
+
+</body>
+</html>

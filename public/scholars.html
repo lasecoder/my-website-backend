@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholarships</title>
+    <link rel="stylesheet" href="D:\book\my-blog\css\scholars.css">
+</head>
+<body>
+    <!-- Dynamic Header -->
+    <header>
+        <div class="container" id="header-content-container">
+            <section class="logs">
+                <div class="container">
+                    <h2>System Logs</h2>
+                    <ul id="log-list">
+                        <!-- Logs will be dynamically inserted here -->
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- Header Title Section -->
+            <div class="header-title">
+                <!-- This will display dynamic header content -->
+                <h1>Scholarship Portal</h1>
+            </div>
+        </div>
+
+        <div class="back-home">
+            <!-- Use relative URL for "Back Home" link -->
+            <a href="D:\book\my-blog\public\index.html" class="back-home-btn">Back Home</a>
+        </div>
+    </header>
+    
+    <section class="scholarships">
+        <div class="container" id="scholarship-list">
+            <!-- Scholarship content will be injected here dynamically -->
+        </div>
+    </section>
+    
+    <!-- Dynamic Footer -->
+    <footer>
+        <div class="container" id="footer-content-container">
+            <!-- Footer content will be injected here dynamically -->
+        </div>
+    </footer>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const scholarshipList = document.getElementById("scholarship-list");
+        const headerContentContainer = document.getElementById("header-content-container");
+        const footerContentContainer = document.getElementById("footer-content-container");
+        const API_URL = "http://localhost:5000/api"; // Replace with your backend API URL
+        async function loadLogs() {
+    try {
+        const response = await fetch("http://localhost:5000/api/logs");
+        const logs = await response.json();
+        const logList = document.getElementById("log-list");
+        logList.innerHTML = ""; // Clear previous logs
+
+        if (logs.length === 0) {
+            logList.innerHTML = "<p>No logs available.</p>";
+            return;
+        }
+
+        logs.forEach(log => {
+            const listItem = document.createElement("li");
+            
+            // Create a string with the timestamp and message
+            const logText = `[${new Date(log.timestamp).toLocaleString()}] ${log.message}`;
+
+            // Check if an image exists and add the image element if so
+            let imageElement = "";
+            if (log.imageUrl) {
+                imageElement = `<img src="http://localhost:5000${log.imageUrl}" alt="Log Image" width="100">`;
+            }
+
+            // Add log text and image (if exists)
+            listItem.innerHTML = `
+                <div>
+                    <p>${logText}</p>
+                    ${imageElement}
+                </div>
+            `;
+            logList.appendChild(listItem);
+        });
+    } catch (error) {
+        console.error("Error loading logs:", error);
+        document.getElementById("log-list").innerHTML = "<p>Failed to load logs.</p>";
+    }
+}
+
+
+// Call the function to load logs when the page loads
+document.addEventListener("DOMContentLoaded", loadLogs);
+
+        // Function to load header content
+        async function loadHeaderContent() {
+            try {
+                const response = await fetch(`${API_URL}/scholar-header`); // Updated endpoint
+                const data = await response.json();
+                if (data && data.header) {
+                    headerContentContainer.innerHTML = `
+                        <h1>${data.header}</h1>
+                    `;
+                } else {
+                    headerContentContainer.innerHTML = "<h1>Scholarship Portal</h1>";
+                }
+            } catch (error) {
+                console.error("Error loading header content:", error);
+                headerContentContainer.innerHTML = "<h1>Scholarship Portal</h1>";
+            }
+        }
+
+        // Function to load footer content
+        async function loadFooterContent() {
+            try {
+                const response = await fetch(`${API_URL}/scholar-footer`); // Updated endpoint
+                const data = await response.json();
+                if (data && data.footer) {
+                    footerContentContainer.innerHTML = `<p>${data.footer}</p>`;
+                } else {
+                    footerContentContainer.innerHTML = "<p>&copy; 2025 Scholarship System</p>";
+                }
+            } catch (error) {
+                console.error("Error loading footer content:", error);
+                footerContentContainer.innerHTML = "<p>&copy; 2025 Scholarship System</p>";
+            }
+        }
+
+        // Function to load scholarships
+        async function loadScholarships() {
+            try {
+                const response = await fetch(`${API_URL}/scholarships`);
+                const scholarships = await response.json();
+                scholarshipList.innerHTML = ""; // Clear any existing content
+
+                if (scholarships.length === 0) {
+                    scholarshipList.innerHTML = "<p>No scholarships available at the moment.</p>";
+                    return;
+                }
+
+                scholarships.forEach(scholarship => {
+                    const div = document.createElement("div");
+                    div.classList.add("scholarship-item");
+
+                    // Image URL handling
+                    const imageUrl = scholarship.image ? `http://localhost:5000${scholarship.image}` : "default_image.png";
+                    div.innerHTML = `
+                        <h3>${scholarship.title}</h3>
+                        <p>${scholarship.description}</p>
+                        <img src="${imageUrl}" width="200" alt="Scholarship Image">
+                    `;
+                    scholarshipList.appendChild(div);
+                });
+            } catch (error) {
+                console.error("Error loading scholarships:", error);
+                scholarshipList.innerHTML = "<p>Failed to load scholarships.</p>";
+            }
+        }
+
+        // Load data when the page loads
+        loadHeaderContent();
+        loadFooterContent();
+        loadScholarships();
+    });
+    </script>
+</body>
+</html>

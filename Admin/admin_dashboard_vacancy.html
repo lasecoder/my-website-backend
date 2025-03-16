@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Manage Vacancies</title>
+    <link rel="stylesheet" href="D:/book/my-blog/Admin/admin_dashboard_vacancy.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Admin Dashboard - Vacancy Management</h1>
+        </div>
+    </header>
+    <div class="sidebar">
+        <h3>Admin Dashboard</h3>
+        <ul>
+            <li><a href="admin_dashboard.html">Home</a></li>
+            <li><a href="D:\book\my-blog\Admin\admin_dashboard_vacancy.html">Vacancy</a></li>
+        </ul>
+    </div>
+    <main>
+        <!-- Manage Header (Logo & Title) -->
+        <section class="header-management">
+            <h3>Manage Header</h3>
+            <button class="btn" onclick="showEditHeaderForm()">✏️ Edit Header</button>
+
+            <!-- Edit Header Form -->
+            <div id="edit-header-form" class="post-form" style="display:none;">
+                <h3>Edit Header</h3>
+                <form id="header-form" onsubmit="saveHeader(event)">
+                    <label for="header-title">Header Title:</label>
+                    <input type="text" id="header-title" required>
+
+                    <label for="header-logo">Upload Logo:</label>
+                    <input type="file" id="header-logo" accept="image/*">
+
+                    <button type="submit" class="btn">Save Header</button>
+                    <button type="button" class="btn" onclick="cancelEditHeader()">Cancel</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="dashboard-content">
+            <h2>Manage Job Vacancies</h2>
+
+            <!-- Add New Vacancy Button -->
+            <button class="btn" onclick="showAddVacancyForm()">➕ Add New Vacancy</button>
+            
+            <!-- Add Vacancy Form -->
+            <div id="add-vacancy-form" class="post-form" style="display:none;">
+                <h3>Add New Job Vacancy</h3>
+                <form id="vacancy-form" onsubmit="addVacancy(event)">
+                    <label for="vacancy-title">Job Title:</label>
+                    <input type="text" id="vacancy-title" required>
+
+                    <label for="vacancy-description">Job Description:</label>
+                    <textarea id="vacancy-description" required></textarea>
+
+                    <label for="vacancy-image">Job Image:</label>
+                    <input type="file" id="vacancy-image" accept="image/*">
+
+                    <button type="submit" class="btn">Save Vacancy</button>
+                    <button type="button" class="btn" onclick="cancelAddVacancy()">Cancel</button>
+                </form>
+            </div>
+
+            <!-- Edit Vacancy Form -->
+            <div id="edit-vacancy-form" class="post-form" style="display:none;">
+                <h3>Edit Job Vacancy</h3>
+                <form id="edit-vacancy-form-content" onsubmit="editVacancy(event)">
+                    <input type="hidden" id="edit-vacancy-id">
+
+                    <label for="edit-vacancy-title">Job Title:</label>
+                    <input type="text" id="edit-vacancy-title" required>
+
+                    <label for="edit-vacancy-description">Job Description:</label>
+                    <textarea id="edit-vacancy-description" required></textarea>
+
+                    <label for="edit-vacancy-image">Job Image:</label>
+                    <input type="file" id="edit-vacancy-image" accept="image/*">
+
+                    <button type="submit" class="btn">Save Changes</button>
+                    <button type="button" class="btn" onclick="cancelEditVacancy()">Cancel</button>
+                </form>
+            </div>
+
+            <!-- Footer Management Section: Edit Footer -->
+            <section class="footer-management">
+                <h3>Manage Footer</h3>
+                <button class="btn" onclick="showEditFooterForm()">✏️ Edit Footer</button>
+                
+                <!-- Edit Footer Form -->
+                <div id="edit-footer-form" class="post-form" style="display:none;">
+                    <h3>Edit Footer Content</h3>
+                    <form id="footer-form" onsubmit="editFooter(event)">
+                        <label for="footer-content">Footer Content:</label>
+                        <textarea id="footer-content" required></textarea>
+                        
+                        <button type="submit" class="btn">Save Footer</button>
+                        <button type="button" class="btn" onclick="cancelEditFooter()">Cancel</button>
+                    </form>
+                </div>
+
+                <!-- Footer Display Section -->
+                <div id="footer-display">
+                    <h4>Current Footer Content:</h4>
+                    <p id="footer-text"></p>
+                </div>
+            </section>
+
+            <!-- Vacancy List -->
+            <div class="vacancy-container" id="vacancy-container"></div>
+        </section>
+    </main>
+
+    <footer id="footer">
+        <!-- Footer content will be displayed here -->
+    </footer>
+
+    <script>
+        // Show the form for adding a new vacancy
+        function showAddVacancyForm() {
+            document.getElementById("add-vacancy-form").style.display = "block";
+        }
+
+        // Hide the form for adding a new vacancy
+        function cancelAddVacancy() {
+            document.getElementById("add-vacancy-form").style.display = "none";
+        }
+        // Show Header Edit Form
+        function showEditHeaderForm() {
+            document.getElementById("edit-header-form").style.display = "block";
+        }
+
+        // Hide Header Edit Form
+        function cancelEditHeader() {
+            document.getElementById("edit-header-form").style.display = "none";
+        }
+
+        // Save Header (Title & Logo)
+        async function saveHeader(event) {
+            event.preventDefault();
+
+            const title = document.getElementById("header-title").value;
+            const logoFile = document.getElementById("header-logo").files[0];
+
+            const formData = new FormData();
+            formData.append("title", title);
+            if (logoFile) formData.append("logo", logoFile);
+
+            try {
+                const response = await fetch("http://localhost:5000/api/header", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error("Error saving header");
+                }
+
+                alert("Header updated successfully!");
+
+                fetchHeader(); // Reload header on client side
+                cancelEditHeader(); // Hide edit form
+            } catch (error) {
+                console.error("❌ Error updating header:", error);
+            }
+        }
+
+        // Fetch Header Data
+        async function fetchHeader() {
+            try {
+                const response = await fetch("http://localhost:5000/api/header");
+                if (!response.ok) {
+                    throw new Error("Error fetching header data");
+                }
+
+                const data = await response.json();
+                document.getElementById("site-title").innerText = data.title || "Admin Dashboard - Vacancy Management";
+                if (data.logoUrl) {
+                    document.getElementById("site-logo").src = "http://localhost:5000" + data.logoUrl;
+                }
+            } catch (error) {
+                console.error("❌ Error fetching header:", error);
+            }
+        }
+
+        // Load Header on Page Load
+        window.onload = function() {
+            fetchHeader();
+        };
+        // Function to add a vacancy
+        async function addVacancy(event) {
+            event.preventDefault();
+            
+            const title = document.getElementById("vacancy-title").value;
+            const description = document.getElementById("vacancy-description").value;
+            const image = document.getElementById("vacancy-image").files[0];
+            
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append("description", description);
+            formData.append("image", image);
+            
+            try {
+                const response = await fetch("http://localhost:5000/api/vacancies", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error("Error adding vacancy");
+                }
+
+                fetchVacancies(); // Reload vacancies after adding
+                cancelAddVacancy(); // Hide add form
+            } catch (error) {
+                console.error("❌ Error adding vacancy:", error);
+            }
+        }
+
+        // Function to edit a vacancy
+        async function editVacancy(event) {
+            event.preventDefault();
+
+            const id = document.getElementById("edit-vacancy-id").value;
+            const title = document.getElementById("edit-vacancy-title").value;
+            const description = document.getElementById("edit-vacancy-description").value;
+            const image = document.getElementById("edit-vacancy-image").files[0];
+            
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append("description", description);
+            if (image) formData.append("image", image);
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/vacancies/${id}`, {
+                    method: "PUT",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error("Error editing vacancy");
+                }
+
+                fetchVacancies(); // Reload vacancies after editing
+                cancelEditVacancy(); // Hide edit form
+            } catch (error) {
+                console.error("❌ Error editing vacancy:", error);
+            }
+        }
+
+        // Function to delete a vacancy
+        async function deleteVacancy(id) {
+            if (confirm("Are you sure you want to delete this vacancy?")) {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/vacancies/${id}`, {
+                        method: "DELETE",
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Error deleting vacancy");
+                    }
+
+                    fetchVacancies(); // Reload vacancies after deletion
+                } catch (error) {
+                    console.error("❌ Error deleting vacancy:", error);
+                }
+            }
+        }
+
+        // Fetch all vacancies from backend
+        async function fetchVacancies() {
+            try {
+                const response = await fetch("http://localhost:5000/api/vacancies");
+                if (!response.ok) {
+                    throw new Error("Error fetching vacancies");
+                }
+                
+                const vacancies = await response.json();
+                const container = document.getElementById("vacancy-container");
+                container.innerHTML = "";
+
+                if (vacancies.length === 0) {
+                    container.innerHTML = "<p>No job vacancies available at the moment.</p>";
+                } else {
+                    vacancies.forEach(vacancy => {
+                        container.innerHTML += `
+                            <div class="job" id="vacancy-${vacancy._id}">
+                                <h2>${vacancy.title}</h2>
+                                <p>${vacancy.description}</p>
+                                ${vacancy.imageUrl ? `<img src="http://localhost:5000${vacancy.imageUrl}" alt="Vacancy Image" style="width: 200px;">` : ""}
+                                <button class="btn" onclick="editVacancyForm('${vacancy._id}')">Edit</button>
+                                <button class="btn" onclick="deleteVacancy('${vacancy._id}')">Delete</button>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (error) {
+                console.error("❌ Error fetching vacancies:", error);
+            }
+        }
+
+        // Show form to edit a vacancy
+        function editVacancyForm(id) {
+            const vacancy = document.getElementById(`vacancy-${id}`);
+            const title = vacancy.querySelector("h2").innerText;
+            const description = vacancy.querySelector("p").innerText;
+
+            document.getElementById("edit-vacancy-id").value = id;
+            document.getElementById("edit-vacancy-title").value = title;
+            document.getElementById("edit-vacancy-description").value = description;
+
+            document.getElementById("edit-vacancy-form").style.display = "block";
+        }
+
+        // Hide edit form
+        function cancelEditVacancy() {
+            document.getElementById("edit-vacancy-form").style.display = "none";
+        }
+
+        // Show the footer editing form
+        function showEditFooterForm() {
+            document.getElementById("edit-footer-form").style.display = "block";
+            document.getElementById("footer-display").style.display = "none";
+        }
+
+        // Save and update the footer content
+        async function editFooter(event) {
+            event.preventDefault();
+            
+            const footerContent = document.getElementById("footer-content").value;
+
+            // Set footer content on the page
+            document.getElementById("footer-text").innerText = footerContent;
+            document.getElementById("footer").innerHTML = footerContent;
+
+            // Optionally, save the footer to the backend
+            saveFooterToBackend(footerContent);
+
+            // Hide the form and show the updated footer
+            cancelEditFooter();
+        }
+
+        // Hide the footer editing form
+        function cancelEditFooter() {
+            document.getElementById("edit-footer-form").style.display = "none";
+            document.getElementById("footer-display").style.display = "block";
+        }
+
+        // Function to save footer content to the backend
+        async function saveFooterToBackend(footerContent) {
+            try {
+                const response = await fetch("http://localhost:5000/api/footer", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ footerContent })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to save footer content");
+                }
+                console.log("Footer content saved!");
+            } catch (error) {
+                console.error("❌ Error saving footer:", error);
+            }
+        }
+
+        // Fetch footer content on page load
+        async function fetchFooterContent() {
+            try {
+                const response = await fetch("http://localhost:5000/api/footer");
+                if (!response.ok) {
+                    throw new Error("Error fetching footer content");
+                }
+                const data = await response.json();
+                const footerContent = data.footerContent || "Your footer content will appear here...";
+                document.getElementById("footer-text").innerText = footerContent;
+                document.getElementById("footer").innerHTML = footerContent;
+            } catch (error) {
+                console.error("❌ Error fetching footer:", error);
+            }
+        }
+
+        // Load vacancies and footer on page load
+        window.onload = function() {
+            fetchVacancies();
+            fetchFooterContent();
+        };
+    </script>
+</body>
+</html>

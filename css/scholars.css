@@ -1,0 +1,232 @@
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", Arial, sans-serif;
+}
+
+/* Body Styling */
+body {
+    background: linear-gradient(135deg, #f4f7f6, #dde6ed);
+    color: #333;
+    font-size: 16px;
+    padding: 20px;
+}
+
+/* Header Styling */
+header {
+    background: linear-gradient(135deg, #002147, #003366);
+    color: white;
+    padding: 40px 50px; /* Increased padding for bigger header */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 0 0 15px 15px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    animation: fadeInDown 1s ease-in-out;
+}
+
+/* Logo Styling (Left Alignment) */
+.header-logo {
+    max-width: 110px; /* Larger logo */
+    height: auto;
+    position: absolute;
+    left: 40px; /* Keeps it aligned left */
+}
+
+/* Header Title */
+header h1 {
+    font-size: 2.8rem; /* Bigger font size */
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    text-align: center;
+    flex-grow: 1;
+}
+
+/* Back to Home Button */
+.back-home {
+    position: absolute; /* Position the element absolutely inside the header */
+    top: 10px;          /* Place it 10px from the top */
+    right: 10px;        /* Place it 10px from the right */
+    text-align: right;
+}
+
+.back-home-btn {
+    display: inline-block;
+    padding: 12px 25px;
+    background-color:transparent;
+    color: white;
+    font-size: 1.2rem;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background 0.3s ease-in-out;
+}
+
+.back-home-btn:hover {
+    /* A darker shade for hover effect */
+    color: white;
+    text-decoration: underline;
+}
+
+/* Main Content */
+main {
+    margin-top: 60px; /* More space between header & content */
+}
+
+/* Scholarship Listings */
+.scholarship-list {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    animation: fadeInUp 1s ease-in-out;
+}
+
+.scholarship-list h2 {
+    font-size: 2rem;
+    margin-bottom: 25px;
+    text-align: center;
+    color: #002147;
+    font-weight: 700;
+}
+
+/* Scholarship Item Container */
+#scholarship-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+}
+
+/* Scholarship Item Styling */
+.scholarship-item {
+    background-color: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    width: calc(33.33% - 25px);
+    box-sizing: border-box;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 6px solid #002147;
+}
+
+.scholarship-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.25);
+    border-left: 6px solid #ff9800;
+}
+
+.scholarship-item h3 {
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    color: #002147;
+    font-weight: 700;
+}
+
+.scholarship-item p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 12px;
+    line-height: 1.6;
+}
+
+/* Scholarship Image */
+.scholarship-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-top: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading Animation */
+.loading {
+    font-size: 1.4rem;
+    color: #002147;
+    text-align: center;
+    margin-top: 60px;
+    font-weight: bold;
+}
+
+/* Footer Styling */
+footer {
+    background: linear-gradient(135deg, #002147, #003366);
+    color: white;
+    text-align: center;
+    padding: 25px 0;
+    margin-top: 60px;
+    border-radius: 15px 15px 0 0;
+    animation: fadeInUp 1s ease-in-out;
+}
+
+footer p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Keyframe Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .scholarship-item {
+        width: calc(50% - 25px);
+    }
+}
+
+@media (max-width: 768px) {
+    .scholarship-item {
+        width: 100%;
+    }
+
+    header h1 {
+        font-size: 2.5rem;
+    }
+
+    .scholarship-list {
+        width: 90%;
+    }
+
+    .header-logo {
+        max-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scholarship-item {
+        width: 100%;
+    }
+
+    header h1 {
+        font-size: 2.2rem;
+    }
+
+    .header-logo {
+        max-width: 85px;
+    }
+}

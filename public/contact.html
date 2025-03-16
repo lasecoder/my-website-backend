@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <link rel="stylesheet" href="D:/book/my-blog/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Import Axios -->
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1 id="header-title">Contact Us</h1> <!-- Dynamic header title -->
+            <p id="header-desc">We'd love to hear from you! Please fill out the form below to get in touch.</p> <!-- Dynamic header description -->
+        </div>
+        <div class="home">
+            <a href="index.html" class="back-home-btn">← Home</a>
+        </div>
+    </header>
+
+    <section class="contact-form-section">
+        <div class="container">
+            <form id="contactForm" class="contact-form">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" id="name" name="name" required placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Your Email</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="message">Your Message</label>
+                    <textarea id="message" name="message" required placeholder="Enter your message"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Submit</button>
+            </form>
+            <p id="successMessage" style="display: none; color: green;">Message sent successfully!</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 My Blog. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Fetch and display updated contact content
+        function fetchContactContent() {
+            axios.get('http://localhost:5000/contact-content')
+                .then(response => {
+                    const content = response.data;
+                    content.forEach(item => {
+                        if (item.section === "header-title") {
+                            document.getElementById("header-title").textContent = item.content;
+                        }
+                        if (item.section === "header-desc") {
+                            document.getElementById("header-desc").textContent = item.content;
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("❌ Error fetching content:", error);
+                });
+        }
+
+        // Call this function when the page loads to fetch content
+        window.onload = fetchContactContent;
+
+        // Handle form submission
+        document.getElementById("contactForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            
+            // Get form data
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const message = document.getElementById("message").value;
+            const successMessage = document.getElementById("successMessage");
+
+            // Disable button to prevent multiple clicks
+            const submitBtn = document.querySelector(".submit-btn");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Sending...";
+
+            // Send data to backend
+            axios.post("http://localhost:3001/contact", {
+                name: name,
+                email: email,
+                message: message
+            })
+            .then(response => {
+                console.log("✅ Success:", response.data);
+                successMessage.style.display = "block"; // Show success message
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit"; // Reset button text
+            })
+            .catch(error => {
+                console.error("❌ Error:", error.response ? error.response.data : error);
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit"; // Reset button text
+            });
+        });
+    </script>
+
+</body>
+</html>

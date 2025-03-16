@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Home</title>
+  <link rel="stylesheet" href="D:/book/my-blog/Admin/admin_dashboard.css" />
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <div class="sidebar">
+    <h3>Admin Dashboard</h3>
+    <ul>
+      <li><a href="admin_dashboard.html">Home Page</a></li>
+      <li><a href="admin_dashboard_about_us.html">About Us</a></li>
+      <li><a href="admin_dashboard_services.html">Services</a></li>
+      <li><a href="admin_dashboard_blog.html">Blog</a></li>
+      <li><a href="admin_dashboard_contact.html">Contact</a></li>
+      <li><a href="admin_dashboard_vacancy.html">Vacancy</a></li>
+      <li><a href="admin_dashboard_scholars.html">Scholarships</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Home Header Section -->
+    <section id="home-header">
+      <h2>Edit Home Header</h2>
+      <form id="home-header-form" enctype="multipart/form-data">
+        <label for="home-header-title">Header Title:</label>
+        <input type="text" id="home-header-title" name="home-header-title" value="FutureTechTalent - Professional Business Solutions" /><br>
+        <label for="home-header-image">Header Image:</label>
+        <input type="file" id="home-header-image" name="home-header-image" /><br>
+        <button type="submit" id="update-header-btn">Update Header</button>
+      </form>
+    </section>
+
+    <!-- Service 1 Section -->
+    <section id="home-services">
+      <h2>Edit Services</h2>
+      <form id="home-services-form" enctype="multipart/form-data">
+        <div class="service-form">
+          <label for="service1-title">Title:</label>
+          <input type="text" id="service1-title" name="service1-title" placeholder="Enter title" required><br>
+
+          <label for="service1-description">Description:</label>
+          <textarea id="service1-description" name="service1-description" placeholder="Enter description" required></textarea><br>
+
+          <label for="service1-image">Upload Image:</label>
+          <input type="file" id="service1-image" name="service1-image" accept="image/*"><br>
+
+          <button type="submit" id="update-service1-btn">Update Service 1</button>
+        </div>
+      </form>
+    </section>
+    <!-- Footer Section -->
+    <section id="home-footer">
+      <h2>Edit Footer</h2>
+      <form id="home-footer-form">
+        <label for="home-footer-text">Footer Text:</label>
+        <textarea id="home-footer-text" name="home-footer-text" rows="2" cols="50">
+          &copy; 2025 FutureTechTalent Business Solutions. All Rights Reserved.
+        </textarea><br>
+        <button type="submit" id="update-footer-btn">Update Footer</button>
+      </form>
+    </section>
+  </div>
+  <script src="D:/book/my-blog/Admin/admin_dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Services</title>
+    <link rel="stylesheet" href="D:\book\my-blog\css\services.css"> <!-- Corrected relative path -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="back-home">
+            <!-- Use relative URL for "Back Home" link -->
+            <a href="D:\book\my-blog\public\index.html" class="back-home-btn">Back Home</a>
+        </div>
+        <h1 id="services-header-title">Our Services</h1>
+    </header>
+    
+    <section id="services-container"></section>
+
+    <footer>
+        <div class="container">
+            <p id="footer-text">&copy; 2025 My Blog. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function fetchHeaderText() {
+            fetch("http://localhost:4001/api/header")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.headerText) {
+                        document.getElementById("services-header-title").textContent = data.headerText;
+                    }
+                })
+                .catch(error => console.error("Error fetching header text:", error));
+        }
+        // Fetch all services
+        function fetchServices() {
+            fetch("http://localhost:4001/api/services")
+                .then(response => response.json())
+                .then(data => {
+                    if (!Array.isArray(data)) throw new Error("Received data is not an array");
+                    
+                    const servicesContainer = document.getElementById("services-container");
+                    servicesContainer.innerHTML = "";
+
+                    data.forEach(service => {
+                        const serviceCard = document.createElement("div");
+                        serviceCard.classList.add("service-card");
+
+                        // Handle Image & Video Rendering
+                        const imageHTML = service.image ? `<img src="http://localhost:4001/${service.image}" alt="${service.title}" />` : '';
+                        const videoHTML = service.video ? `<video width="320" height="240" controls>
+                                                            <source src="http://localhost:4001/${service.video}" type="video/mp4">
+                                                            Your browser does not support the video tag.
+                                                        </video>` : '';
+                        
+                        serviceCard.innerHTML = ` 
+                            <h2>${service.title}</h2>
+                            <p>${service.description}</p>
+                            ${imageHTML}
+                            ${videoHTML}
+                        `;
+                        servicesContainer.appendChild(serviceCard);
+                    });
+                })
+                .catch(error => console.error("Error fetching services:", error));
+        }
+        function fetchHeaderText() {
+    fetch("http://localhost:4001/api/header")
+        .then(response => response.json())
+        .then(data => {
+            if (data.headerText) {
+                document.getElementById("services-header-title").textContent = data.headerText;
+            }
+        })
+        .catch(error => console.error("Error fetching header text:", error));
+}
+
+        // Fetch the footer content from the backend
+        function fetchFooter() {
+            fetch("http://localhost:4001/api/content/footer")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const footerText = data.footerText; // Get the footer text from the response
+                    const footerContainer = document.querySelector("footer .container");
+                    footerContainer.innerHTML = `<p>${footerText}</p>`; // Update the footer with new content
+                })
+                .catch(error => {
+                    console.error("Error fetching footer:", error);
+                });
+        }
+
+        // Call fetchFooter and fetchServices on page load
+        window.onload = function() {
+            fetchHeaderText();
+            fetchServices();
+            fetchFooter();  // Fetch and display the updated footer from the database
+        };
+    </script>
+</body>
+</html>

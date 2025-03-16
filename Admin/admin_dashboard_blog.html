@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Blog Management</title>
+    <link rel="stylesheet" href="D:\book\my-blog\Admin\admin_dashboard_blog.css">
+</head>
+<body>
+    <header>
+        <div class="container_blog">
+            <div class="header-left">
+                <a href="index.html">
+                    <img src="D:/book/my-blog/images/ftt.png" alt="Logo">
+                </a>
+                <h1>Admin Dashboard - Blog Management</h1>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Admin Dashboard Sidebar -->
+    <div class="sidebar">
+        <ul>
+            <li><a href="D:\book\my-blog\Admin\admin_dashboard.html">Home</a></li>
+            <li><a href="admin_dashboard_blog.html" class="active">Dashboard</a></li>
+            <li><a href="public/blog.html">View Blog</a></li>
+            <li><a href="logout.html">Logout</a></li>
+        </ul>
+    </div>
+
+    <main>
+      <!-- Add Header Editing Section -->
+      <section class="header-edit">
+        <h2>Edit Header</h2>
+        
+        <!-- Edit Title -->
+        <label for="header-title">Blog Title:</label>
+        <input type="text" id="header-title" placeholder="Enter new title">
+        <button class="btn" onclick="saveHeaderTitle()">Save Title</button>
+        
+        <!-- Edit Logo -->
+        <label for="logo-upload">Upload Logo:</label>
+        <input type="file" id="logo-upload" accept="image/*">
+        <button class="btn" onclick="saveLogo()">Save Logo</button>
+    </section>
+
+        <section class="dashboard-content">
+            <h2>Manage Blog Posts</h2>
+            
+            <!-- Add New Post Button -->
+            <button class="btn" onclick="showAddPostForm()">Add New Post</button>
+            
+            <!-- Add Post Form (hidden by default) -->
+            <div id="add-post-form" class="post-form" style="display:none;">
+                <h3>Add New Blog Post</h3>
+                <form id="post-form" onsubmit="addPost(event)">
+                    <label for="post-title">Title:</label>
+                    <input type="text" id="post-title" required>
+                    <label for="post-content">Content:</label>
+                    <textarea id="post-content" required></textarea>
+                    <label for="post-image">Image:</label>
+                    <input type="file" id="post-image" accept="image/*">
+                    <label for="post-video">Video:</label>
+                    <input type="file" id="post-video" accept="video/*">
+                    <button type="submit" class="btn">Save Post</button>
+                    <button type="button" class="btn" onclick="cancelAddPost()">Cancel</button>
+                </form>
+            </div>
+
+            <!-- Blog Posts Container -->
+            <div class="posts-container" id="posts-container"></div>
+        </section>
+
+          <p id="footer-text">&copy; 2025 Your Business. All Rights Reserved.</p>
+          <button class="btn edit-footer-btn" onclick="editFooter()">Edit Footer</button>
+     
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Your Business. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+      // Function to save new header title
+function saveHeaderTitle() {
+    let newTitle = document.getElementById("header-title").value;
+    if (newTitle) {
+        localStorage.setItem("headerTitle", newTitle);
+        alert("Header title updated!");
+    }
+}
+
+// Function to save new logo
+function saveLogo() {
+    let fileInput = document.getElementById("logo-upload");
+    let file = fileInput.files[0];
+
+    if (file) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+            localStorage.setItem("blogLogo", e.target.result);
+            alert("Logo updated successfully!");
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+        // Fetch posts from the backend API and display them
+        async function fetchPosts() {
+            const response = await fetch("http://localhost:5000/api/posts");
+            const posts = await response.json();
+            const container = document.getElementById("posts-container");
+            container.innerHTML = ""; // Clear any existing posts
+            
+            posts.forEach(post => {
+                container.innerHTML += `
+                    <div class="post" id="post-${post._id}">
+                        <h3>${post.title}</h3>
+                        <p>${post.content}</p>
+                        ${post.image ? `<img src="http://localhost:5000/${post.image}" alt="Post Image" width="200">` : ""}
+                        ${post.video ? `<video controls width="200" src="http://localhost:5000/${post.video}"></video>` : ""}
+                        <button onclick="editPost('${post._id}', '${post.title}', '${post.content}')">Edit</button>
+                        <button onclick="deletePost('${post._id}')">Delete</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Function to delete a post
+        async function deletePost(id) {
+            if (confirm("Are you sure you want to delete this post?")) {
+                await fetch(`http://localhost:5000/api/posts/${id}`, { method: "DELETE" });
+                fetchPosts();  // Reload the posts after deletion
+            }
+        }
+
+        // Function to edit a post
+        function editPost(id, title, content) {
+            const newTitle = prompt("Edit Title:", title);
+            const newContent = prompt("Edit Content:", content);
+            if (newTitle && newContent) {
+                fetch(`http://localhost:5000/api/posts/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ title: newTitle, content: newContent })
+                }).then(() => fetchPosts());  // Reload posts after updating
+            }
+        }
+
+        // Function to show the form to add a new post
+        function showAddPostForm() {
+            document.getElementById("add-post-form").style.display = "block";
+        }
+
+        // Function to hide the add post form
+        function cancelAddPost() {
+            document.getElementById("add-post-form").style.display = "none";
+        }
+
+        // Function to add a new post
+        async function addPost(event) {
+            event.preventDefault();  // Prevent form from reloading the page
+            
+            const title = document.getElementById("post-title").value;
+            const content = document.getElementById("post-content").value;
+            const image = document.getElementById("post-image").files[0];
+            const video = document.getElementById("post-video").files[0];
+
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append("content", content);
+            if (image) formData.append("image", image);
+            if (video) formData.append("video", video);
+
+            await fetch("http://localhost:5000/api/posts", {
+                method: "POST",
+                body: formData
+            });
+
+            fetchPosts();  // Reload posts after adding new one
+            cancelAddPost();  // Hide the add post form
+        }
+// Function to edit the footer
+function editFooter() {
+        let currentText = document.getElementById("footer-text").innerText;
+        let newText = prompt("Edit Footer Text:", currentText);
+
+        if (newText) {
+            document.getElementById("footer-text").innerText = newText;
+            localStorage.setItem("footerText", newText);  // Save to local storage
+        }
+    }
+
+    // Load footer text from localStorage on page load
+    window.onload = function () {
+        fetchPosts(); // Load posts
+        let savedFooter = localStorage.getItem("footerText");
+        if (savedFooter) {
+            document.getElementById("footer-text").innerText = savedFooter;
+        }
+    };
+        // Fetch posts when the page loads
+        window.onload = fetchPosts;
+    </script>
+</body>
+</html>

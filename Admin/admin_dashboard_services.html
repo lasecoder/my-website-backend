@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Services</title>
+    <link rel="stylesheet" href="D:\book\my-blog\Admin\admin_dashboard_services.css"> <!-- Corrected path -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Admin Dashboard</h3>
+        <ul>
+            <li><a href="admin_dashboard.html">Home</a></li>
+            <li><a href="admin_dashboard_services.html">Services</a></li>
+        </ul>
+    </div>
+    <h2>Edit Header Text</h2>
+    <form id="header-form">
+        <label for="header-text">Header Text:</label>
+        <input type="text" id="header-text" name="header-text" required>
+        <button type="submit">Save</button>
+    </form>
+    <div class="main-content">
+        <h2>Manage Services</h2>
+        <form id="service-form" enctype="multipart/form-data">
+            <label for="service-title">Service Title:</label>
+            <input type="text" id="service-title" name="service-title" required>
+            
+            <label for="service-description">Description:</label>
+            <textarea id="service-description" name="service-description" required></textarea>
+            
+            <label for="service-image">Image:</label>
+            <input type="file" id="service-image" name="service-image">
+            
+            <label for="service-video">Video:</label>
+            <input type="file" id="service-video" name="service-video">
+
+            <button type="submit">Add Service</button>
+        </form>
+    </div>
+    <section id="contact-footer">
+        <h2>Edit Contact Footer</h2>
+        <form id="contact-footer-form">
+          <label for="contact-footer-text">Footer Text:</label>
+          <textarea id="contact-footer-text" name="contact-footer-text" rows="2" cols="50">
+  &copy; 2025 My Blog. All Rights Reserved.
+          </textarea><br>
+          <button type="submit">Update Footer</button>
+        </form>
+        
+      </section>
+    <script>
+        document.getElementById("header-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    
+    const headerText = document.getElementById("header-text").value.trim();
+
+    axios.put("http://localhost:4001/api/header", { headerText })
+        .then(response => {
+            alert("✅ Header updated successfully!");
+        })
+        .catch(error => {
+            console.error("❌ Error updating header:", error);
+            alert("❌ Failed to update header.");
+        });
+});
+
+        document.getElementById("service-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(this);
+            axios.post("http://localhost:4001/api/services", formData)
+                .then(response => {
+                    alert("Service added successfully!");
+                })
+                .catch(error => {
+                    console.error("Error adding service:", error);
+                });
+        });
+        // Handle footer text update in admin dashboard
+        document.getElementById("contact-footer-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const footerText = document.getElementById("contact-footer-text").value.trim();
+
+    console.log("Footer text submitted:", footerText);  // Debug log
+
+    axios.put("http://localhost:4001/api/content/footer", { "footer-text": footerText })
+        .then(response => {
+            alert("✅ Footer updated successfully!");
+        })
+        .catch(error => {
+            console.error("❌ Error updating footer:", error);
+            alert("❌ Failed to update footer. Check console.");
+        });
+});
+
+ // Fetch current header text when the page loads
+ fetch("http://localhost:4001/api/header")
+            .then(response => response.json())
+            .then(data => {
+                if (data.headerText) {
+                    document.getElementById("header-text").value = data.headerText;
+                }
+            })
+            .catch(error => console.error("Error fetching current header:", error));
+
+        // Handle form submission to update the header text
+        document.getElementById("header-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            const headerText = document.getElementById("header-text").value;
+
+            fetch("http://localhost:4001/api/header", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ headerText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Header updated successfully!");
+            })
+            .catch(error => {
+                console.error("Error updating header:", error);
+                alert("Error updating header.");
+            });
+        });
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Contact</title>
+  <link rel="stylesheet" href="admin_dashboard_contact.css">
+</head>
+<body>
+  <div class="sidebar">
+    <h3>Admin Dashboard</h3>
+    <ul>
+      <li><a href="D:\book\my-blog\Admin\admin_dashboard.html">Home Page</a></li>
+      <li><a href="admin_dashboard_contact.html">Contact</a></li>
+    
+    </ul>
+  </div>
+
+  <div class="main-content">
+    <!-- Contact Header Section -->
+    <section id="contact-header">
+      <h2>Edit Contact Header</h2>
+      <form id="contact-header-form" enctype="multipart/form-data">
+        <label for="contact-header-title">Page Title:</label>
+        <input type="text" id="contact-header-title" name="contact-header-title" value="Contact Us"><br>
+        <label for="contact-header-desc">Header Description:</label>
+        <textarea id="contact-header-desc" name="contact-header-desc" rows="3" cols="50">
+We'd love to hear from you! Please fill out the form below to get in touch.
+        </textarea><br>
+        <button type="submit">Update Header</button>
+      </form>
+    </section>
+
+    <!-- Contact Form Labels Section -->
+    <section id="contact-form-labels">
+      <h2>Edit Contact Form Labels</h2>
+      <form id="contact-form-labels-form">
+        <label for="label-name">Name Label:</label>
+        <input type="text" id="label-name" name="label-name" value="Your Name"><br>
+        <label for="label-email">Email Label:</label>
+        <input type="text" id="label-email" name="label-email" value="Your Email"><br>
+        <label for="label-message">Message Label:</label>
+        <input type="text" id="label-message" name="label-message" value="Your Message"><br>
+        <button type="submit">Update Form Labels</button>
+      </form>
+    </section>
+
+    <!-- Contact Footer Section -->
+    <section id="contact-footer">
+      <h2>Edit Contact Footer</h2>
+      <form id="contact-footer-form">
+        <label for="contact-footer-text">Footer Text:</label>
+        <textarea id="contact-footer-text" name="contact-footer-text" rows="2" cols="50">
+&copy; 2025 My Blog. All Rights Reserved.
+        </textarea><br>
+        <button type="submit">Update Footer</button>
+      </form>
+      
+    </section>
+  </div>
+
+  <script src="admin_dashboard_contact.js"></script>
+</body>
+</html>
