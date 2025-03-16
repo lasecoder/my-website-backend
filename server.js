@@ -8,6 +8,23 @@ const Message = require('./models/message');  // Correct import path
  // Import Message model
 const app = express();
 
+
+// Serve static files from the 'public' folder inside the backend directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve static CSS from the 'css' folder inside the backend directory
+app.use(express.static(path.join(__dirname, 'css')));
+
+// Define a route for the homepage
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html')); // Send the index.html from public folder
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 // ✅ Connect to MongoDB
 mongoose.connect("mongodb://localhost:27017/servicesDB")
   .then(() => console.log("✅ Connected to MongoDB"))
