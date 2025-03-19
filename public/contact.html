@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us</title>
-    <link rel="stylesheet" href="D:/book/my-blog/css/style.css">
+    <link rel="stylesheet" href="./css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Import Axios -->
 </head>
 <body>
@@ -85,7 +85,7 @@
             submitBtn.textContent = "Sending...";
 
             // Send data to backend
-            axios.post("http://localhost:3001/contact", {
+            axios.post("http://localhost:5000/contact", {
                 name: name,
                 email: email,
                 message: message

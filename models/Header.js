@@ -1,8 +1,7 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const headerSchema = new mongoose.Schema({
-    headerText: { type: String, required: true }
+const HeaderSchema = new mongoose.Schema({
+  headerText: { type: String, default: 'Default Header Text' }
 });
 
-const Header = mongoose.model("Header", headerSchema);
-module.exports = Header;
+module.exports = mongoose.model('Header', HeaderSchema);

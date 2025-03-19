@@ -11,7 +11,7 @@ document.getElementById('services-header-form')?.addEventListener('submit', asyn
   }
 
   try {
-    const response = await fetch('http://localhost:3003/api/content/services-header', {
+    const response = await fetch('http://localhost:5000/api/content/services-header', {
       method: 'PUT',
       body: formData,  // Send FormData directly
     });
@@ -36,7 +36,7 @@ document.getElementById('default-services-form')?.addEventListener('submit', asy
   const formData = new FormData(e.target);
 
   try {
-    const response = await fetch('http://localhost:3003/api/content/services', {
+    const response = await fetch('http://localhost:5000/api/content/services', {
       method: 'PUT',
       body: formData,  // Send FormData directly
     });
@@ -60,7 +60,7 @@ document.getElementById('service-form-1')?.addEventListener('submit', async (e) 
   const formData = new FormData(e.target);
 
   try {
-    const response = await fetch('http://localhost:3003/api/services/1', {
+    const response = await fetch('http://localhost:5000/api/services/1', {
       method: 'PUT',
       body: formData,  // Send FormData directly
     });
@@ -84,7 +84,7 @@ document.getElementById('service-form-2')?.addEventListener('submit', async (e) 
   const formData = new FormData(e.target);
 
   try {
-    const response = await fetch('http://localhost:3003/api/services/2', {
+    const response = await fetch('http://localhost:5000/api/services/2', {
       method: 'PUT',
       body: formData,  // Send FormData directly
     });
@@ -115,7 +115,7 @@ document.getElementById('footer-form')?.addEventListener('submit', async (e) => 
   };
 
   try {
-    const response = await fetch('http://localhost:3003/api/content/footer', {
+    const response = await fetch('http://localhost:5000/api/content/footer', {
       method: 'PUT',  // Ensure it's a PUT request
       headers: {
         'Content-Type': 'application/json',  // Send data as JSON

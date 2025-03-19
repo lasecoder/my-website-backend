@@ -1,21 +1,19 @@
 const mongoose = require('mongoose');
 
-const homeContentSchema = new mongoose.Schema({
+const HomeContentSchema = new mongoose.Schema({
   header: {
     title: String,
     content: String,
-    image: String,
-  },
-  footer: {
-    footerText: String,
+    image: String
   },
   services: [{
     title: String,
     description: String,
-    image: String,
-  }]
+    image: String
+  }],
+  footer: {
+    footerText: String
+  }
 });
 
-const HomeContent = mongoose.model('HomeContent', homeContentSchema);
-
-module.exports = HomeContent;
+module.exports = mongoose.model('HomeContent', HomeContentSchema);
