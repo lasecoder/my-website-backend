@@ -6,10 +6,33 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const dotenv = require('dotenv');
-
+// Models
+const HomeContent = require('./models/HomeContent');
+const Message = require('./models/message');
+const User = require('./models/User');
+const Service1 = require('./models/Service1');
+const Service = require('./models/Service'); // Ensure this path is correct
+const DefaultServicesContent = require('./models/DefaultServicesContent');
+const Footer = require('./models/Footer');
+const Post = require('./models/Post');
+const Vacancy = require('./models/Vacancy');
+const Scholarship = require('./models/Scholarship');
+const Header = require('./models/Header'); // Ensure this path is correct
 // Load environment variables
 dotenv.config();
+const uploadDir = 'uploads';
+const imageDir = `${uploadDir}/images`;
+const videoDir = `${uploadDir}/videos`;
 
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+if (!fs.existsSync(imageDir)) {
+  fs.mkdirSync(imageDir);
+}
+if (!fs.existsSync(videoDir)) {
+  fs.mkdirSync(videoDir);
+}
 // MongoDB connection
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -41,17 +64,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Models
-const HomeContent = require('./models/HomeContent');
-const Message = require('./models/message');
-const User = require('./models/User');
-const Service1 = require('./models/Service1');
-const DefaultServicesContent = require('./models/DefaultServicesContent');
-const Footer = require('./models/Footer');
-const Post = require('./models/Post');
-const Vacancy = require('./models/Vacancy');
-const Scholarship = require('./models/Scholarship');
-const Header = require('./models/Header'); // Ensure this path is correct
 
 // ------------------------ Routes ------------------------
 
@@ -188,6 +200,29 @@ app.get('/api/posts', async (req, res) => {
 
 // Multer Configuration for File Uploads
 // API Endpoints
+app.get('/api/header', async (req, res) => {
+  try {
+      const header = await Header.findOne();
+      if (!header) {
+          return res.status(404).json({ message: 'Header not found' });
+      }
+      res.json(header);
+  } catch (error) {
+      console.error('Error fetching header text:', error);
+      res.status(500).json({ message: 'Error fetching header text', error: error.message });
+  }
+});
+
+// Optionally, add insertDefaultHeader function here, but ensure Header is declared once
+async function insertDefaultHeader() {
+  const existingHeader = await Header.findOne();
+  if (!existingHeader) {
+      await Header.create({ text: "Welcome to my website" });
+      console.log("✅ Default header added");
+  }
+}
+
+insertDefaultHeader(); // Insert if needed
 
 // Add new Service (POST)
 app.post("/api/services", upload.fields([{ name: "service-image" }, { name: "service-video" }]), async (req, res) => {
@@ -286,20 +321,72 @@ app.put("/api/header", async (req, res) => {
 });
 
 // API endpoint to get header text (GET)
-app.get("/api/header", async (req, res) => {
-  console.log("GET /api/header request received");  // Add this log
+app.get('/api/header', async (req, res) => {
   try {
-      const header = await Header.findOne();
+      console.log("GET /api/header request received"); // Debugging log
+
+      const header = await Header.findOne(); // ✅ Correct function call
       if (!header) {
-          return res.status(404).json({ message: "Header text not found" });
+          return res.status(404).json({ message: 'Header not found' });
       }
-      res.json({ headerText: header.headerText });
+      res.json(header);
   } catch (error) {
-      res.status(500).json({ message: "Error fetching header text", error: error.message });
+      console.error("Error fetching header text:", error);
+      res.status(500).json({ message: 'Error fetching header text', error: error.message });
   }
 });
 
+app.put("/api/header", async (req, res) => {
+  const { headerText } = req.body;
+
+  if (!headerText) {
+      return res.status(400).json({ message: "Header text is required" });
+  }
+
+  try {
+      let header = await Header.findOne();
+
+      if (!header) {
+          header = new Header({ headerText });
+      } else {
+          header.headerText = headerText;
+      }
+
+      await header.save();
+      res.status(200).json({ message: "Header updated successfully" });
+  } catch (error) {
+      res.status(500).json({ message: "Error updating header text", error: error.message });
+  }
+});
 // ------------------------ Server Initialization ------------------------
+app.post("/api/services", upload.fields([{ name: "service-image" }, { name: "service-video" }]), async (req, res) => {
+  try {
+      const { "service-title": title, "service-description": description } = req.body;
+      const imagePath = req.files["service-image"] ? `uploads/images/${req.files["service-image"][0].filename}` : "";
+      const videoPath = req.files["service-video"] ? `uploads/videos/${req.files["service-video"][0].filename}` : "";
+
+      const newService = new Service({ title, description, image: imagePath, video: videoPath });
+      await newService.save();
+
+      res.json({ message: "✅ Service added successfully!", service: newService });
+  } catch (error) {
+      console.error("❌ Error saving service:", error);
+      res.status(500).json({ message: "Error saving service", error: error.message });
+  }
+});
+
+//--------------
+app.get('/api/services', async (req, res) => {
+  // Handle the request for services
+});
+
+app.get('/api/content/footer', async (req, res) => {
+  // Handle the request for footer content
+});
+
+app.get('/api/header', async (req, res) => {
+  // Handle the request for header content
+});
 
 app.listen(port, () => {
   console.log(`🚀 Server running on http://localhost:${port}`);

@@ -10,8 +10,8 @@
 <body>
     <header>
         <div class="back-home">
-            <!-- Use relative URL for "Back Home" link -->
-            <a href="D:\book\my-blog\public\index.html" class="back-home-btn">Back Home</a>
+            <!-- Use a relative URL for "Back Home" link -->
+            <a href="/index.html" class="back-home-btn">Back Home</a>
         </div>
         <h1 id="services-header-title">Our Services</h1>
     </header>
@@ -25,8 +25,9 @@
     </footer>
 
     <script>
+        // Fetch header text from the backend
         function fetchHeaderText() {
-            fetch("http://localhost:4001/api/header")
+            fetch("http://localhost:5000/api/header")
                 .then(response => response.json())
                 .then(data => {
                     if (data.headerText) {
@@ -35,9 +36,10 @@
                 })
                 .catch(error => console.error("Error fetching header text:", error));
         }
+
         // Fetch all services
         function fetchServices() {
-            fetch("http://localhost:4001/api/services")
+            fetch("http://localhost:5000/api/services")
                 .then(response => response.json())
                 .then(data => {
                     if (!Array.isArray(data)) throw new Error("Received data is not an array");
@@ -50,9 +52,9 @@
                         serviceCard.classList.add("service-card");
 
                         // Handle Image & Video Rendering
-                        const imageHTML = service.image ? `<img src="http://localhost:4001/${service.image}" alt="${service.title}" />` : '';
+                        const imageHTML = service.image ? `<img src="http://localhost:5000/${service.image}" alt="${service.title}" />` : '';
                         const videoHTML = service.video ? `<video width="320" height="240" controls>
-                                                            <source src="http://localhost:4001/${service.video}" type="video/mp4">
+                                                            <source src="http://localhost:5000/${service.video}" type="video/mp4">
                                                             Your browser does not support the video tag.
                                                         </video>` : '';
                         
@@ -67,20 +69,10 @@
                 })
                 .catch(error => console.error("Error fetching services:", error));
         }
-        function fetchHeaderText() {
-    fetch("http://localhost:4001/api/header")
-        .then(response => response.json())
-        .then(data => {
-            if (data.headerText) {
-                document.getElementById("services-header-title").textContent = data.headerText;
-            }
-        })
-        .catch(error => console.error("Error fetching header text:", error));
-}
 
         // Fetch the footer content from the backend
         function fetchFooter() {
-            fetch("http://localhost:4001/api/content/footer")
+            fetch("http://localhost:5000/api/content/footer")
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -97,7 +89,7 @@
                 });
         }
 
-        // Call fetchFooter and fetchServices on page load
+        // Call fetchFooter, fetchHeaderText, and fetchServices on page load
         window.onload = function() {
             fetchHeaderText();
             fetchServices();
