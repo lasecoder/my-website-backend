@@ -215,30 +215,6 @@ app.get("/api/services", async (req, res) => {
       res.status(500).json({ message: "Error fetching services", error });
   }
 });
-app.put('/api/header', async (req, res) => {
-  try {
-      const { headerText } = req.body; // ✅ Get headerText from request body
-
-      // Validate input
-      if (!headerText) {
-          return res.status(400).json({ message: "Header text is required" });
-      }
-
-      // Update or create the header document
-      const updatedHeader = await HeaderModel.findOneAndUpdate(
-          {}, // Find the first document (empty filter)
-          { headerText }, // Update the headerText field
-          { new: true, upsert: true } // Return the updated document, create if it doesn't exist
-      );
-
-      // Send success response
-      res.json({ message: "Header updated successfully!", updatedHeader });
-  } catch (error) {
-      console.error("Error updating header:", error);
-      res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
 
 // ------------------------
 // Route to update Footer (PUT)
