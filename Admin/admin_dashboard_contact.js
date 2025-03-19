@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   // Fetch and load existing contact page content
-  fetch("http://localhost:3001/contact-content")
+  fetch("http://localhost:5000/contact-content")
       .then(response => response.json())
       .then(data => {
           data.forEach(item => {
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function updateContent(section, content) {
-    fetch("http://localhost:3001/update-contact-content", {
+    fetch("http://localhost:5000/update-contact-content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ section, content })

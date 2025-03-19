@@ -1,9 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const headerSchema = new mongoose.Schema({
-    text: { type: String, required: true }
+const HeaderSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  logoUrl: { type: String, required: true }
 });
 
-const Header = mongoose.model('Header', headerSchema); // ✅ Correct way to create a model
-
-module.exports = Header; // ✅ Ensure this line exists
+// Define and export the Header model
+const Header = mongoose.models.Header || mongoose.model("Header", HeaderSchema);
+module.exports = Header;

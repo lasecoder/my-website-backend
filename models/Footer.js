@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
 
 const FooterSchema = new mongoose.Schema({
-    footerText: { type: String, required: true }
+    text: String,
+    year: Number,
 });
 
-module.exports = mongoose.model("Footer", FooterSchema);
+const Footer = mongoose.models.Footer || mongoose.model("Footer", FooterSchema);
+
+module.exports = Footer;

@@ -1,9 +1,13 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const VacancySchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  imageUrl: { type: String }
+    title: String,
+    description: String,
+    company: String,
+    location: String,
+    postedDate: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Vacancy', VacancySchema);
+const Vacancy = mongoose.models.Vacancy || mongoose.model("Vacancy", VacancySchema);
+
+module.exports = Vacancy;

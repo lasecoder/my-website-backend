@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href=".\admin_dashboard_about_us.css">
+    <link rel="stylesheet" href="./admin_dashboard_about_us.css">
 </head>
 <body>
     <header>
@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="home">
-            <a href="index.html" class="back-home-btn">← Home</a>
+            <a href="./admin_dashboard.html" class="back-home-btn">← Home</a>
         </div>
     </header>
     
@@ -77,6 +77,14 @@
                 }).then(() => fetchPosts());  // Reload posts after updating
             }
         }
+        fetch('http://localhost:5000/api/posts')
+  .then(response => response.json())
+  .then(data => {
+    console.log(data); // Handle the data
+  })
+  .catch(error => {
+    console.error('Error fetching posts:', error);
+  });
 
         // Fetch posts when the page loads
         fetchPosts();
