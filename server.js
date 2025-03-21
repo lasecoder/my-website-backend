@@ -105,7 +105,34 @@ app.post('/login', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+app.post('/admin/login', async (req, res) => {
+  const { email, password } = req.body;
 
+  try {
+      // Find the user in the database
+      const user = await User.findOne({ email });
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Check if the user is an admin
+      if (user.role !== 'admin') {
+          return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+
+      // Compare passwords
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+          return res.status(400).json({ message: 'Invalid credentials' });
+      }
+
+      // Return success response
+      res.status(200).json({ success: true, message: 'Admin login successful', user });
+  } catch (error) {
+      console.error('❌ Error during admin login:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 // ------------------------ Routes ------------------------
 
 // Homepage route

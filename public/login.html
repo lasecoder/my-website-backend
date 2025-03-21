@@ -18,6 +18,10 @@
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" placeholder="Enter your password" required>
 
+            <label for="isAdmin">
+                <input type="checkbox" id="isAdmin" name="isAdmin"> Login as Admin
+            </label>
+
             <button type="submit" class="btn">Login</button>
             
             <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
@@ -32,11 +36,14 @@
 
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
+            const isAdmin = document.getElementById('isAdmin').checked;
 
-            console.log('🔹 Sending:', { email, password });
+            const loginUrl = isAdmin ? `${backendUrl}/admin/login` : `${backendUrl}/login`;
+
+            console.log('🔹 Sending:', { email, password, isAdmin });
 
             try {
-                const response = await fetch(`${backendUrl}/login`, { // Updated URL
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -54,7 +61,11 @@
                 alert(data.message);
                 if (data.success) {
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    window.location.href = 'dashboard.html';
+                    if (isAdmin) {
+                        window.location.href = 'admin-dashboard.html'; // Redirect to admin dashboard
+                    } else {
+                        window.location.href = 'dashboard.html'; // Redirect to user dashboard
+                    }
                 }
             } catch (error) {
                 console.error('❌ Error:', error.message);
