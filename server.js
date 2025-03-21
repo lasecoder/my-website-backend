@@ -51,12 +51,21 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
+
+const path = require('path');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
+
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Route to serve the main HTML file
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: 'uploads/',
