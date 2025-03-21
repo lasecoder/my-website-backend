@@ -62,9 +62,8 @@ app.use('/uploads', express.static('uploads'));
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'https://your-frontend.onrender.com' // Replace with your actual frontend Render domain
+  origin: 'https://my-website-backend-ixzh.onrender.com' // Use your actual frontend URL
 }));
-
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -75,24 +74,30 @@ app.get('/', (req, res) => {
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
   }
 });
 const upload = multer({ storage });
 
-
 // ------------------------ Routes ------------------------
 
 // Homepage route
-app.get('/api/content/header', (req, res) => {
-  res.json({ title: 'Welcome!', image: 'uploads/default-logo.png' });
+app.get('/api/header', async (req, res) => {
+  try {
+    const header = await Header.findOne();
+    if (!header) {
+      return res.status(404).json({ message: 'Header not found' });
+    }
+    res.json({ title: header.title, image: header.logoUrl });
+  } catch (error) {
+    console.error('Error fetching header:', error);
+    res.status(500).json({ message: 'Failed to fetch header' });
+  }
 });
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // API: Update Home Content (Header, Services, Footer)
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
@@ -155,10 +160,10 @@ app.get('/api/content/header', async (req, res) => {
 // API: Fetch Services
 app.get('/api/services', async (req, res) => {
   try {
-    const content = await HomeContent.findOne();
-    res.json(content?.services || []);
+    const services = await Service.find();
+    res.json(services);
   } catch (error) {
-    console.error('❌ Error fetching services:', error);
+    console.error('Error fetching services:', error);
     res.status(500).json({ message: 'Failed to fetch services' });
   }
 });
@@ -184,14 +189,13 @@ app.post('/api/chat', async (req, res) => {
 // API: Fetch Footer
 app.get('/api/content/footer', async (req, res) => {
   try {
-    const content = await HomeContent.findOne();
-    res.json(content?.footer || { content: "© 2025 FutureTechTalent. All Rights Reserved." });
+    const footer = await Footer.findOne();
+    res.json({ footerText: footer ? footer.content : "© 2025 FutureTechTalent. All Rights Reserved." });
   } catch (error) {
-    console.error('❌ Error fetching footer:', error);
+    console.error('Error fetching footer:', error);
     res.status(500).json({ message: 'Failed to fetch footer' });
   }
 });
-
 // ------------------------ Blog Routes --------------------
 
 // Create Blog Post
