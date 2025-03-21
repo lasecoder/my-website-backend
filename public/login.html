@@ -30,18 +30,18 @@
 
     <script>
         const backendUrl = "https://my-website-backend-ixzh.onrender.com"; // Use your Render backend URL
-
+    
         document.getElementById('login-form').addEventListener('submit', async function(event) {
             event.preventDefault();
-
+    
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             const isAdmin = document.getElementById('isAdmin').checked;
-
+    
             const loginUrl = isAdmin ? `${backendUrl}/admin/login` : `${backendUrl}/login`;
-
+    
             console.log('🔹 Sending:', { email, password, isAdmin });
-
+    
             try {
                 const response = await fetch(loginUrl, {
                     method: 'POST',
@@ -50,14 +50,14 @@
                     },
                     body: JSON.stringify({ email, password })
                 });
-
+    
                 const data = await response.json();
                 console.log('🔹 Received:', data);
-
+    
                 if (!response.ok) {
                     throw new Error(data.message || `HTTP error! Status: ${response.status}`);
                 }
-
+    
                 alert(data.message);
                 if (data.success) {
                     localStorage.setItem('user', JSON.stringify(data.user));

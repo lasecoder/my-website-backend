@@ -1117,6 +1117,40 @@ app.get("/api/logo", async (req, res) => {
       res.status(500).json({ message: "Error fetching logo", error: error.message });
   }
 });
+const bcrypt = require('bcryptjs');
+const User = require('./models/User'); // Adjust the path to your User model
+
+async function createAdminUser() {
+    const adminEmail = 'admin@example.com'; // Admin email
+    const adminPassword = 'admin123'; // Admin password
+
+    try {
+        // Check if the admin user already exists
+        const existingAdmin = await User.findOne({ email: adminEmail, role: 'admin' });
+        if (!existingAdmin) {
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+            // Create the admin user
+            const adminUser = new User({
+                email: adminEmail,
+                password: hashedPassword,
+                role: 'admin' // Ensure your User model has a 'role' field
+            });
+
+            // Save the admin user to the database
+            await adminUser.save();
+            console.log('✅ Admin user created:', adminEmail);
+        } else {
+            console.log('ℹ️ Admin user already exists:', adminEmail);
+        }
+    } catch (error) {
+        console.error('❌ Error creating admin user:', error);
+    }
+}
+
+// Run the function to create the admin user
+createAdminUser();
 //====================start server======================
 app.listen(port, () => {
   console.log(`🚀 Server running on http://localhost:${port}`);
