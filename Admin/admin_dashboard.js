@@ -1,3 +1,5 @@
+const backendUrl = "https://my-backend-service.onrender.com"; // Replace with your backend URL
+
 async function updateContent(section, title, description, image = null) {
   try {
     const formData = new FormData();
@@ -19,7 +21,7 @@ async function updateContent(section, title, description, image = null) {
       image: image ? image.name : "No image",
     });
 
-    const response = await fetch("http://localhost:5000/api/content", {
+    const response = await fetch(`${backendUrl}/api/content`, {
       method: "POST",
       body: formData,
     });
@@ -35,12 +37,12 @@ async function updateContent(section, title, description, image = null) {
   }
 }
 
-
 document.addEventListener("DOMContentLoaded", function () {
   const updateService1Button = document.getElementById("update-service1-btn");
   const updateHeaderButton = document.getElementById("update-header-btn");
   const updateFooterButton = document.getElementById("update-footer-btn");
 
+  // Handle Service 1 Update
   if (updateService1Button) {
     updateService1Button.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -74,21 +76,20 @@ document.addEventListener("DOMContentLoaded", function () {
       await updateContent("header", title, "", image);
     });
   }
- 
+
   // Handle Footer Update
-if (updateFooterButton) {
-  updateFooterButton.addEventListener("click", async (e) => {
-    e.preventDefault();
+  if (updateFooterButton) {
+    updateFooterButton.addEventListener("click", async (e) => {
+      e.preventDefault();
 
-    const footerText = document.getElementById("home-footer-text").value;
+      const footerText = document.getElementById("home-footer-text").value;
 
-    if (!footerText) {
-      alert("Please enter footer text.");
-      return;
-    }
+      if (!footerText) {
+        alert("Please enter footer text.");
+        return;
+      }
 
-    await updateContent("footer", "", footerText); // Just send footer text for footer section
-  });
-}
-
+      await updateContent("footer", "", footerText); // Just send footer text for footer section
+    });
+  }
 });
