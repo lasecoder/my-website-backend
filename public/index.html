@@ -20,7 +20,8 @@
         <div class="container">
             <div class="header-left">
                 <!-- ✅ Updated Image Path -->
-                <img id="logo" src="https://my-backend-service.onrender.com/uploads/default-logo.png" alt="Company Logo">
+                <img id="logo" src="http://localhost:5000/uploads/default-logo.png" alt="Company Logo">
+
             </div>
             <div class="register">
                 <button class="btn" onclick="location.href='login.html'">Login</button>
@@ -82,6 +83,7 @@
                 </div>
             </div>
         </div>
+        
     </main>
 
     <footer>
@@ -102,24 +104,22 @@
 
     <!-- ✅ Fetch Data from MongoDB -->
     <script>
-        const backendUrl = "https://my-backend-service.onrender.com"; // Use your Render backend URL
-
         // Function to fetch and update header data
         async function fetchContent() {
             try {
-                const response = await fetch(`${backendUrl}/api/content/header`);
+                const response = await fetch("http://localhost:5000/api/content/header");
                 if (!response.ok) throw new Error("Failed to fetch header");
-
+    
                 const data = await response.json();
-
+    
                 // ✅ Update header title
                 if (document.getElementById("home-header-title"))
                     document.getElementById("home-header-title").innerText = data.title || "Welcome!";
-
+    
                 // ✅ Update logo image
                 const logoElement = document.getElementById("logo");
                 if (logoElement && data.image) {
-                    logoElement.src = `${backendUrl}/${data.image}`;
+                    logoElement.src = `http://localhost:5000/${data.image}`; // Make sure the full path is used
                     logoElement.style.display = "block";
                 } else {
                     console.warn("⚠️ No image found for header.");
@@ -129,38 +129,96 @@
                 console.error("❌ Error fetching header:", error);
             }
         }
-
+    
         // Function to fetch and display services
         async function fetchServices() {
             try {
-                const response = await axios.get(`${backendUrl}/api/services`);
+                const response = await axios.get("http://localhost:5000/api/services");
                 const services = response.data;
-
+    
                 if (!Array.isArray(services)) throw new Error("Invalid service data");
-
+    
                 const servicesContainer = document.getElementById("services-container");
                 servicesContainer.innerHTML = "";
-
+    
                 services.forEach(service => {
                     const serviceCard = document.createElement("div");
                     serviceCard.classList.add("service-card");
-
+    
                     serviceCard.innerHTML = `
                         <h2 class="service-title">${service.title}</h2>
-                        <img src="${backendUrl}/${service.image}" alt="${service.title}" class="service-image">
+                        <img src="http://localhost:5000/${service.image}" alt="${service.title}" class="service-image">
                         <p class="service-description">${service.description}</p>
                     `;
-
+    
                     servicesContainer.appendChild(serviceCard);
                 });
             } catch (error) {
                 console.error("❌ Error fetching services:", error);
             }
         }
+    
+       // Ensure the DOM is fully loaded before running JavaScript
+document.addEventListener('DOMContentLoaded', () => {
+    // Get elements
+    const chatToggle = document.getElementById('chat-toggle');
+    const chatWindow = document.getElementById('chat-window');
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
 
+    // Initial setup: Hide the chat window by default
+    chatWindow.style.display = 'none';
+
+    // Toggle chat window visibility when the chatToggle button is clicked
+    chatToggle.addEventListener('click', () => {
+        // Toggle between showing and hiding the chat window
+        chatWindow.style.display = chatWindow.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Enable or disable the send button based on input field
+    chatInput.addEventListener('input', () => {
+        sendButton.disabled = chatInput.value.trim() === ''; // Disable if input is empty
+    });
+
+    // Handle sending the message
+    sendButton.addEventListener('click', async () => {
+        const userMessage = chatInput.value.trim();
+
+        if (userMessage !== '') {
+            try {
+                // Send the message to the backend (your API)
+                const response = await fetch('http://localhost:5000/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userMessage,  // User's message
+                        sender: 'user', // Sender is 'user'
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+
+                // Clear the input field and disable the send button after sending
+                chatInput.value = '';
+                sendButton.disabled = true;
+
+                console.log('✅ Message sent and stored in the database!');
+            } catch (error) {
+                console.error('❌ Error sending message:', error);
+            }
+        }
+    });
+});
+
+
+    
         // Function to fetch footer content
         function fetchFooter() {
-            fetch(`${backendUrl}/api/content/footer`)
+            fetch("http://localhost:5000/api/content/footer")
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Footer API failed with status ${response.status}`);
@@ -174,7 +232,7 @@
                 })
                 .catch(error => console.error("❌ Error fetching footer:", error));
         }
-
+    
         // Run all functions on page load
         window.onload = function() {
             fetchContent();
@@ -182,5 +240,8 @@
             fetchFooter();
         };
     </script>
+    
+    
+
 </body>
 </html>
