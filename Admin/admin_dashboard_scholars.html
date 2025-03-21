@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Scholarships</title>
-    <link rel="stylesheet" href=".\admin_dashboard_scholars.css">
+    <link rel="stylesheet" href="./admin_dashboard_scholars.css">
 </head>
 <body>
     <div class="sidebar">
@@ -22,14 +22,11 @@
         <div id="header-content-container">
             <p id="header-display"></p>
             <button id="edit-header-button">Edit Header</button>
-            <!-- Add textarea for editing header -->
             <textarea id="header-textarea" rows="4" style="display:none;"></textarea>
             <button id="save-header-button" style="display:none;">Save Header</button>
 
-            <!-- Logo Section -->
             <h3>Manage Logo</h3>
             <div id="logo-section">
-                
                 <img id="header-logo" src="" alt="Current Logo" width="150">
                 <button id="edit-logo-button">Edit Logo</button>
                 <input type="file" id="logo-file-input" style="display:none;" accept="image/*">
@@ -41,7 +38,6 @@
         <div id="footer-content-container">
             <p id="footer-display"></p>
             <button id="edit-footer-button">Edit Footer</button>
-            <!-- Add textarea for editing footer -->
             <textarea id="footer-textarea" rows="4" style="display:none;"></textarea>
             <button id="save-footer-button" style="display:none;">Save Footer</button>
         </div>
@@ -72,7 +68,41 @@
             const headerContentContainer = document.getElementById("header-content-container");
             const footerContentContainer = document.getElementById("footer-content-container");
             const scholarshipList = document.getElementById("scholarship-list");
-            const API_URL = "http://localhost:5000/api"; // Change this URL according to your backend
+            const API_URL = "http://localhost:5000/api";
+
+            // Load scholarships
+            async function loadScholarships() {
+                try {
+                    const response = await fetch(`${API_URL}/scholarships`);
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch scholarships");
+                    }
+                    const scholarships = await response.json();
+                    scholarshipList.innerHTML = ""; // Clear existing content
+
+                    if (scholarships.length === 0) {
+                        scholarshipList.innerHTML = "<p>No scholarships available at the moment.</p>";
+                        return;
+                    }
+
+                    scholarships.forEach(scholarship => {
+                        const div = document.createElement("div");
+                        div.classList.add("scholarship-item");
+
+                        const imageUrl = scholarship.image ? `http://localhost:5000${scholarship.image}` : "http://localhost:5000/default_image.png";
+                        div.innerHTML = `
+                            <h3>${scholarship.title}</h3>
+                            <p>${scholarship.description}</p>
+                            <img src="${imageUrl}" width="200" alt="Scholarship Image">
+                            <button onclick="deleteScholarship('${scholarship._id}')">Delete</button>
+                        `;
+                        scholarshipList.appendChild(div);
+                    });
+                } catch (error) {
+                    console.error("Error loading scholarships:", error);
+                    scholarshipList.innerHTML = "<p>Failed to load scholarships.</p>";
+                }
+            }
 
             // Load scholar header content
             async function loadScholarHeader() {
@@ -80,7 +110,7 @@
                     const response = await fetch(`${API_URL}/scholar-header`);
                     const data = await response.json();
                     if (data && data.header) {
-                        document.getElementById("header-display").innerText = data.header; // Display the header content
+                        document.getElementById("header-display").innerText = data.header;
                     }
                 } catch (error) {
                     console.error("Error fetching scholar header:", error);
@@ -93,35 +123,30 @@
                     const response = await fetch(`${API_URL}/scholar-footer`);
                     const data = await response.json();
                     if (data && data.footer) {
-                        document.getElementById("footer-display").innerText = data.footer; // Display the footer content
+                        document.getElementById("footer-display").innerText = data.footer;
                     }
                 } catch (error) {
                     console.error("Error fetching scholar footer:", error);
                 }
             }
 
+            // Load logo
             async function loadLogo() {
-    try {
-        const response = await fetch('http://localhost:5000/api/logo');
-        if (response.ok) {
-            const data = await response.json();
-            const logoUrl = data.logoUrl;
+                try {
+                    const response = await fetch(`${API_URL}/logo`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const logoUrl = data.logoUrl;
+                        document.getElementById("header-logo").src = logoUrl;
+                    } else {
+                        console.log("Logo not found");
+                    }
+                } catch (error) {
+                    console.error("Error fetching logo:", error);
+                }
+            }
 
-            // Display the logo in your header
-            const logoImage = document.createElement('img');
-            logoImage.src = logoUrl;
-            logoImage.alt = 'Logo';
-            document.getElementById('dynamic-header').appendChild(logoImage);
-        } else {
-            console.log('Logo not found');
-        }
-    } catch (error) {
-        console.error('Error fetching logo:', error);
-    }
-}
-
-
-            // Function to save scholar header content
+            // Save scholar header content
             async function saveScholarHeaderContent() {
                 const newHeaderContent = document.getElementById("header-textarea").value;
 
@@ -129,13 +154,13 @@
                     const response = await fetch(`${API_URL}/scholar-header`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ header: newHeaderContent })  // Send only the content
+                        body: JSON.stringify({ header: newHeaderContent })
                     });
 
                     if (response.ok) {
                         alert("Scholar Header updated successfully!");
-                        loadScholarHeader();  // Reload the updated header
-                        toggleHeaderEdit(false); // Hide the textarea after saving
+                        loadScholarHeader();
+                        toggleHeaderEdit(false);
                     } else {
                         alert("Failed to update scholar header.");
                     }
@@ -144,7 +169,7 @@
                 }
             }
 
-            // Function to save scholar footer content
+            // Save scholar footer content
             async function saveScholarFooterContent() {
                 const newFooterContent = document.getElementById("footer-textarea").value;
 
@@ -152,13 +177,13 @@
                     const response = await fetch(`${API_URL}/scholar-footer`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ footer: newFooterContent })  // Send only the content
+                        body: JSON.stringify({ footer: newFooterContent })
                     });
 
                     if (response.ok) {
                         alert("Scholar Footer updated successfully!");
-                        loadScholarFooter();  // Reload the updated footer
-                        toggleFooterEdit(false); // Hide the textarea after saving
+                        loadScholarFooter();
+                        toggleFooterEdit(false);
                     } else {
                         alert("Failed to update scholar footer.");
                     }
@@ -167,7 +192,7 @@
                 }
             }
 
-            // Function to save new logo
+            // Save logo
             async function saveLogo() {
                 const logoFile = document.getElementById("logo-file-input").files[0];
 
@@ -187,8 +212,8 @@
 
                     if (response.ok) {
                         alert("Logo updated successfully!");
-                        loadLogo();  // Reload the updated logo
-                        toggleLogoEdit(false); // Hide the file input after saving
+                        loadLogo();
+                        toggleLogoEdit(false);
                     } else {
                         alert('Failed to update logo.');
                     }
@@ -198,27 +223,7 @@
                 }
             }
 
-            // Toggle visibility for header editing
-            document.getElementById("edit-header-button").addEventListener("click", () => {
-                toggleHeaderEdit(true);
-            });
-
-            document.getElementById("save-header-button").addEventListener("click", saveScholarHeaderContent);
-
-            // Toggle visibility for footer editing
-            document.getElementById("edit-footer-button").addEventListener("click", () => {
-                toggleFooterEdit(true);
-            });
-
-            document.getElementById("save-footer-button").addEventListener("click", saveScholarFooterContent);
-
-            // Toggle visibility for logo editing
-            document.getElementById("edit-logo-button").addEventListener("click", () => {
-                toggleLogoEdit(true);
-            });
-
-            document.getElementById("save-logo-button").addEventListener("click", saveLogo);
-
+            // Toggle header edit mode
             function toggleHeaderEdit(editMode) {
                 const displayText = document.getElementById("header-display");
                 const textArea = document.getElementById("header-textarea");
@@ -229,10 +234,11 @@
                 saveButton.style.display = editMode ? "inline" : "none";
 
                 if (editMode) {
-                    textArea.value = displayText.innerText; // Pre-fill textarea with current header content
+                    textArea.value = displayText.innerText;
                 }
             }
 
+            // Toggle footer edit mode
             function toggleFooterEdit(editMode) {
                 const displayText = document.getElementById("footer-display");
                 const textArea = document.getElementById("footer-textarea");
@@ -243,10 +249,11 @@
                 saveButton.style.display = editMode ? "inline" : "none";
 
                 if (editMode) {
-                    textArea.value = displayText.innerText; // Pre-fill textarea with current footer content
+                    textArea.value = displayText.innerText;
                 }
             }
 
+            // Toggle logo edit mode
             function toggleLogoEdit(editMode) {
                 const logoImage = document.getElementById("header-logo");
                 const fileInput = document.getElementById("logo-file-input");
@@ -255,29 +262,6 @@
                 logoImage.style.display = editMode ? "none" : "block";
                 fileInput.style.display = editMode ? "block" : "none";
                 saveButton.style.display = editMode ? "inline" : "none";
-            }
-
-            // Manage Scholarships
-            async function displayScholarships() {
-                try {
-                    const response = await fetch(`${API_URL}/scholarships`);
-                    const scholarships = await response.json();
-                    scholarshipList.innerHTML = "";
-
-                    scholarships.forEach(scholarship => {
-                        const div = document.createElement("div");
-                        div.innerHTML = `
-                            <h3>${scholarship.title}</h3>
-                            <p>${scholarship.description}</p>
-                            <img src="http://localhost:5000${scholarship.image}" width="150">
-                            <button onclick="deleteScholarship('${scholarship._id}')">Delete</button>
-                        `;
-                        scholarshipList.appendChild(div);
-                    });
-                } catch (error) {
-                    console.error("Error fetching scholarships:", error);
-                    alert("Error loading scholarships.");
-                }
             }
 
             // Add new scholarship
@@ -292,7 +276,7 @@
                     alert("Please select an image");
                     return;
                 }
-        
+
                 const formData = new FormData();
                 formData.append("title", title);
                 formData.append("description", description);
@@ -306,7 +290,7 @@
 
                     if (response.ok) {
                         alert('Scholarship added successfully!');
-                        displayScholarships();
+                        loadScholarships();
                         scholarshipForm.reset();
                     } else {
                         alert('Failed to add scholarship.');
@@ -326,7 +310,7 @@
 
                     if (response.ok) {
                         alert('Scholarship deleted successfully!');
-                        displayScholarships();
+                        loadScholarships();
                     } else {
                         alert('Failed to delete scholarship.');
                     }
@@ -340,7 +324,7 @@
             loadScholarHeader();
             loadScholarFooter();
             loadLogo();
-            displayScholarships();
+            loadScholarships();
         });
     </script>
 </body>

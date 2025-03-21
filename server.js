@@ -18,7 +18,7 @@ const Post = require('./models/Post');
 const Vacancy = require("./models/Vacancy");
 const Scholarship = require("./models/Scholarship");
 const Header = require("./models/Header");  // Importing Header model
-
+const Logo = require('./models/Logo');
 
 // Load environment variables
 dotenv.config();
@@ -56,7 +56,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
-
+// Serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, 'public')));
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: 'uploads/',
@@ -1030,6 +1031,19 @@ app.put('/api/content/footer', async (req, res) => {
   } catch (error) {
     console.error("Error updating footer:", error);
     res.status(500).json({ error: "Failed to update footer", details: error.message });
+  }
+});
+// Define the /api/logo endpoint
+app.get("/api/logo", async (req, res) => {
+  try {
+      const logo = await Logo.findOne(); // Fetch the logo from the database
+      if (!logo) {
+          return res.status(404).json({ message: "Logo not found" });
+      }
+      res.json({ logoUrl: logo.imageUrl }); // Return the logo URL
+  } catch (error) {
+      console.error("Error fetching logo:", error);
+      res.status(500).json({ message: "Error fetching logo", error: error.message });
   }
 });
 //====================start server======================
