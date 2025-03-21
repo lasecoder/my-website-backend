@@ -62,10 +62,9 @@ app.use('/uploads', express.static('uploads'));
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: '*', // Allow all origins (replace with your frontend URL in production)
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specific HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
+  origin: 'https://your-frontend.onrender.com' // Replace with your actual frontend Render domain
 }));
+
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 
