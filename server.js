@@ -58,6 +58,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
+
+
 // Enable CORS for all routes
 app.use(cors({
   origin: '*', // Allow all origins (replace with your frontend URL in production)
