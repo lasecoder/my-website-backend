@@ -197,7 +197,8 @@ body {
 .services {
     text-align: center;
     padding: 50px 20px;
-    background-color: #f9f9f9;
+    background-color: #002147;
+    color: white;
     
 }
 
@@ -681,7 +682,7 @@ body {
 
 .contact-container p {
     font-size: 1.2rem;
-    color: #0056b3; /* Dark grey for better contrast with the background */
+    color: #002147; /* Dark grey for better contrast with the background */
     margin: 12px 0;
     line-height: 1.6; /* More readable line height */
     padding: 10px; /* Add padding to make the text block more prominent */
@@ -694,7 +695,7 @@ body {
 
 /* Links Styling */
 .contact-container a {
-    color: #116dff;
+    color: #002147;
     text-decoration: none;
     font-weight: 600;
     position: relative;
@@ -713,7 +714,7 @@ body {
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: #0056b3;
+    background-color: #002147;
     transform: scaleX(0);
     transform-origin: bottom right;
     transition: transform 0.3s ease-in-out;
@@ -774,7 +775,7 @@ body {
 }
 
 .contact-container ul li a {
-    color: #116dff;
+    color: #002147;
     text-decoration: none;
     font-size: 1.5rem;
     transition: all 0.3s ease-in-out;

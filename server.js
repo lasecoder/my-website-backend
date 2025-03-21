@@ -8,7 +8,6 @@ const fs = require('fs');
 const dotenv = require('dotenv');
 // Models
 const HomeContent = require('./models/HomeContent');
-const Message = require('./models/message');
 const User = require('./models/User');
 const Service1 = require('./models/Service1');
 const Service = require('./models/Service'); // Ensure this path is correct
@@ -19,7 +18,7 @@ const Vacancy = require("./models/Vacancy");
 const Scholarship = require("./models/Scholarship");
 const Header = require("./models/Header");  // Importing Header model
 const Logo = require('./models/Logo');
-
+const message = require('./models/Message'); // Use the correct case
 // Load environment variables
 dotenv.config();
 const uploadDir = 'uploads';
