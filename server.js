@@ -79,6 +79,9 @@ const upload = multer({ storage });
 // ------------------------ Routes ------------------------
 
 // Homepage route
+app.get('/api/content/header', (req, res) => {
+  res.json({ title: 'Welcome!', image: 'uploads/default-logo.png' });
+});
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
