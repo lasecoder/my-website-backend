@@ -25,41 +25,42 @@
     </div>
 
     <script>
+        const backendUrl = "https://my-website-backend-ixzh.onrender.com"; // Use your Render backend URL
+
         document.getElementById('login-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
+            event.preventDefault();
 
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-    console.log('🔹 Sending:', { email, password });
+            console.log('🔹 Sending:', { email, password });
 
-    try {
-        const response = await fetch('http://localhost:5000/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password }) // ✅ Ensure this is correct
+            try {
+                const response = await fetch(`${backendUrl}/login`, { // Updated URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                console.log('🔹 Received:', data);
+
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP error! Status: ${response.status}`);
+                }
+
+                alert(data.message);
+                if (data.success) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (error) {
+                console.error('❌ Error:', error.message);
+                alert('Login failed: ' + error.message);
+            }
         });
-
-        const data = await response.json();
-        console.log('🔹 Received:', data);
-
-        if (!response.ok) {
-            throw new Error(data.message || `HTTP error! Status: ${response.status}`);
-        }
-
-        alert(data.message);
-        if (data.success) {
-            localStorage.setItem('user', JSON.stringify(data.user));
-            window.location.href = 'dashboard.html';
-        }
-    } catch (error) {
-        console.error('❌ Error:', error.message);
-        alert('Login failed: ' + error.message);
-    }
-});
-
     </script>
 
 </body>

@@ -82,6 +82,29 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+      // Find the user in the database
+      const user = await User.findOne({ email });
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Compare passwords
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+          return res.status(400).json({ message: 'Invalid credentials' });
+      }
+
+      // Return success response
+      res.status(200).json({ success: true, message: 'Login successful', user });
+  } catch (error) {
+      console.error('❌ Error during login:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 // ------------------------ Routes ------------------------
 
