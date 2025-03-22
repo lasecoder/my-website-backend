@@ -1113,8 +1113,8 @@ async function createAdminUser() {
 
 createAdminUser(); // Run this function to create the admin user
 // Serve the admin-dashboard.html file from the Admin folder
-app.get('/admin-dashboard.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'Admin', 'admin-dashboard.html'));
+app.get('/admin_dashboard.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
 });
 
 // Error handling middleware
