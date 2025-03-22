@@ -60,12 +60,12 @@
     
                 alert(data.message);
                 if (data.success) {
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    if (isAdmin) {
-                        window.location.href = 'admin-dashboard.html'; // Redirect to admin dashboard
-                    } else {
-                        window.location.href = 'dashboard.html'; // Redirect to user dashboard
-                    }
+                   localStorage.setItem('user', JSON.stringify(data.user));
+                  if (isAdmin) {
+                     window.location.href = '/admin-dashboard.html'; // Redirect to admin dashboard
+                  } else {
+                  window.location.href = '/dashboard.html'; // Redirect to user dashboard
+                     }
                 }
             } catch (error) {
                 console.error('❌ Error:', error.message);
