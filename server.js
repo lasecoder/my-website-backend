@@ -14,7 +14,6 @@ const Service = require('./models/Service'); // Ensure this path is correct
 const DefaultServicesContent = require('./models/DefaultServicesContent');
 const Footer = require("./models/Footer");
 const Post = require('./models/Post');
-const Vacancy = require("./models/Vacancy");
 const Scholarship = require("./models/Scholarship");
 const Header = require("./models/Header");  // Importing Header model
 const Logo = require('./models/Logo');
