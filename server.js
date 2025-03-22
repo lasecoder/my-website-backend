@@ -103,57 +103,7 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
 
-  try {
-      // Find the user in the database
-      const user = await User.findOne({ email });
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
-
-      // Compare passwords
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-      }
-
-      // Return success response
-      res.status(200).json({ success: true, message: 'Login successful', user });
-  } catch (error) {
-      console.error('❌ Error during login:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-app.post('/admin/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-      // Find the user in the database
-      const user = await User.findOne({ email });
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
-
-      // Check if the user is an admin
-      if (user.role !== 'admin') {
-          return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
-      }
-
-      // Compare passwords
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-      }
-
-      // Return success response
-      res.status(200).json({ success: true, message: 'Admin login successful', user });
-  } catch (error) {
-      console.error('❌ Error during admin login:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
 // ------------------------ Routes ------------------------
 
 // Homepage route
@@ -1139,64 +1089,73 @@ app.get("/api/logo", async (req, res) => {
   }
 });
 
-async function createAdminUser() {
-    const adminEmail = 'admin@example.com'; // Admin email
-    const adminPassword = 'admin123'; // Admin password
 
-    try {
-        // Check if the admin user already exists
-        const existingAdmin = await User.findOne({ email: adminEmail, role: 'admin' });
-        if (!existingAdmin) {
-            // Hash the password
-            const hashedPassword = await bcrypt.hash(adminPassword, 10);
+// Login routes
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
 
-            // Create the admin user
-            const adminUser = new User({
-                email: adminEmail,
-                password: hashedPassword,
-                role: 'admin' // Ensure your User model has a 'role' field
-            });
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-            // Save the admin user to the database
-            await adminUser.save();
-            console.log('✅ Admin user created:', adminEmail);
-        } else {
-            console.log('ℹ️ Admin user already exists:', adminEmail);
-        }
-    } catch (error) {
-        console.error('❌ Error creating admin user:', error);
-    }
-}
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+
+    res.status(200).json({ success: true, message: 'Login successful', user });
+  } catch (error) {
+    console.error('❌ Error during login:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 app.post('/admin/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-      // Find the user in the database
-      const user = await User.findOne({ email });
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-      // Check if the user is an admin
-      if (user.role !== 'admin') {
-          return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
-      }
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+    }
 
-      // Compare passwords
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-      }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-      // Return success response
-      res.status(200).json({ success: true, message: 'Admin login successful', user });
+    res.status(200).json({ success: true, message: 'Admin login successful', user });
   } catch (error) {
-      console.error('❌ Error during admin login:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    console.error('❌ Error during admin login:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+// Admin user creation
+async function createAdminUser() {
+  const adminEmail = 'admin@example.com'; // Admin email
+  const adminPassword = 'admin123'; // Admin password
+
+  try {
+    const existingAdmin = await User.findOne({ email: adminEmail, role: 'admin' });
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      const adminUser = new User({
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin'
+      });
+      await adminUser.save();
+      console.log('✅ Admin user created:', adminEmail);
+    } else {
+      console.log('ℹ️ Admin user already exists:', adminEmail);
+    }
+  } catch (error) {
+    console.error('❌ Error creating admin user:', error);
+  }
+}
+
 createAdminUser(); // Run this function to create the admin user
+
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err);
   res.status(500).json({ message: 'Internal Server Error' });
