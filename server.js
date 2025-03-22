@@ -59,7 +59,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
 
-
 // Enable CORS for all routes
 app.use(cors({
   origin: 'https://my-website-backend-ixzh.onrender.com', // Allow only your frontend domain
@@ -1169,8 +1168,6 @@ async function createAdminUser() {
     }
 }
 
-// Run the function to create the admin user
-createAdminUser();
 app.post('/admin/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -1198,6 +1195,11 @@ app.post('/admin/login', async (req, res) => {
       console.error('❌ Error during admin login:', error);
       res.status(500).json({ message: 'Internal Server Error' });
   }
+});
+createAdminUser(); // Run this function to create the admin user
+app.use((err, req, res, next) => {
+  console.error('❌ Error:', err);
+  res.status(500).json({ message: 'Internal Server Error' });
 });
 //====================start server======================
 app.listen(port, () => {
