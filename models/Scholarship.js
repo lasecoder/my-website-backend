@@ -1,12 +1,7 @@
-const mongoose = require("mongoose");
-
+// ✅ Scholarship Schema
 const ScholarshipSchema = new mongoose.Schema({
-    name: String,
-    amount: Number,
-    eligibility: String,
-    deadline: Date
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    image: { type: String },
+    createdAt: { type: Date, default: Date.now }
 });
-
-const Scholarship = mongoose.models.Scholarship || mongoose.model("Scholarship", ScholarshipSchema);
-
-module.exports = Scholarship;

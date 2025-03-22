@@ -1,13 +1,6 @@
-const mongoose = require("mongoose");
-
+// ✅ Vacancy Schema
 const VacancySchema = new mongoose.Schema({
-    title: String,
-    description: String,
-    company: String,
-    location: String,
-    postedDate: { type: Date, default: Date.now }
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    imageUrl: { type: String }
 });
-
-const Vacancy = mongoose.models.Vacancy || mongoose.model("Vacancy", VacancySchema);
-
-module.exports = Vacancy;

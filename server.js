@@ -78,6 +78,7 @@ app.get('/api/content/header', (req, res) => {
 app.get('/api/content/footer', (req, res) => {
   res.json({ message: 'Footer content' });
 });
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -432,45 +433,7 @@ app.get('/api/content/footer', async (req, res) => {
 app.get('/api/header', async (req, res) => {
   // Handle the request for header content
 });
-// ✅ Vacancy Schema
-const VacancySchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    imageUrl: { type: String }
-});
-
-
-// ✅ Scholarship Schema
-const ScholarshipSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    image: { type: String },
-    createdAt: { type: Date, default: Date.now }
-});
-
-// Define a combined schema for scholar header and footer
-
-// MongoDB models for Scholar Header and Scholar Footer
-const ScholarHeader = mongoose.model("ScholarHeader", new mongoose.Schema({
-    header: String,
-  }));
   
-  const ScholarFooter = mongoose.model("ScholarFooter", new mongoose.Schema({
-    footer: String,
-  }));
-  
-
-// ✅ Header Schema
-const HeaderSchema = new mongoose.Schema({
-    title: { type: String, default: "Admin Dashboard - Vacancy Management" },
-    logoUrl: { type: String, default: "/uploads/default-logo.png" }
-});
-
-// ✅ Footer Schema
-const FooterSchema = new mongoose.Schema({
-    content: { type: String, required: true }
-});
-
 // 🎯 VACANCY ROUTES
 app.get('/api/vacancies', async (req, res) => {
     try {
@@ -610,10 +573,6 @@ app.post('/api/footer', async (req, res) => {
         res.status(500).json({ error: 'Error saving footer content' });
     }
 });
-// API routes
-
-// Get header and footer content
-
 // API Routes for Scholar Header and Footer
 app.get("/api/scholar-header", async (req, res) => {
     try {
@@ -810,9 +769,6 @@ app.post('/api/footer', async (req, res) => {
   }
 });
 // API routes
-
-// Get header and footer content
-
 // API Routes for Scholar Header and Footer
 app.get("/api/scholar-header", async (req, res) => {
   try {
@@ -1156,8 +1112,9 @@ async function createAdminUser() {
 }
 
 createAdminUser(); // Run this function to create the admin user
+// Serve the admin-dashboard.html file from the Admin folder
 app.get('/admin-dashboard.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+  res.sendFile(path.join(__dirname, 'Admin', 'admin-dashboard.html'));
 });
 
 // Error handling middleware
