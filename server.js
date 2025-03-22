@@ -1139,8 +1139,6 @@ app.get("/api/logo", async (req, res) => {
       res.status(500).json({ message: "Error fetching logo", error: error.message });
   }
 });
-const bcrypt = require('bcryptjs');
-const User = require('./models/User'); // Adjust the path to your User model
 
 async function createAdminUser() {
     const adminEmail = 'admin@example.com'; // Admin email
