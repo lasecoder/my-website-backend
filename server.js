@@ -19,6 +19,7 @@ const Scholarship = require("./models/Scholarship");
 const Header = require("./models/Header");  // Importing Header model
 const Logo = require('./models/Logo');
 const message = require('./models/Message'); // Use the correct case
+const Vacancy = require('./models/Vacancy'); // Import the Vacancy model
 // Load environment variables
 dotenv.config();
 const uploadDir = 'uploads';
