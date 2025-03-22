@@ -1133,12 +1133,14 @@ app.post('/admin/login', async (req, res) => {
 async function createAdminUser() {
   const adminEmail = 'admin@example.com'; // Admin email
   const adminPassword = 'admin123'; // Admin password
+  const adminName = 'Admin User'; // Add a name for the admin user
 
   try {
     const existingAdmin = await User.findOne({ email: adminEmail, role: 'admin' });
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
       const adminUser = new User({
+        name: adminName, // Provide the required name field
         email: adminEmail,
         password: hashedPassword,
         role: 'admin'
@@ -1154,6 +1156,7 @@ async function createAdminUser() {
 }
 
 createAdminUser(); // Run this function to create the admin user
+ 
 
 // Error handling middleware
 app.use((err, req, res, next) => {
