@@ -62,8 +62,30 @@ app.use('/uploads', express.static('uploads'));
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'https://my-website-backend-ixzh.onrender.com' // Use your actual frontend URL
+  origin: 'https://my-website-backend-ixzh.onrender.com', // Allow only your frontend domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  credentials: true // Allow cookies and credentials
 }));
+
+// Your API routes
+app.get('/api/services', (req, res) => {
+  res.json({ message: 'Services data' });
+});
+
+app.get('/api/content/header', (req, res) => {
+  res.json({ message: 'Header content' });
+});
+
+app.get('/api/content/footer', (req, res) => {
+  res.json({ message: 'Footer content' });
+});
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 
