@@ -52,26 +52,23 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
+const express = require('express');
+const cors = require('cors');
 
 
-
-// Enable CORS for all routes
-app.use(cors());
-
-// Alternatively, you can configure CORS for specific origins
-// ✅ Add this:
+// ✅ Only add CORS **once**, configured properly
 app.use(cors({
-  origin: 'https://my-website-backend-ixzh.onrender.com', // Your frontend domain
+  origin: 'https://my-website-backend-ixzh.onrender.com', // ✅ your frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
-// Your routes
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static('uploads'));
+
+// ✅ Your API routes
 app.get('/api/services', (req, res) => {
   res.json({ message: 'Services data' });
 });
@@ -84,10 +81,6 @@ app.get('/api/content/footer', (req, res) => {
   res.json({ message: 'Footer content' });
 });
 
-// Allow requests from specific frontend origin
-app.use(cors({
-  origin: 'https://my-website-backend-ixzh.onrender.com'
-}));
 
 
 app.use((req, res, next) => {
