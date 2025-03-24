@@ -64,8 +64,11 @@ app.use('/uploads', express.static('uploads'));
 app.use(cors());
 
 // Alternatively, you can configure CORS for specific origins
+// ✅ Add this:
 app.use(cors({
-  origin: 'https://my-website-backend-ixzh.onrender.com'
+  origin: 'https://my-website-backend-ixzh.onrender.com', // Your frontend domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
 
 // Your routes
@@ -80,6 +83,13 @@ app.get('/api/content/header', (req, res) => {
 app.get('/api/content/footer', (req, res) => {
   res.json({ message: 'Footer content' });
 });
+///
+const cors = require('cors');
+
+// Allow requests from specific frontend origin
+app.use(cors({
+  origin: 'https://my-website-backend-ixzh.onrender.com'
+}));
 
 
 app.use((req, res, next) => {
