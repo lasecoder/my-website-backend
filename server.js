@@ -49,22 +49,42 @@ mongoose.connect(MONGO_URI)
 // Initialize Express app
 const app = express();
 const port = process.env.PORT || 5000;
-// Configure CORS properly
+
+// Enhanced CORS configuration
+const allowedOrigins = [
+  'https://my-website-backend-ixzh.onrender.com',
+  'http://localhost:3000' // For local development
+];
+
 const corsOptions = {
-  origin: 'https://my-website-backend-ixzh.onrender.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Add OPTIONS
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept'
+  ],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
-// Apply CORS middleware
+// Apply CORS middleware to all routes
 app.use(cors(corsOptions));
 
-// Handle OPTIONS requests (preflight)
-app.options('*', cors(corsOptions)); // This handles all OPTIONS requests
+// Explicitly handle OPTIONS requests
+app.options('*', cors(corsOptions));
 
 // Your existing routes
 app.get('/api/header', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
   res.json({
     title: "Welcome to FutureTechTalent",
     description: "Your trusted partner for business solutions",
@@ -74,6 +94,7 @@ app.get('/api/header', (req, res) => {
 });
 
 app.get('/api/services', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
   res.json([
     {
       title: "AI Strategy",
@@ -89,10 +110,21 @@ app.get('/api/services', (req, res) => {
 });
 
 app.get('/api/content/footer', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
   res.json({
     footerText: "© 2025 FutureTechTalent. All rights reserved."
   });
 });
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  if (err.message === 'Not allowed by CORS') {
+    res.status(403).json({ error: 'CORS policy blocked this request' });
+  } else {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
