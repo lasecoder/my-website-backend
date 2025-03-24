@@ -4,14 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FutureTechTalent - Business Solutions</title>
+    
+    <!-- ✅ Use relative path for CSS -->
     <link rel="stylesheet" href="./css/style.css">
+
+    <!-- ✅ Axios for API Calls -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- ✅ FontAwesome Icons -->
     <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
 </head>
 <body>
+    
     <header>
         <div class="container">
             <div class="header-left">
+                <!-- ✅ Updated Image Path -->
                 <img id="logo" src="https://my-backend-service.onrender.com/uploads/default-logo.png" alt="Company Logo">
             </div>
             <div class="register">
@@ -39,51 +47,39 @@
     </header>
 
     <main class="container">
-        <!-- Added display sections for content -->
         <section class="intro">
-            <div id="header-display"></div>
-            <div id="services-display"></div>
-            <div id="footer-display"></div>
+            <h2 id="home-header-title"></h2>
+            <p id="home-intro-text"></p>
         </section>
 
-        <!-- Added admin controls (could be hidden for non-admin users) -->
-        <div class="admin-controls" style="margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem;">
-            <h3>Admin Controls</h3>
-            
-            <div class="control-group">
-                <h4>Update Header</h4>
-                <input type="text" id="home-header-title" placeholder="Header title">
-                <input type="file" id="home-header-image">
-                <button id="update-header-btn">Update Header</button>
-            </div>
-            
-            <div class="control-group">
-                <h4>Update Service 1</h4>
-                <input type="text" id="service1-title" placeholder="Service title">
-                <input type="text" id="service1-description" placeholder="Service description">
-                <input type="file" id="service1-image">
-                <button id="update-service1-btn">Update Service</button>
-            </div>
-            
-            <div class="control-group">
-                <h4>Update Footer</h4>
-                <textarea id="home-footer-text" placeholder="Footer text"></textarea>
-                <button id="update-footer-btn">Update Footer</button>
-            </div>
+        <div id="home-content">
+            <p id="home-services-text"></p>
         </div>
+
+        <section class="services">
+            <div id="services-container" class="services-container"></div>
+        </section>
 
         <section class="contact-cta">
             <h2 id="home-cta-text">Let's Grow Your Business</h2>
             <p>Contact us today to learn how we can help you succeed.</p>
             <a id="home-cta-link" href="contact.html" class="button-primary">Get in Touch</a>
         </section>
-        
         <div id="chat-bot">
             <button id="chat-toggle">💬 Chat with Us</button>
-            <div id="chat-window" style="display: none;">
+            <div id="chat-window">
                 <p>Hi there! How can we help you today?</p>
                 <input type="text" id="chat-input" placeholder="Type your message...">
-                <button id="send-button">Send</button>
+                <div class="MessageComposer__ActionsWrapper-cxn0v1-3">
+                    <button id="send-button" aria-label="send message" class="SendButton__Button-rm6hl8-0" disabled>
+                        <svg width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="SendButton__SendIcon-rm6hl8-1">
+                            <defs>
+                                <path d="M21.158.222L2.568 11.815c-.8.498-.749 1.215.113 1.591l4.406 1.923 10.395-9.903c1.377-1.296 1.569-1.119.426.395L8.254 18.215v4.927c0 .953.5 1.141 1.113.418l4.473-5.282 5.055 2.207c.861.376 1.643-.092 1.736-1.04l1.81-18.404c.094-.949-.484-1.317-1.283-.819" id="send__a"></path>
+                            </defs>
+                            <use xlink:href="#send__a" fill-rule="evenodd"></use>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </main>
@@ -92,7 +88,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-left">
-                    <p id="footer-text"></p>
+                    <p id="home-footer-text"></p>
                 </div>
             </div>
             <div class="social-media">
@@ -104,116 +100,86 @@
         </div>
     </footer>
 
+    <!-- ✅ Fetch Data from MongoDB -->
     <script>
         const backendUrl = "https://my-backend-service.onrender.com";
 
-        // Improved fetch and display function
-        async function fetchAndDisplayContent(section, elementId) {
-            try {
-                const response = await fetch(`${backendUrl}/api/${section}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const data = await response.json();
-                
-                // Handle different response structures
-                let content = data.content || data.header || data.footer || data;
-                
-                const element = document.getElementById(elementId);
-                if (!element) {
-                    console.error(`Element with ID ${elementId} not found`);
-                    return;
-                }
+// Fetch and display content
+async function fetchAndDisplayContent(section, elementId) {
+  try {
+    const response = await fetch(`${backendUrl}/api/content/${section}`);
+    if (!response.ok) throw new Error('Failed to fetch content');
+    
+    const { success, content } = await response.json();
+    if (success && content) {
+      document.getElementById(elementId).innerHTML = `
+        <h3>${content.title || ''}</h3>
+        <p>${content.description || content.footerText || ''}</p>
+        ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="${content.title}">` : ''}
+      `;
+    }
+  } catch (error) {
+    console.error(`❌ Error fetching ${section}:`, error);
+  }
+}
 
-                if (section === 'header') {
-                    element.innerHTML = `
-                        <h2>${content.title || 'Welcome to FutureTechTalent'}</h2>
-                        ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="Header Image">` : ''}
-                    `;
-                } else if (section === 'services') {
-                    element.innerHTML = `
-                        <h3>${content.title || 'Our Services'}</h3>
-                        <p>${content.description || ''}</p>
-                        ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="Service Image">` : ''}
-                    `;
-                } else if (section === 'footer') {
-                    document.getElementById('footer-text').textContent = 
-                        content.footerText || content.content || '© 2025 FutureTechTalent. All rights reserved.';
-                }
-            } catch (error) {
-                console.error(`Error fetching ${section}:`, error);
-                // Fallback content
-                if (section === 'footer') {
-                    document.getElementById('footer-text').textContent = 
-                        '© 2025 FutureTechTalent. All rights reserved.';
-                }
-            }
-        }
+// Update content
+async function updateContent(section, title, description, image = null) {
+  try {
+    const formData = new FormData();
+    formData.append("section", section);
+    
+    if (section === "footer") {
+      formData.append("footerText", description);
+    } else {
+      formData.append("title", title);
+      formData.append("description", description);
+      if (image) formData.append("image", image);
+    }
 
-        // Improved update function
-        async function updateContent(section, title, description, image = null) {
-            try {
-                const formData = new FormData();
-                
-                if (section === "footer") {
-                    formData.append("footerText", description);
-                } else {
-                    if (title) formData.append("title", title);
-                    if (description) formData.append("description", description);
-                    if (image) formData.append("image", image);
-                }
+    const response = await fetch(`${backendUrl}/api/content`, {
+      method: "POST",
+      body: formData,
+    });
 
-                const response = await fetch(`${backendUrl}/api/${section}`, {
-                    method: "POST",
-                    body: formData,
-                });
+    if (!response.ok) throw new Error("Failed to update content");
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || "Failed to update content");
-                }
+    const data = await response.json();
+    console.log("✅ Server response:", data);
+    alert(`${section} updated successfully!`);
+    fetchAndDisplayContent(section, `${section}-display`);
+  } catch (error) {
+    console.error("❌ Error updating content:", error);
+    alert("Error updating content: " + error.message);
+  }
+}
 
-                const data = await response.json();
-                console.log("Update successful:", data);
-                alert(`${section} updated successfully!`);
-                fetchAndDisplayContent(section, `${section}-display`);
-            } catch (error) {
-                console.error("Error updating content:", error);
-                alert(`Error: ${error.message}`);
-            }
-        }
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", function() {
+  // Fetch and display all content
+  fetchAndDisplayContent('header', 'header-display');
+  fetchAndDisplayContent('services', 'services-display');
+  fetchAndDisplayContent('footer', 'footer-display');
 
-        // Initialize on page load
-        document.addEventListener("DOMContentLoaded", function() {
-            // Fetch and display all content
-            fetchAndDisplayContent('header', 'header-display');
-            fetchAndDisplayContent('services', 'services-display');
-            fetchAndDisplayContent('footer', 'footer-display');
+  // Set up event listeners for update buttons
+  document.getElementById('update-header-btn')?.addEventListener('click', () => {
+    const title = document.getElementById('home-header-title').value;
+    const image = document.getElementById('home-header-image').files[0];
+    updateContent('header', title, '', image);
+  });
 
-            // Chat toggle functionality
-            document.getElementById('chat-toggle')?.addEventListener('click', function() {
-                const chatWindow = document.getElementById('chat-window');
-                chatWindow.style.display = chatWindow.style.display === 'none' ? 'block' : 'none';
-            });
+  document.getElementById('update-service1-btn')?.addEventListener('click', () => {
+    const title = document.getElementById('service1-title').value;
+    const description = document.getElementById('service1-description').value;
+    const image = document.getElementById('service1-image').files[0];
+    updateContent('services', title, description, image);
+  });
 
-            // Set up event listeners for update buttons
-            document.getElementById('update-header-btn')?.addEventListener('click', () => {
-                const title = document.getElementById('home-header-title').value;
-                const image = document.getElementById('home-header-image').files[0];
-                updateContent('header', title, '', image);
-            });
-
-            document.getElementById('update-service1-btn')?.addEventListener('click', () => {
-                const title = document.getElementById('service1-title').value;
-                const description = document.getElementById('service1-description').value;
-                const image = document.getElementById('service1-image').files[0];
-                updateContent('services', title, description, image);
-            });
-
-            document.getElementById('update-footer-btn')?.addEventListener('click', () => {
-                const footerText = document.getElementById('home-footer-text').value;
-                updateContent('footer', '', footerText);
-            });
-        });
+  document.getElementById('update-footer-btn')?.addEventListener('click', () => {
+    const footerText = document.getElementById('home-footer-text').value;
+    updateContent('footer', '', footerText);
+  });
+});
     </script>
 </body>
 </html>
