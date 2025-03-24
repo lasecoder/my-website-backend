@@ -51,11 +51,6 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-
-const express = require('express');
-const cors = require('cors');
-
-
 // ✅ Only add CORS **once**, configured properly
 app.use(cors({
   origin: 'https://my-website-backend-ixzh.onrender.com', // ✅ your frontend
