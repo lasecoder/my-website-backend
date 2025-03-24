@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
-    <link rel="stylesheet" href="./css/singup-styles.css">
+    <link rel="stylesheet" href="css/signup-styles.css">
 </head>
 <body>
 
@@ -29,40 +29,38 @@
     </div>
 
     <script>
-        document.getElementById('signup-form').addEventListener('submit', function (event) {
-            event.preventDefault();
+       // In your signup.html
+const backendUrl = 'https://my-backend-service.onrender.com'; // Use your actual backend URL
 
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+async function handleSignup(event) {
+  event.preventDefault();
+  
+  const formData = new FormData(event.target);
+  const userData = Object.fromEntries(formData);
 
-            // Debugging: Log the request payload
-            console.log("📤 Sending Data:", { name, email, password, confirmPassword });
+  try {
+    const response = await fetch(`${backendUrl}/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    });
 
-            fetch('http://localhost:3001/signup', {  // ✅ Fixed API URL
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, email, password, confirmPassword }),
-            })
-            .then(response => {
-                console.log("📥 Response Status:", response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log("✅ Server Response:", data);
-                alert(data.message);
-                if (data.success) {
-                    window.location.href = 'login.html';
-                }
-            })
-            .catch(error => {
-                console.error("❌ Fetch Error:", error);
-                alert("Signup failed. Please try again.");
-            });
-        });
+    if (!response.ok) {
+      throw new Error('Signup failed');
+    }
+
+    const data = await response.json();
+    console.log('✅ Signup successful:', data);
+    // Redirect or show success message
+  } catch (error) {
+    console.error('❌ Signup error:', error);
+    // Show error message to user
+  }
+}
+
+document.getElementById('signup-form').addEventListener('submit', handleSignup);
     </script>
 
 </body>

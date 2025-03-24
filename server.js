@@ -103,7 +103,10 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
-
+//Your signup route
+app.post('/signup', (req, res) => {
+  // Handle signup logic
+});
 // ------------------------ Routes ------------------------
 
 // Homepage route
