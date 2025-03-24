@@ -64,24 +64,50 @@ app.use(cors({
 }));
 
 // Middleware
+const express = require('express');
+const cors = require('cors');
+
+
+// ✅ CORS config for your frontend
+app.use(cors({
+  origin: 'https://my-website-backend-ixzh.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
+
+// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
-// ✅ Your API routes
+// ✅ Sample routes
 app.get('/api/services', (req, res) => {
-  res.json({ message: 'Services data' });
+  res.json([
+    {
+      title: "Service One",
+      image: "uploads/service1.png",
+      description: "Description for Service One"
+    },
+    {
+      title: "Service Two",
+      image: "uploads/service2.png",
+      description: "Description for Service Two"
+    }
+  ]);
 });
 
 app.get('/api/content/header', (req, res) => {
-  res.json({ message: 'Header content' });
+  res.json({
+    title: "Welcome to FutureTechTalent",
+    image: "uploads/default-logo.png"
+  });
 });
 
 app.get('/api/content/footer', (req, res) => {
-  res.json({ message: 'Footer content' });
+  res.json({
+    footerText: "© 2025 FutureTechTalent. All rights reserved."
+  });
 });
-
-
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
