@@ -50,83 +50,33 @@ mongoose.connect(MONGO_URI)
 const app = express();
 const port = process.env.PORT || 5000;
 
-// CORS Configuration
+// ✅ This must come before any routes!
 app.use(cors({
   origin: 'https://my-website-backend-ixzh.onrender.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
-// Database Connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('✅ Connected to MongoDB'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
-
-// Content Schema
-const contentSchema = new mongoose.Schema({
-  section: String,
-  title: String,
-  description: String,
-  imageUrl: String,
-  footerText: String,
-  updatedAt: { type: Date, default: Date.now }
-});
-const Content = mongoose.model('Content', contentSchema);
-
-// File Upload Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
-
-// API Endpoints
-app.post('/api/content', upload.single('image'), async (req, res) => {
-  try {
-    const { section, title, description, footerText } = req.body;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
-    
-    const content = new Content({
-      section,
-      title,
-      description,
-      imageUrl,
-      footerText
-    });
-    
-    await content.save();
-    res.status(201).json({ success: true, content });
-  } catch (error) {
-    console.error('Error saving content:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.get('/api/content/:section', async (req, res) => {
-  try {
-    const { section } = req.params;
-    const content = await Content.findOne({ section }).sort({ updatedAt: -1 });
-    
-    if (!content) {
-      return res.status(404).json({ success: false, message: 'Content not found' });
-    }
-    
-    res.json({ success: true, content });
-  } catch (error) {
-    console.error('Error fetching content:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Serve static files
+// Body parser, static files, and your routes
+app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+
+// Your routes
+app.get('/api/services', (req, res) => {
+  res.json([
+    { title: 'AI Strategy', description: 'Let us help you adopt AI', image: 'uploads/service1.jpg' },
+    { title: 'Cloud Migration', description: 'Move to the cloud seamlessly', image: 'uploads/service2.jpg' }
+  ]);
+});
+
+app.get('/api/content/header', (req, res) => {
+  res.json({ title: 'Welcome to FutureTechTalent', image: 'uploads/default-logo.png' });
+});
+
+app.get('/api/content/footer', (req, res) => {
+  res.json({ footerText: '© 2025 FutureTechTalent. All rights reserved.' });
+});
+
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
@@ -142,6 +92,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  }
+});
+const upload = multer({ storage });
 
 // ------------------------ Routes ------------------------
 
