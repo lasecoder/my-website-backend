@@ -49,7 +49,6 @@ mongoose.connect(MONGO_URI)
 // Initialize Express app
 const app = express();
 const port = process.env.PORT || 5000;
-
 // Configure CORS properly
 const corsOptions = {
   origin: 'https://my-website-backend-ixzh.onrender.com',
@@ -93,6 +92,21 @@ app.get('/api/content/footer', (req, res) => {
   res.json({
     footerText: "© 2025 FutureTechTalent. All rights reserved."
   });
+});
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+// Serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Route to serve the main HTML file
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Multer setup for file uploads
