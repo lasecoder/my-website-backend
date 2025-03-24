@@ -50,34 +50,33 @@ mongoose.connect(MONGO_URI)
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
-
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
-
-
-// Enable CORS for all routes
+// ✅ This must come before any routes!
 app.use(cors({
-  origin: 'https://my-website-backend-ixzh.onrender.com', // Allow only your frontend domain
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
-  credentials: true // Allow cookies and credentials
+  origin: 'https://my-website-backend-ixzh.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
 
-// Your API routes
+// Body parser, static files, and your routes
+app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+
+// Your routes
 app.get('/api/services', (req, res) => {
-  res.json({ message: 'Services data' });
+  res.json([
+    { title: 'AI Strategy', description: 'Let us help you adopt AI', image: 'uploads/service1.jpg' },
+    { title: 'Cloud Migration', description: 'Move to the cloud seamlessly', image: 'uploads/service2.jpg' }
+  ]);
 });
 
 app.get('/api/content/header', (req, res) => {
-  res.json({ message: 'Header content' });
+  res.json({ title: 'Welcome to FutureTechTalent', image: 'uploads/default-logo.png' });
 });
 
 app.get('/api/content/footer', (req, res) => {
-  res.json({ message: 'Footer content' });
+  res.json({ footerText: '© 2025 FutureTechTalent. All rights reserved.' });
 });
+
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
@@ -104,7 +103,10 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
-
+//Your signup route
+app.post('/signup', (req, res) => {
+  // Handle signup logic
+});
 // ------------------------ Routes ------------------------
 
 // Homepage route

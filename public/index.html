@@ -4,15 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FutureTechTalent - Business Solutions</title>
+    
+    <!-- ✅ Use relative path for CSS -->
     <link rel="stylesheet" href="./css/style.css">
+
+    <!-- ✅ Axios for API Calls -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- ✅ FontAwesome Icons -->
     <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
 </head>
 <body>
+    
     <header>
         <div class="container">
             <div class="header-left">
-                <img id="logo" src="" alt="Company Logo">
+                <!-- ✅ Updated Image Path -->
+                <img id="logo" src="https://my-backend-service.onrender.com/uploads/default-logo.png" alt="Company Logo">
             </div>
             <div class="register">
                 <button class="btn" onclick="location.href='login.html'">Login</button>
@@ -39,168 +47,140 @@
     </header>
 
     <main class="container">
-        <!-- Header Content Section -->
-        <section class="content-section" id="header-section">
-            <h2>Loading header...</h2>
+        <section class="intro">
+            <h2 id="home-header-title"></h2>
+            <p id="home-intro-text"></p>
         </section>
 
-        <!-- Services Content Section -->
-        <section class="content-section" id="services-section">
-            <h2>Our Services</h2>
-            <div id="services-container"></div>
+        <div id="home-content">
+            <p id="home-services-text"></p>
+        </div>
+
+        <section class="services">
+            <div id="services-container" class="services-container"></div>
         </section>
 
-        <!-- Footer Content Section -->
-        <footer class="content-section" id="footer-section">
-            <p>Loading footer...</p>
-        </footer>
-
-        <!-- Chat Bot -->
+        <section class="contact-cta">
+            <h2 id="home-cta-text">Let's Grow Your Business</h2>
+            <p>Contact us today to learn how we can help you succeed.</p>
+            <a id="home-cta-link" href="contact.html" class="button-primary">Get in Touch</a>
+        </section>
         <div id="chat-bot">
             <button id="chat-toggle">💬 Chat with Us</button>
-            <div id="chat-window" style="display:none;">
-                <div id="chat-messages"></div>
+            <div id="chat-window">
+                <p>Hi there! How can we help you today?</p>
                 <input type="text" id="chat-input" placeholder="Type your message...">
-                <button id="send-button">Send</button>
+                <div class="MessageComposer__ActionsWrapper-cxn0v1-3">
+                    <button id="send-button" aria-label="send message" class="SendButton__Button-rm6hl8-0" disabled>
+                        <svg width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="SendButton__SendIcon-rm6hl8-1">
+                            <defs>
+                                <path d="M21.158.222L2.568 11.815c-.8.498-.749 1.215.113 1.591l4.406 1.923 10.395-9.903c1.377-1.296 1.569-1.119.426.395L8.254 18.215v4.927c0 .953.5 1.141 1.113.418l4.473-5.282 5.055 2.207c.861.376 1.643-.092 1.736-1.04l1.81-18.404c.094-.949-.484-1.317-1.283-.819" id="send__a"></path>
+                            </defs>
+                            <use xlink:href="#send__a" fill-rule="evenodd"></use>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </main>
 
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p id="home-footer-text"></p>
+                </div>
+            </div>
+            <div class="social-media">
+                <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ✅ Fetch Data from MongoDB -->
     <script>
-        const backendUrl = "https://my-backend-service.onrender.com";
-    
-        // 1. First define the utility function
-        async function fetchWithCORS(url, options = {}) {
+        const backendUrl = "https://my-backend-service.onrender.com"; // Use your Render backend URL
+
+        // Function to fetch and update header data
+        async function fetchContent() {
             try {
-                const response = await fetch(url, {
-                    ...options,
-                    mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                const response = await fetch(`${backendUrl}/api/content/header`);
+                if (!response.ok) throw new Error("Failed to fetch header");
+
+                const data = await response.json();
+
+                // ✅ Update header title
+                if (document.getElementById("home-header-title"))
+                    document.getElementById("home-header-title").innerText = data.title || "Welcome!";
+
+                // ✅ Update logo image
+                const logoElement = document.getElementById("logo");
+                if (logoElement && data.image) {
+                    logoElement.src = `${backendUrl}/${data.image}`;
+                    logoElement.style.display = "block";
+                } else {
+                    console.warn("⚠️ No image found for header.");
+                    if (logoElement) logoElement.style.display = "none";
                 }
-                
-                return await response.json();
             } catch (error) {
-                console.error(`Fetch error for ${url}:`, error);
-                throw error;
+                console.error("❌ Error fetching header:", error);
             }
         }
-    
-        // 2. Then define all fetch functions
-        async function fetchHeader() {
-            try {
-                const headerData = await fetchWithCORS(`${backendUrl}/api/header`);
-                
-                const headerSection = document.getElementById('header-section');
-                if (headerData.logoUrl) {
-                    document.getElementById('logo').src = `${backendUrl}${headerData.logoUrl}`;
-                }
-                
-                headerSection.innerHTML = `
-                    <h2>${headerData.title || 'Welcome to FutureTechTalent'}</h2>
-                    ${headerData.description ? `<p>${headerData.description}</p>` : ''}
-                    ${headerData.image ? `<img src="${backendUrl}${headerData.image}" alt="Header Image" style="max-width:100%;">` : ''}
-                `;
-            } catch (error) {
-                console.error('Error fetching header:', error);
-                document.getElementById('header-section').innerHTML = `
-                    <h2>Welcome to FutureTechTalent</h2>
-                    <p>Your trusted partner for business solutions</p>
-                `;
-            }
-        }
-    
+
+        // Function to fetch and display services
         async function fetchServices() {
             try {
-                const services = await fetchWithCORS(`${backendUrl}/api/services`);
-                const servicesContainer = document.getElementById('services-container');
-                
-                if (services.length === 0) {
-                    servicesContainer.innerHTML = '<p>No services available at the moment.</p>';
-                    return;
-                }
-                
-                servicesContainer.innerHTML = '';
+                const response = await axios.get(`${backendUrl}/api/services`);
+                const services = response.data;
+
+                if (!Array.isArray(services)) throw new Error("Invalid service data");
+
+                const servicesContainer = document.getElementById("services-container");
+                servicesContainer.innerHTML = "";
+
                 services.forEach(service => {
-                    const serviceCard = document.createElement('div');
-                    serviceCard.className = 'service-card';
+                    const serviceCard = document.createElement("div");
+                    serviceCard.classList.add("service-card");
+
                     serviceCard.innerHTML = `
-                        <h3>${service.title || 'Service'}</h3>
-                        <p>${service.description || ''}</p>
-                        ${service.image ? `<img src="${backendUrl}${service.image}" alt="${service.title || 'Service Image'}">` : ''}
-                        ${service.video ? `<video src="${backendUrl}${service.video}" controls style="max-width:100%;"></video>` : ''}
+                        <h2 class="service-title">${service.title}</h2>
+                        <img src="${backendUrl}/${service.image}" alt="${service.title}" class="service-image">
+                        <p class="service-description">${service.description}</p>
                     `;
+
                     servicesContainer.appendChild(serviceCard);
                 });
             } catch (error) {
-                console.error('Error fetching services:', error);
-                document.getElementById('services-container').innerHTML = `
-                    <div class="service-card">
-                        <h3>AI Strategy</h3>
-                        <p>Let us help you adopt AI solutions for your business</p>
-                    </div>
-                    <div class="service-card">
-                        <h3>Cloud Migration</h3>
-                        <p>Move your business to the cloud seamlessly</p>
-                    </div>
-                `;
+                console.error("❌ Error fetching services:", error);
             }
         }
-    
-        async function fetchFooter() {
-            try {
-                const footerData = await fetchWithCORS(`${backendUrl}/api/content/footer`);
-                const footerSection = document.getElementById('footer-section');
-                
-                footerSection.innerHTML = `
-                    <p>${footerData.footerText || '© 2025 FutureTechTalent. All rights reserved.'}</p>
-                `;
-            } catch (error) {
-                console.error('Error fetching footer:', error);
-                document.getElementById('footer-section').innerHTML = `
-                    <p>© 2025 FutureTechTalent. All rights reserved.</p>
-                `;
-            }
+
+        // Function to fetch footer content
+        function fetchFooter() {
+            fetch(`${backendUrl}/api/content/footer`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Footer API failed with status ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.footerText) {
+                        document.getElementById("home-footer-text").textContent = data.footerText;
+                    }
+                })
+                .catch(error => console.error("❌ Error fetching footer:", error));
         }
-    
-        function initChat() {
-            const toggleBtn = document.getElementById('chat-toggle');
-            const chatWindow = document.getElementById('chat-window');
-            
-            toggleBtn.addEventListener('click', () => {
-                chatWindow.style.display = chatWindow.style.display === 'none' ? 'block' : 'none';
-            });
-            
-            document.getElementById('send-button').addEventListener('click', sendMessage);
-            
-            function sendMessage() {
-                const input = document.getElementById('chat-input');
-                const message = input.value.trim();
-                if (message) {
-                    const messagesDiv = document.getElementById('chat-messages');
-                    messagesDiv.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
-                    input.value = '';
-                    
-                    setTimeout(() => {
-                        messagesDiv.innerHTML += `<p><strong>Support:</strong> Thanks for your message! We'll get back to you soon.</p>`;
-                    }, 1000);
-                }
-            }
-        }
-    
-        // 3. Finally, initialize everything when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchHeader();
+
+        // Run all functions on page load
+        window.onload = function() {
+            fetchContent();
             fetchServices();
             fetchFooter();
-            initChat();
-        });
+        };
     </script>
 </body>
 </html>
