@@ -103,93 +103,83 @@
     <!-- ✅ Fetch Data from MongoDB -->
     <script>
         const backendUrl = "https://my-backend-service.onrender.com";
+
+// Fetch and display content
+async function fetchAndDisplayContent(section, elementId) {
+  try {
+    const response = await fetch(`${backendUrl}/api/content/${section}`);
+    if (!response.ok) throw new Error('Failed to fetch content');
     
-        // Enhanced fetch function with error handling
-        async function fetchWithCORS(url, options = {}) {
-          try {
-            const response = await fetch(url, {
-              ...options,
-              mode: 'cors',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-              }
-            });
+    const { success, content } = await response.json();
+    if (success && content) {
+      document.getElementById(elementId).innerHTML = `
+        <h3>${content.title || ''}</h3>
+        <p>${content.description || content.footerText || ''}</p>
+        ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="${content.title}">` : ''}
+      `;
+    }
+  } catch (error) {
+    console.error(`❌ Error fetching ${section}:`, error);
+  }
+}
+
+// Update content
+async function updateContent(section, title, description, image = null) {
+  try {
+    const formData = new FormData();
+    formData.append("section", section);
     
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              throw new Error(
-                errorData.message || `HTTP error! status: ${response.status}`
-              );
-            }
-    
-            return await response.json();
-          } catch (error) {
-            console.error('Fetch error:', error);
-            throw error;
-          }
-        }
-    
-        // Update DOM elements with content
-        function updateContent(elementId, content) {
-          const element = document.getElementById(elementId);
-          if (element) {
-            if (typeof content === 'string') {
-              element.textContent = content;
-            } else if (content.title || content.description) {
-              element.innerHTML = `
-                ${content.title ? `<h2>${content.title}</h2>` : ''}
-                ${content.description ? `<p>${content.description}</p>` : ''}
-                ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="${content.title || 'Content image'}">` : ''}
-              `;
-            }
-          }
-        }
-    
-        // Fetch and display content with retry logic
-        async function fetchAndDisplayContent(section, elementId, retries = 3) {
-          try {
-            const { success, content } = await fetchWithCORS(
-              `${backendUrl}/api/content/${section}`
-            );
-    
-            if (success && content) {
-              updateContent(elementId, content);
-            }
-          } catch (error) {
-            console.error(`❌ Error fetching ${section}:`, error);
-            if (retries > 0) {
-              console.log(`Retrying ${section} fetch... (${retries} attempts left)`);
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              return fetchAndDisplayContent(section, elementId, retries - 1);
-            }
-            updateContent(elementId, { description: `Failed to load ${section} content. Please try again later.` });
-          }
-        }
-    
-        // Initialize content loading
-        document.addEventListener("DOMContentLoaded", function() {
-          // Content sections to load
-          const contentSections = [
-            { section: 'header', elementId: 'home-header-title' },
-            { section: 'intro', elementId: 'home-intro-text' },
-            { section: 'services', elementId: 'services-container' },
-            { section: 'footer', elementId: 'home-footer-text' }
-          ];
-    
-          // Load all sections
-          contentSections.forEach(({ section, elementId }) => {
-            fetchAndDisplayContent(section, elementId);
-          });
-    
-          // Set up periodic refresh (every 30 seconds)
-          setInterval(() => {
-            contentSections.forEach(({ section, elementId }) => {
-              fetchAndDisplayContent(section, elementId);
-            });
-          }, 10000);
-        });
+    if (section === "footer") {
+      formData.append("footerText", description);
+    } else {
+      formData.append("title", title);
+      formData.append("description", description);
+      if (image) formData.append("image", image);
+    }
+
+    const response = await fetch(`${backendUrl}/api/content`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Failed to update content");
+
+    const data = await response.json();
+    console.log("✅ Server response:", data);
+    alert(`${section} updated successfully!`);
+    fetchAndDisplayContent(section, `${section}-display`);
+  } catch (error) {
+    console.error("❌ Error updating content:", error);
+    alert("Error updating content: " + error.message);
+  }
+}
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", function() {
+  // Fetch and display all content
+  fetchAndDisplayContent('header', 'header-display');
+  fetchAndDisplayContent('services', 'services-display');
+  fetchAndDisplayContent('footer', 'footer-display');
+
+  // Set up event listeners for update buttons
+  document.getElementById('update-header-btn')?.addEventListener('click', () => {
+    const title = document.getElementById('home-header-title').value;
+    const image = document.getElementById('home-header-image').files[0];
+    updateContent('header', title, '', image);
+  });
+
+  document.getElementById('update-service1-btn')?.addEventListener('click', () => {
+    const title = document.getElementById('service1-title').value;
+    const description = document.getElementById('service1-description').value;
+    const image = document.getElementById('service1-image').files[0];
+    updateContent('services', title, description, image);
+  });
+
+  document.getElementById('update-footer-btn')?.addEventListener('click', () => {
+    const footerText = document.getElementById('home-footer-text').value;
+    updateContent('footer', '', footerText);
+  });
+});
     </script>
 </body>
 </html>
