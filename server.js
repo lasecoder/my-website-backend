@@ -50,53 +50,49 @@ mongoose.connect(MONGO_URI)
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 // Configure CORS properly
 const corsOptions = {
   origin: 'https://my-website-backend-ixzh.onrender.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Add OPTIONS
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 };
 
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Your other middleware and routes.
+// Handle OPTIONS requests (preflight)
+app.options('*', cors(corsOptions)); // This handles all OPTIONS requests
 
-// Body parser, static files, and your routes
-app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+// Your existing routes
+app.get('/api/header', (req, res) => {
+  res.json({
+    title: "Welcome to FutureTechTalent",
+    description: "Your trusted partner for business solutions",
+    logoUrl: "/uploads/default-logo.png",
+    image: "/uploads/header-image.jpg"
+  });
+});
 
-// Your routes
 app.get('/api/services', (req, res) => {
   res.json([
-    { title: 'AI Strategy', description: 'Let us help you adopt AI', image: 'uploads/service1.jpg' },
-    { title: 'Cloud Migration', description: 'Move to the cloud seamlessly', image: 'uploads/service2.jpg' }
+    {
+      title: "AI Strategy",
+      description: "Let us help you adopt AI solutions",
+      image: "/uploads/service1.jpg"
+    },
+    {
+      title: "Cloud Migration",
+      description: "Move to the cloud seamlessly",
+      image: "/uploads/service2.jpg"
+    }
   ]);
 });
 
-app.get('/api/content/header', (req, res) => {
-  res.json({ title: 'Welcome to FutureTechTalent', image: 'uploads/default-logo.png' });
-});
-
 app.get('/api/content/footer', (req, res) => {
-  res.json({ footerText: '© 2025 FutureTechTalent. All rights reserved.' });
-});
-
-
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Route to serve the main HTML file
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.json({
+    footerText: "© 2025 FutureTechTalent. All rights reserved."
+  });
 });
 
 // Multer setup for file uploads

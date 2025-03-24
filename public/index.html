@@ -69,7 +69,7 @@
     <script>
         const backendUrl = "https://my-backend-service.onrender.com";
     
-        // Modified fetch functions with proper headers and error handling
+        // 1. First define the utility function
         async function fetchWithCORS(url, options = {}) {
             try {
                 const response = await fetch(url, {
@@ -92,6 +92,7 @@
             }
         }
     
+        // 2. Then define all fetch functions
         async function fetchHeader() {
             try {
                 const headerData = await fetchWithCORS(`${backendUrl}/api/header`);
@@ -115,9 +116,85 @@
             }
         }
     
-        // Similar modifications for fetchServices and fetchFooter...
+        async function fetchServices() {
+            try {
+                const services = await fetchWithCORS(`${backendUrl}/api/services`);
+                const servicesContainer = document.getElementById('services-container');
+                
+                if (services.length === 0) {
+                    servicesContainer.innerHTML = '<p>No services available at the moment.</p>';
+                    return;
+                }
+                
+                servicesContainer.innerHTML = '';
+                services.forEach(service => {
+                    const serviceCard = document.createElement('div');
+                    serviceCard.className = 'service-card';
+                    serviceCard.innerHTML = `
+                        <h3>${service.title || 'Service'}</h3>
+                        <p>${service.description || ''}</p>
+                        ${service.image ? `<img src="${backendUrl}${service.image}" alt="${service.title || 'Service Image'}">` : ''}
+                        ${service.video ? `<video src="${backendUrl}${service.video}" controls style="max-width:100%;"></video>` : ''}
+                    `;
+                    servicesContainer.appendChild(serviceCard);
+                });
+            } catch (error) {
+                console.error('Error fetching services:', error);
+                document.getElementById('services-container').innerHTML = `
+                    <div class="service-card">
+                        <h3>AI Strategy</h3>
+                        <p>Let us help you adopt AI solutions for your business</p>
+                    </div>
+                    <div class="service-card">
+                        <h3>Cloud Migration</h3>
+                        <p>Move your business to the cloud seamlessly</p>
+                    </div>
+                `;
+            }
+        }
     
-        // Initialize everything when DOM is loaded
+        async function fetchFooter() {
+            try {
+                const footerData = await fetchWithCORS(`${backendUrl}/api/content/footer`);
+                const footerSection = document.getElementById('footer-section');
+                
+                footerSection.innerHTML = `
+                    <p>${footerData.footerText || '© 2025 FutureTechTalent. All rights reserved.'}</p>
+                `;
+            } catch (error) {
+                console.error('Error fetching footer:', error);
+                document.getElementById('footer-section').innerHTML = `
+                    <p>© 2025 FutureTechTalent. All rights reserved.</p>
+                `;
+            }
+        }
+    
+        function initChat() {
+            const toggleBtn = document.getElementById('chat-toggle');
+            const chatWindow = document.getElementById('chat-window');
+            
+            toggleBtn.addEventListener('click', () => {
+                chatWindow.style.display = chatWindow.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            document.getElementById('send-button').addEventListener('click', sendMessage);
+            
+            function sendMessage() {
+                const input = document.getElementById('chat-input');
+                const message = input.value.trim();
+                if (message) {
+                    const messagesDiv = document.getElementById('chat-messages');
+                    messagesDiv.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+                    input.value = '';
+                    
+                    setTimeout(() => {
+                        messagesDiv.innerHTML += `<p><strong>Support:</strong> Thanks for your message! We'll get back to you soon.</p>`;
+                    }, 1000);
+                }
+            }
+        }
+    
+        // 3. Finally, initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             fetchHeader();
             fetchServices();
