@@ -50,12 +50,18 @@ mongoose.connect(MONGO_URI)
 const app = express();
 const port = process.env.PORT || 5000;
 
-// ✅ This must come before any routes!
-app.use(cors({
+
+// Configure CORS properly
+const corsOptions = {
   origin: 'https://my-website-backend-ixzh.onrender.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+
+// Your other middleware and routes.
 
 // Body parser, static files, and your routes
 app.use(express.json());
