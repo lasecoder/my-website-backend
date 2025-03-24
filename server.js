@@ -47,7 +47,7 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-const mongoose = require('mongoose');
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
