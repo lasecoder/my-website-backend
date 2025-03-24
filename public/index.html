@@ -103,84 +103,93 @@
     <!-- ✅ Fetch Data from MongoDB -->
     <script>
         const backendUrl = "https://my-backend-service.onrender.com";
-
-// Enhanced fetch function with error handling
-async function fetchWithCORS(url, options = {}) {
-  try {
-    const response = await fetch(url, {
-      ...options,
-      mode: 'cors',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Fetch error:', error);
-    throw error;
-  }
-}
-
-// Fetch and display content with retry logic
-async function fetchAndDisplayContent(section, elementId, retries = 3) {
-  try {
-    const { success, content } = await fetchWithCORS(
-      `${backendUrl}/api/content/${section}`
-    );
-
-    if (success && content) {
-      const displayElement = document.getElementById(elementId);
-      if (displayElement) {
-        displayElement.innerHTML = `
-          <h3>${content.title || ''}</h3>
-          <p>${content.description || content.footerText || ''}</p>
-          ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="${content.title}">` : ''}
-        `;
-      }
-    }
-  } catch (error) {
-    console.error(`❌ Error fetching ${section}:`, error);
-    if (retries > 0) {
-      console.log(`Retrying ${section} fetch... (${retries} attempts left)`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return fetchAndDisplayContent(section, elementId, retries - 1);
-    }
-    document.getElementById(elementId).innerHTML = `
-      <p class="error">Failed to load ${section} content. Please try again later.</p>
-    `;
-  }
-}
-
-// Initialize content loading
-document.addEventListener("DOMContentLoaded", function() {
-  // Load all sections
-  const sections = [
-    { id: 'header', element: 'header-display' },
-    { id: 'services', element: 'services-display' },
-    { id: 'footer', element: 'footer-display' }
-  ];
-
-  sections.forEach(({ id, element }) => {
-    fetchAndDisplayContent(id, element);
-  });
-
-  // Set up periodic refresh (every 30 seconds)
-  setInterval(() => {
-    sections.forEach(({ id, element }) => {
-      fetchAndDisplayContent(id, element);
-    });
-  }, 30000);
-});
+    
+        // Enhanced fetch function with error handling
+        async function fetchWithCORS(url, options = {}) {
+          try {
+            const response = await fetch(url, {
+              ...options,
+              mode: 'cors',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+              }
+            });
+    
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(
+                errorData.message || `HTTP error! status: ${response.status}`
+              );
+            }
+    
+            return await response.json();
+          } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
+          }
+        }
+    
+        // Update DOM elements with content
+        function updateContent(elementId, content) {
+          const element = document.getElementById(elementId);
+          if (element) {
+            if (typeof content === 'string') {
+              element.textContent = content;
+            } else if (content.title || content.description) {
+              element.innerHTML = `
+                ${content.title ? `<h2>${content.title}</h2>` : ''}
+                ${content.description ? `<p>${content.description}</p>` : ''}
+                ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="${content.title || 'Content image'}">` : ''}
+              `;
+            }
+          }
+        }
+    
+        // Fetch and display content with retry logic
+        async function fetchAndDisplayContent(section, elementId, retries = 3) {
+          try {
+            const { success, content } = await fetchWithCORS(
+              `${backendUrl}/api/content/${section}`
+            );
+    
+            if (success && content) {
+              updateContent(elementId, content);
+            }
+          } catch (error) {
+            console.error(`❌ Error fetching ${section}:`, error);
+            if (retries > 0) {
+              console.log(`Retrying ${section} fetch... (${retries} attempts left)`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              return fetchAndDisplayContent(section, elementId, retries - 1);
+            }
+            updateContent(elementId, { description: `Failed to load ${section} content. Please try again later.` });
+          }
+        }
+    
+        // Initialize content loading
+        document.addEventListener("DOMContentLoaded", function() {
+          // Content sections to load
+          const contentSections = [
+            { section: 'header', elementId: 'home-header-title' },
+            { section: 'intro', elementId: 'home-intro-text' },
+            { section: 'services', elementId: 'services-container' },
+            { section: 'footer', elementId: 'home-footer-text' }
+          ];
+    
+          // Load all sections
+          contentSections.forEach(({ section, elementId }) => {
+            fetchAndDisplayContent(section, elementId);
+          });
+    
+          // Set up periodic refresh (every 30 seconds)
+          setInterval(() => {
+            contentSections.forEach(({ section, elementId }) => {
+              fetchAndDisplayContent(section, elementId);
+            });
+          }, 10000);
+        });
     </script>
 </body>
 </html>
