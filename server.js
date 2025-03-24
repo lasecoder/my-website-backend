@@ -45,75 +45,104 @@ if (!MONGO_URI) {
 mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ Error connecting to MongoDB:", err));
-  
-  const app = express();
-  
-  // Enhanced CORS Configuration
-  const corsOptions = {
-    origin: [
-      'https://my-website-backend-ixzh.onrender.com',
-      'https://my-backend-service.onrender.com'
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    optionsSuccessStatus: 200
-  };
-  
-  // Apply CORS middleware
-  app.use(cors(corsOptions));
-  
-  // Handle preflight requests
-  app.options('*', cors(corsOptions));
-  
-  // Database Connection
-  mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false
-  })
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
-  
-  // API Routes
-  app.get('/api/content/:section', async (req, res) => {
-    try {
-      const { section } = req.params;
-      const content = await Content.findOne({ section }).sort({ updatedAt: -1 });
-      
-      if (!content) {
-        return res.status(404).json({ 
-          success: false, 
-          message: `${section} content not found` 
-        });
-      }
-      
-      // Set CORS headers manually for additional assurance
-      res.header('Access-Control-Allow-Origin', corsOptions.origin);
-      res.header('Access-Control-Allow-Methods', corsOptions.methods.join(','));
-      res.header('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(','));
-      
-      res.json({ success: true, content });
-    } catch (error) {
-      console.error(`Error fetching ${section}:`, error);
-      res.status(500).json({ 
-        success: false, 
-        error: error.message 
-      });
-    }
-  });
-  
-  // Error handling middleware
-  app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Internal server error' 
+
+// Initialize Express app
+const app = express();
+const port = process.env.PORT || 5000;
+
+// CORS Configuration
+app.use(cors({
+  origin: 'https://my-website-backend-ixzh.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+// Database Connection
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
+
+// Content Schema
+const contentSchema = new mongoose.Schema({
+  section: String,
+  title: String,
+  description: String,
+  imageUrl: String,
+  footerText: String,
+  updatedAt: { type: Date, default: Date.now }
+});
+const Content = mongoose.model('Content', contentSchema);
+
+// File Upload Configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
+// API Endpoints
+app.post('/api/content', upload.single('image'), async (req, res) => {
+  try {
+    const { section, title, description, footerText } = req.body;
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+    
+    const content = new Content({
+      section,
+      title,
+      description,
+      imageUrl,
+      footerText
     });
-  });
-  
- 
+    
+    await content.save();
+    res.status(201).json({ success: true, content });
+  } catch (error) {
+    console.error('Error saving content:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/content/:section', async (req, res) => {
+  try {
+    const { section } = req.params;
+    const content = await Content.findOne({ section }).sort({ updatedAt: -1 });
+    
+    if (!content) {
+      return res.status(404).json({ success: false, message: 'Content not found' });
+    }
+    
+    res.json({ success: true, content });
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Serve static files
+app.use('/uploads', express.static('uploads'));
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://my-website-backend-ixzh.onrender.com');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+// Serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Route to serve the main HTML file
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // ------------------------ Routes ------------------------
 
 // Homepage route
