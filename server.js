@@ -83,8 +83,6 @@ app.get('/api/content/header', (req, res) => {
 app.get('/api/content/footer', (req, res) => {
   res.json({ message: 'Footer content' });
 });
-///
-const cors = require('cors');
 
 // Allow requests from specific frontend origin
 app.use(cors({
