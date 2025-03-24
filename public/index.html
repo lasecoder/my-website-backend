@@ -104,81 +104,82 @@
     <script>
         const backendUrl = "https://my-backend-service.onrender.com";
 
-// Fetch and display content
-async function fetchAndDisplayContent(section, elementId) {
+// Enhanced fetch function with error handling
+async function fetchWithCORS(url, options = {}) {
   try {
-    const response = await fetch(`${backendUrl}/api/content/${section}`);
-    if (!response.ok) throw new Error('Failed to fetch content');
-    
-    const { success, content } = await response.json();
+    const response = await fetch(url, {
+      ...options,
+      mode: 'cors',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error;
+  }
+}
+
+// Fetch and display content with retry logic
+async function fetchAndDisplayContent(section, elementId, retries = 3) {
+  try {
+    const { success, content } = await fetchWithCORS(
+      `${backendUrl}/api/content/${section}`
+    );
+
     if (success && content) {
-      document.getElementById(elementId).innerHTML = `
-        <h3>${content.title || ''}</h3>
-        <p>${content.description || content.footerText || ''}</p>
-        ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="${content.title}">` : ''}
-      `;
+      const displayElement = document.getElementById(elementId);
+      if (displayElement) {
+        displayElement.innerHTML = `
+          <h3>${content.title || ''}</h3>
+          <p>${content.description || content.footerText || ''}</p>
+          ${content.imageUrl ? `<img src="${backendUrl}${content.imageUrl}" alt="${content.title}">` : ''}
+        `;
+      }
     }
   } catch (error) {
     console.error(`❌ Error fetching ${section}:`, error);
-  }
-}
-
-// Update content
-async function updateContent(section, title, description, image = null) {
-  try {
-    const formData = new FormData();
-    formData.append("section", section);
-    
-    if (section === "footer") {
-      formData.append("footerText", description);
-    } else {
-      formData.append("title", title);
-      formData.append("description", description);
-      if (image) formData.append("image", image);
+    if (retries > 0) {
+      console.log(`Retrying ${section} fetch... (${retries} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return fetchAndDisplayContent(section, elementId, retries - 1);
     }
-
-    const response = await fetch(`${backendUrl}/api/content`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) throw new Error("Failed to update content");
-
-    const data = await response.json();
-    console.log("✅ Server response:", data);
-    alert(`${section} updated successfully!`);
-    fetchAndDisplayContent(section, `${section}-display`);
-  } catch (error) {
-    console.error("❌ Error updating content:", error);
-    alert("Error updating content: " + error.message);
+    document.getElementById(elementId).innerHTML = `
+      <p class="error">Failed to load ${section} content. Please try again later.</p>
+    `;
   }
 }
 
-// Initialize on page load
+// Initialize content loading
 document.addEventListener("DOMContentLoaded", function() {
-  // Fetch and display all content
-  fetchAndDisplayContent('header', 'header-display');
-  fetchAndDisplayContent('services', 'services-display');
-  fetchAndDisplayContent('footer', 'footer-display');
+  // Load all sections
+  const sections = [
+    { id: 'header', element: 'header-display' },
+    { id: 'services', element: 'services-display' },
+    { id: 'footer', element: 'footer-display' }
+  ];
 
-  // Set up event listeners for update buttons
-  document.getElementById('update-header-btn')?.addEventListener('click', () => {
-    const title = document.getElementById('home-header-title').value;
-    const image = document.getElementById('home-header-image').files[0];
-    updateContent('header', title, '', image);
+  sections.forEach(({ id, element }) => {
+    fetchAndDisplayContent(id, element);
   });
 
-  document.getElementById('update-service1-btn')?.addEventListener('click', () => {
-    const title = document.getElementById('service1-title').value;
-    const description = document.getElementById('service1-description').value;
-    const image = document.getElementById('service1-image').files[0];
-    updateContent('services', title, description, image);
-  });
-
-  document.getElementById('update-footer-btn')?.addEventListener('click', () => {
-    const footerText = document.getElementById('home-footer-text').value;
-    updateContent('footer', '', footerText);
-  });
+  // Set up periodic refresh (every 30 seconds)
+  setInterval(() => {
+    sections.forEach(({ id, element }) => {
+      fetchAndDisplayContent(id, element);
+    });
+  }, 30000);
 });
     </script>
 </body>
