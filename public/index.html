@@ -4,37 +4,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FutureTechTalent - Business Solutions</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://kit.fontawesome.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
     <link rel="stylesheet" href="./css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
-    <style>
-        .loading {
-            opacity: 0.6;
-            position: relative;
-        }
-        .loading::after {
-            content: "Loading...";
-            position: absolute;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: #666;
-        }
-    </style>
+    
 </head>
 <body>
-    <!-- Your existing HTML content -->
+    <header>
+        <div class="container">
+            <div class="header-left">
+                <img id="logo" src="/images/default-logo.png" alt="Company Logo" style="display:none;">
+            </div>
+            <div class="register">
+                <button class="btn" onclick="location.href='login.html'">Login</button>
+                <button class="btn" onclick="location.href='signup.html'">Sign Up</button>
+            </div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search..." />
+                <button onclick="searchFunction()">🔍</button>
+            </div>
+            <div class="header-right">
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="vacancy.html">Vacancy</a></li>
+                        <li><a href="scholars.html">Scholarship</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="intro">
+            <h2 id="home-header-title" class=""></h2>
+            <p id="home-intro-text"></p>
+        </section>
+
+        <div id="home-content">
+            <p id="home-services-text"></p>
+        </div>
+
+        <section class="services">
+            <div id="services-container" class="">
+                <!-- Services will be loaded here -->
+            </div>
+        </section>
+
+        <section class="contact-cta">
+            <h2 id="home-cta-text">Let's Grow Your Business</h2>
+            <p>Contact us today to learn how we can help you succeed.</p>
+            <a id="home-cta-link" href="contact.html" class="button-primary">Get in Touch</a>
+        </section>
+        
+        <div id="chat-bot">
+            <button id="chat-toggle">💬 Chat with Us</button>
+            <div id="chat-window">
+                <p>Hi there! How can we help you today?</p>
+                <input type="text" id="chat-input" placeholder="Type your message...">
+                <div class="MessageComposer__ActionsWrapper-cxn0v1-3">
+                    <button id="send-button" aria-label="send message" class="SendButton__Button-rm6hl8-0" disabled>
+                        <svg width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="SendButton__SendIcon-rm6hl8-1">
+                            <defs>
+                                <path d="M21.158.222L2.568 11.815c-.8.498-.749 1.215.113 1.591l4.406 1.923 10.395-9.903c1.377-1.296 1.569-1.119.426.395L8.254 18.215v4.927c0 .953.5 1.141 1.113.418l4.473-5.282 5.055 2.207c.861.376 1.643-.092 1.736-1.04l1.81-18.404c.094-.949-.484-1.317-1.283-.819" id="send__a"></path>
+                            </defs>
+                            <use xlink:href="#send__a" fill-rule="evenodd"></use>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p id="home-footer-text" class=""></p>
+                </div>
+            </div>
+            <div class="social-media">
+                <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </footer>
 
     <script>
-      // Configuration and DOM elements
+      // Configuration
       const config = {
-        backendUrl: "",
-        refreshInterval: 30000,
+        backendUrl: "", // Same origin
         defaultContent: {
           header: {
-            title: "FutureTechTalent - Professional Business Solutions",
-            image: "/images/default-logo.png"
+            title: "",
+            image: "/uploads/default-logo.png"
           },
           services: [],
           footer: {
@@ -42,143 +111,96 @@
           }
         }
       };
-
-      // DOM elements and state
+    
+      // DOM Elements
       const elements = {
         headerTitle: document.getElementById("home-header-title"),
-        introText: document.getElementById("home-intro-text"),
-        servicesText: document.getElementById("home-services-text"),
         logo: document.getElementById("logo"),
         footerText: document.getElementById("home-footer-text"),
         servicesContainer: document.getElementById("services-container")
       };
-      
-      let refreshTimer;
-      let lastUpdateTime = 0;
-
-      // Safe fetch implementation
-      async function safeFetch(url) {
+    
+      // Enhanced fetch with error handling
+      async function safeFetch(url, options = {}) {
         try {
-          const response = await fetch(`${url}?t=${Date.now()}`);
-          if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+          const response = await fetch(url, options);
+          
+          // Check if response is HTML instead of JSON
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Expected JSON but got: ${contentType}`);
+          }
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error ${response.status}`);
+          }
+          
           return await response.json();
+          
         } catch (error) {
-          console.error('Fetch error:', error);
+          console.error(`API call to ${url} failed:`, error);
           throw error;
         }
       }
-
-      // Image handling
-      function createImageElement(src, alt, fallback) {
-        const img = new Image();
-        img.src = src;
-        img.alt = alt;
-        img.onerror = () => { img.src = fallback; };
-        return img;
-      }
-
-      // Service card template
-      function createServiceCard(service) {
-        const card = document.createElement('div');
-        card.className = 'service-card';
-        
-        const title = document.createElement('h2');
-        title.className = 'service-title';
-        title.textContent = service.title || 'Our Service';
-        
-        const img = createImageElement(
-          service.image || '/images/default-service.jpg',
-          service.title || 'Service',
-          '/images/default-service.jpg'
-        );
-        img.className = 'service-image';
-        
-        const desc = document.createElement('p');
-        desc.className = 'service-description';
-        desc.textContent = service.description || '';
-        
-        card.append(title, img, desc);
-        return card;
-      }
-
-      // Content rendering
-      async function renderContent() {
+    
+      // Load and display home content
+      async function loadHomeContent() {
         try {
-          const data = await safeFetch('/api/home-content');
-          const content = data.data || data;
+          // Try to fetch fresh content
+          const response = await safeFetch('/api/home-content');
+          const content = response.data || response; // Handle both formats
           
-          // Update text content
+          // Update header
           elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+          elements.logo.src = content.header?.image || config.defaultContent.header.image;
+          elements.logo.style.display = "block";
+          
+          // Update services
+          if (Array.isArray(content.services)) {
+            renderServices(content.services);
+          } else {
+            renderServices(config.defaultContent.services);
+          }
+          
+          // Update footer
           elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
           
-          // Update logo
-          const logoImg = createImageElement(
-            content.header?.image || config.defaultContent.header.image,
-            'Company Logo',
-            config.defaultContent.header.image
-          );
-          elements.logo.replaceWith(logoImg);
-          elements.logo = logoImg;
-          logoImg.style.display = 'block';
-          
-          // Render services
-          elements.servicesContainer.innerHTML = '';
-          const services = Array.isArray(content.services) ? content.services : config.defaultContent.services;
-          services.forEach(service => {
-            elements.servicesContainer.appendChild(createServiceCard(service));
-          });
-          
         } catch (error) {
-          console.error('Rendering fallback content');
-          // Fallback rendering
+          console.error('Using default content due to error:', error);
+          // Fallback to default content
           elements.headerTitle.textContent = config.defaultContent.header.title;
+          elements.logo.src = config.defaultContent.header.image;
+          elements.logo.style.display = "block";
+          renderServices(config.defaultContent.services);
           elements.footerText.textContent = config.defaultContent.footer.footerText;
-          
-          const logoImg = createImageElement(
-            config.defaultContent.header.image,
-            'Company Logo',
-            config.defaultContent.header.image
-          );
-          elements.logo.replaceWith(logoImg);
-          elements.logo = logoImg;
-          logoImg.style.display = 'block';
-          
-          elements.servicesContainer.innerHTML = '';
-          config.defaultContent.services.forEach(service => {
-            elements.servicesContainer.appendChild(createServiceCard(service));
-          });
         }
       }
-
-      // Auto-refresh
-      function setupAutoRefresh() {
-        const refresh = () => {
-          renderContent();
-          lastUpdateTime = Date.now();
-        };
+    
+      // Render services list
+      function renderServices(services) {
+        if (!services || services.length === 0) {
+          elements.servicesContainer.innerHTML = '<p>No services available</p>';
+          return;
+        }
         
-        // Initial refresh
-        refresh();
-        
-        // Periodic refresh
-        refreshTimer = setInterval(refresh, config.refreshInterval);
-        
-        // Refresh when tab becomes visible
-        document.addEventListener('visibilitychange', () => {
-          if (!document.hidden && Date.now() - lastUpdateTime > config.refreshInterval) {
-            refresh();
-          }
-        });
+        elements.servicesContainer.innerHTML = services.map(service => `
+          <div class="service-card">
+            <h2 class="service-title">${service.title || 'Our Service'}</h2>
+            <img src="${service.image || '/images/default-service.jpg'}" 
+                 alt="${service.title || 'Service'}"
+                 class="service-image"
+                 onerror="this.src='/images/default-service.jpg'">
+            <p class="service-description">${service.description || ''}</p>
+          </div>
+        `).join('');
       }
-
-      // Initialize
-      document.addEventListener('DOMContentLoaded', () => {
-        setupAutoRefresh();
-      });
-
-      // Cleanup
-      window.addEventListener('beforeunload', () => {
-        clearInterval(refreshTimer);
+      
+    
+      // Initialize page
+      window.addEventListener('DOMContentLoaded', () => {
+        loadHomeContent();
       });
     </script>
 </body>
