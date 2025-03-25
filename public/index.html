@@ -7,7 +7,20 @@
     <link rel="stylesheet" href="./css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
-    
+    <style>
+        .loading {
+            opacity: 0.6;
+            position: relative;
+        }
+        .loading::after {
+            content: "Loading...";
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -41,16 +54,16 @@
 
     <main class="container">
         <section class="intro">
-            <h2 id="home-header-title" class=""></h2>
-            <p id="home-intro-text"></p>
+            <h2 id="home-header-title" class="loading"></h2>
+            <p id="home-intro-text" class="loading"></p>
         </section>
 
         <div id="home-content">
-            <p id="home-services-text"></p>
+            <p id="home-services-text" class="loading"></p>
         </div>
 
         <section class="services">
-            <div id="services-container" class="">
+            <div id="services-container" class="services-container loading">
                 <!-- Services will be loaded here -->
             </div>
         </section>
@@ -84,7 +97,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-left">
-                    <p id="home-footer-text" class=""></p>
+                    <p id="home-footer-text" class="loading"></p>
                 </div>
             </div>
             <div class="social-media">
@@ -100,10 +113,11 @@
       // Configuration
       const config = {
         backendUrl: "", // Same origin
+        refreshInterval: 30000, // 30 seconds
         defaultContent: {
           header: {
-            title: "",
-            image: "/uploads/default-logo.png"
+            title: "FutureTechTalent - Professional Business Solutions",
+            image: "/images/default-logo.png"
           },
           services: [],
           footer: {
@@ -115,17 +129,26 @@
       // DOM Elements
       const elements = {
         headerTitle: document.getElementById("home-header-title"),
+        introText: document.getElementById("home-intro-text"),
+        servicesText: document.getElementById("home-services-text"),
         logo: document.getElementById("logo"),
         footerText: document.getElementById("home-footer-text"),
         servicesContainer: document.getElementById("services-container")
       };
-    
-      // Enhanced fetch with error handling
+      
+      let refreshTimer;
+      let lastUpdateTime = 0;
+
+      // Enhanced fetch with error handling and cache busting
       async function safeFetch(url, options = {}) {
         try {
+          // Add cache busting parameter
+          const cacheBuster = `t=${Date.now()}`;
+          url += (url.includes('?') ? '&' : '?') + cacheBuster;
+          
           const response = await fetch(url, options);
           
-          // Check if response is HTML instead of JSON
+          // Check if response is JSON
           const contentType = response.headers.get('content-type');
           if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
@@ -137,25 +160,62 @@
             throw new Error(errorData.message || `HTTP error ${response.status}`);
           }
           
-          return await response.json();
+          const data = await response.json();
+          lastUpdateTime = Date.now();
+          return data;
           
         } catch (error) {
           console.error(`API call to ${url} failed:`, error);
           throw error;
         }
       }
-    
+      
+      // Remove loading state
+      function removeLoadingState() {
+        document.querySelectorAll('.loading').forEach(el => {
+          el.classList.remove('loading');
+        });
+      }
+      
+      // Format image URL to ensure proper path
+      function formatImageUrl(url) {
+        if (!url) return config.defaultContent.header.image;
+        // Add leading slash if missing
+        if (!url.startsWith('/') && !url.startsWith('http')) {
+          return '/' + url;
+        }
+        return url;
+      }
+
       // Load and display home content
       async function loadHomeContent() {
         try {
+          // Show loading states
+          elements.headerTitle.classList.add('loading');
+          elements.servicesContainer.classList.add('loading');
+          
           // Try to fetch fresh content
           const response = await safeFetch('/api/home-content');
           const content = response.data || response; // Handle both formats
           
           // Update header
           elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-          elements.logo.src = content.header?.image || config.defaultContent.header.image;
+          const logoUrl = formatImageUrl(content.header?.image);
+          elements.logo.src = logoUrl;
           elements.logo.style.display = "block";
+          elements.logo.onerror = () => {
+            elements.logo.src = config.defaultContent.header.image;
+          };
+          
+          // Update intro text if available
+          if (content.intro?.text) {
+            elements.introText.textContent = content.intro.text;
+          }
+          
+          // Update services text if available
+          if (content.servicesText) {
+            elements.servicesText.textContent = content.servicesText;
+          }
           
           // Update services
           if (Array.isArray(content.services)) {
@@ -167,6 +227,8 @@
           // Update footer
           elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
           
+          removeLoadingState();
+          
         } catch (error) {
           console.error('Using default content due to error:', error);
           // Fallback to default content
@@ -175,9 +237,27 @@
           elements.logo.style.display = "block";
           renderServices(config.defaultContent.services);
           elements.footerText.textContent = config.defaultContent.footer.footerText;
+          
+          removeLoadingState();
+          
+          // Show error to user
+          showToast('Failed to load latest content. Showing cached version.', 'error');
         }
       }
-    
+      
+      // Show toast message
+      function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.classList.add('fade-out');
+          setTimeout(() => toast.remove(), 500);
+        }, 3000);
+      }
+
       // Render services list
       function renderServices(services) {
         if (!services || services.length === 0) {
@@ -188,7 +268,7 @@
         elements.servicesContainer.innerHTML = services.map(service => `
           <div class="service-card">
             <h2 class="service-title">${service.title || 'Our Service'}</h2>
-            <img src="${service.image || '/images/default-service.jpg'}" 
+            <img src="${formatImageUrl(service.image) || '/images/default-service.jpg'}" 
                  alt="${service.title || 'Service'}"
                  class="service-image"
                  onerror="this.src='/images/default-service.jpg'">
@@ -197,11 +277,75 @@
         `).join('');
       }
       
-    
+      // Start auto-refresh
+      function startAutoRefresh() {
+        refreshTimer = setInterval(() => {
+          loadHomeContent();
+        }, config.refreshInterval);
+        
+        // Also refresh when page becomes visible again
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden && Date.now() - lastUpdateTime > config.refreshInterval) {
+            loadHomeContent();
+          }
+        });
+      }
+      
+      // Stop auto-refresh
+      function stopAutoRefresh() {
+        if (refreshTimer) {
+          clearInterval(refreshTimer);
+        }
+      }
+
       // Initialize page
       window.addEventListener('DOMContentLoaded', () => {
         loadHomeContent();
+        startAutoRefresh();
+      });
+      
+      // Clean up on page unload
+      window.addEventListener('beforeunload', () => {
+        stopAutoRefresh();
       });
     </script>
+    
+    <style>
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 4px;
+            color: white;
+            z-index: 1000;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .toast-info {
+            background-color: #002147;
+        }
+        
+        .toast-error {
+            background-color: #d32f2f;
+        }
+        
+        .fade-out {
+            animation: fadeOut 0.5s ease-out;
+            opacity: 0;
+        }
+        
+        @keyframes slideIn {
+            from { bottom: -50px; opacity: 0; }
+            to { bottom: 20px; opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
 </body>
 </html>
