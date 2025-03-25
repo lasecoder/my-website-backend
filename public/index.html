@@ -208,6 +208,47 @@
           </div>
         `).join('');
       }
+      // Modify your safeFetch function to include cache-busting
+async function safeFetch(url, options = {}) {
+    // Add timestamp to prevent caching
+    const cacheBuster = `_=${Date.now()}`;
+    url += (url.includes('?') ? '&' : '?') + cacheBuster;
+    
+    try {
+        const response = await fetch(url, options);
+        // ... rest of your existing code ...
+    } catch (error) {
+        console.error(`API call to ${url} failed:`, error);
+        throw error;
+    }
+}
+// Add this to your script section
+let refreshInterval;
+
+function startContentRefresh(interval = 30000) { // 30 seconds by default
+    refreshInterval = setInterval(loadHomeContent, interval);
+}
+
+function stopContentRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+}
+
+// Initialize with refresh
+window.addEventListener('DOMContentLoaded', () => {
+    loadHomeContent();
+    startContentRefresh();
+});
+
+// Optionally stop when tab is inactive
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopContentRefresh();
+    } else {
+        startContentRefresh();
+    }
+});
     
       // Initialize page
       window.addEventListener('DOMContentLoaded', () => {
