@@ -70,7 +70,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
-
+// Simple test route - add this temporarily
+app.get('/api/test', (req, res) => {
+  res.json({ message: "API is working", timestamp: new Date() });
+});
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -114,7 +117,34 @@ app.put('/api/header', async (req, res) => {
     res.status(500).json({ message: "Error updating header text", error: error.message });
   }
 });
-
+app.get('/api/content/header', async (req, res) => {
+  try {
+    // Try to get header from database
+    const header = await Header.findOne();
+    
+    // If no header exists, create a default one
+    if (!header) {
+      return res.json({
+        title: "Welcome to Our Site",
+        image: "/uploads/default-logo.png"
+      });
+    }
+    
+    // Return the found header
+    res.json({
+      title: header.title,
+      image: header.logoUrl || "/uploads/default-logo.png"
+    });
+    
+  } catch (error) {
+    console.error('Header endpoint error:', error);
+    // Always return JSON, even in error cases
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
+  }
+});
 // Footer endpoints
 app.get('/api/content/footer', async (req, res) => {
   try {
