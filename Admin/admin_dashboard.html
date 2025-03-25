@@ -171,14 +171,8 @@
       }
       </style>
   <script>
- 
-  const backendUrl = ""; // Empty for same-origin
+  const backendUrl = "https://my-website-backend-ixzh.onrender.com"; // Use your Render backend URL
 
-// Then update all fetch calls to use relative paths:
-fetch("/api/content", {
-  method: "POST",
-  body: formData
-});
     async function updateContent(section, title, description, image = null) {
       try {
         const formData = new FormData();
