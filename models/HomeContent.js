@@ -1,19 +1,42 @@
+// models/HomeContent.js
 const mongoose = require('mongoose');
 
 const HomeContentSchema = new mongoose.Schema({
   header: {
-    title: String,
+    title: {
+      type: String,
+      default: "FutureTechTalent - Professional Business Solutions"
+    },
     content: String,
-    image: String
+    image: {
+      type: String,
+      default: "/uploads/default-logo.png"
+    }
   },
   services: [{
     title: String,
     description: String,
-    image: String
+    image: String,
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
   }],
   footer: {
-    footerText: String
+    footerText: {
+      type: String,
+      default: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+    }
   }
-});
+}, { timestamps: true });
+
+// Add static methods
+HomeContentSchema.statics.findOrCreate = async function() {
+  let content = await this.findOne();
+  if (!content) {
+    content = await this.create({});
+  }
+  return content;
+};
 
 module.exports = mongoose.model('HomeContent', HomeContentSchema);

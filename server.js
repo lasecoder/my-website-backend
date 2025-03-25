@@ -96,7 +96,48 @@ app.get('/api/header', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch header' });
   }
 });
+// Update these routes in your server.js
 
+// Get complete home content
+app.get('/api/home-content', async (req, res) => {
+  try {
+    const content = await HomeContent.findOne();
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    res.json(content);
+  } catch (error) {
+    console.error('Error fetching home content:', error);
+    res.status(500).json({ message: 'Failed to fetch content' });
+  }
+});
+
+// Update header content
+app.put('/api/content/header', upload.single('image'), async (req, res) => {
+  try {
+    const { title } = req.body;
+    const image = req.file ? req.file.path : null;
+
+    const update = {
+      'header.title': title,
+      ...(image && { 'header.image': image })
+    };
+
+    const content = await HomeContent.findOneAndUpdate(
+      {},
+      update,
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      success: true,
+      data: content.header
+    });
+  } catch (error) {
+    console.error('Error updating header:', error);
+    res.status(500).json({ error: 'Failed to update header' });
+  }
+});
 app.put('/api/header', async (req, res) => {
   const { headerText } = req.body;
 

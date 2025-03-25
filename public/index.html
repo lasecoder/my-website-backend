@@ -109,166 +109,110 @@
     </footer>
 
     <script>
-        // Configuration
-        const config = {
-            backendUrl: "", // Same-origin since frontend/backend are together
-            defaultLogo: "/images/default-logo.png",
-            defaultServices: [
-                {
-                    title: "AI Strategy",
-                    description: "Let us help you adopt AI",
-                    image: "/images/default-service1.jpg"
-                },
-                {
-                    title: "Cloud Migration",
-                    description: "Move to the cloud seamlessly", 
-                    image: "/images/default-service2.jpg"
-                }
-            ]
-        };
-
-        // DOM Elements
-        const elements = {
-            headerTitle: document.getElementById("home-header-title"),
-            logo: document.getElementById("logo"),
-            footerText: document.getElementById("home-footer-text"),
-            servicesContainer: document.getElementById("services-container")
-        };
-
-        // Enhanced fetch with timeout and retries
-        async function safeFetch(endpoint, options = {}, timeout = 8000) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-            try {
-                const response = await fetch(`${config.backendUrl}${endpoint}`, {
-                    ...options,
-                    signal: controller.signal,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    }
-                });
-
-                clearTimeout(timeoutId);
-
-                // Verify JSON response
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const text = await response.text();
-                    console.error(`Expected JSON but got: ${contentType}`, text.substring(0, 100));
-                    throw new Error('Invalid content type');
-                }
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `HTTP error ${response.status}`);
-                }
-
-                return await response.json();
-
-            } catch (error) {
-                clearTimeout(timeoutId);
-                console.error(`API call failed to ${endpoint}:`, error);
-                throw error;
-            }
+      // Configuration
+      const config = {
+        backendUrl: "", // Same origin
+        defaultContent: {
+          header: {
+            title: "FutureTechTalent - Professional Business Solutions",
+            image: "/uploads/default-logo.png"
+          },
+          services: [],
+          footer: {
+            footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+          }
         }
-
-        // Content Loaders with Error Handling
-        async function loadHeader() {
-            try {
-                const data = await safeFetch('/api/content/header');
-                
-                elements.headerTitle.textContent = data.title || "Welcome to FutureTechTalent";
-                elements.headerTitle.classList.remove("loading");
-                
-                if (data.image) {
-                    elements.logo.src = data.image;
-                    elements.logo.style.display = "block";
-                } else {
-                    elements.logo.src = config.defaultLogo;
-                }
-                
-            } catch (error) {
-                console.error('Using default header due to error:', error);
-                elements.headerTitle.textContent = "Welcome to FutureTechTalent";
-                elements.headerTitle.classList.remove("loading");
-                elements.logo.src = config.defaultLogo;
-                elements.logo.style.display = "block";
-            }
+      };
+    
+      // DOM Elements
+      const elements = {
+        headerTitle: document.getElementById("home-header-title"),
+        logo: document.getElementById("logo"),
+        footerText: document.getElementById("home-footer-text"),
+        servicesContainer: document.getElementById("services-container")
+      };
+    
+      // Enhanced fetch with error handling
+      async function safeFetch(url, options = {}) {
+        try {
+          const response = await fetch(url, options);
+          
+          // Check if response is HTML instead of JSON
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Expected JSON but got: ${contentType}`);
+          }
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error ${response.status}`);
+          }
+          
+          return await response.json();
+          
+        } catch (error) {
+          console.error(`API call to ${url} failed:`, error);
+          throw error;
         }
-
-        async function loadFooter() {
-            try {
-                const data = await safeFetch('/api/content/footer');
-                elements.footerText.textContent = data.footerText || "© 2025 FutureTechTalent. All Rights Reserved.";
-                elements.footerText.classList.remove("loading");
-            } catch (error) {
-                console.error('Using default footer due to error:', error);
-                elements.footerText.textContent = "© 2025 FutureTechTalent. All Rights Reserved.";
-                elements.footerText.classList.remove("loading");
-            }
+      }
+    
+      // Load and display home content
+      async function loadHomeContent() {
+        try {
+          // Try to fetch fresh content
+          const response = await safeFetch('/api/home-content');
+          const content = response.data || response; // Handle both formats
+          
+          // Update header
+          elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+          elements.logo.src = content.header?.image || config.defaultContent.header.image;
+          elements.logo.style.display = "block";
+          
+          // Update services
+          if (Array.isArray(content.services)) {
+            renderServices(content.services);
+          } else {
+            renderServices(config.defaultContent.services);
+          }
+          
+          // Update footer
+          elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+          
+        } catch (error) {
+          console.error('Using default content due to error:', error);
+          // Fallback to default content
+          elements.headerTitle.textContent = config.defaultContent.header.title;
+          elements.logo.src = config.defaultContent.header.image;
+          elements.logo.style.display = "block";
+          renderServices(config.defaultContent.services);
+          elements.footerText.textContent = config.defaultContent.footer.footerText;
         }
-
-        async function loadServices() {
-            try {
-                let services = await safeFetch('/api/services');
-                
-                // Ensure we have valid services data
-                if (!Array.isArray(services)) {
-                    throw new Error('Invalid services data format');
-                }
-                
-                if (services.length === 0) {
-                    services = config.defaultServices;
-                }
-                
-                renderServices(services);
-                
-            } catch (error) {
-                console.error('Using default services due to error:', error);
-                renderServices(config.defaultServices);
-            }
+      }
+    
+      // Render services list
+      function renderServices(services) {
+        if (!services || services.length === 0) {
+          elements.servicesContainer.innerHTML = '<p>No services available</p>';
+          return;
         }
-
-        function renderServices(services) {
-            elements.servicesContainer.innerHTML = services.map(service => `
-                <div class="service-card">
-                    <h2 class="service-title">${service.title || 'Our Service'}</h2>
-                    <img src="${service.image || '/images/default-service.jpg'}" 
-                         alt="${service.title || 'Service Image'}"
-                         class="service-image"
-                         onerror="this.src='/images/default-service.jpg'">
-                    <p class="service-description">${service.description || ''}</p>
-                </div>
-            `).join('');
-            
-            elements.servicesContainer.classList.remove("loading");
-        }
-
-        // Initialize Page
-        async function initializePage() {
-            try {
-                // Load all content in parallel
-                await Promise.all([
-                    loadHeader(),
-                    loadFooter(),
-                    loadServices()
-                ]);
-            } catch (error) {
-                console.error('Page initialization error:', error);
-            }
-        }
-
-        // Start when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializePage);
-
-        // Search function (placeholder)
-        function searchFunction() {
-            const searchTerm = document.getElementById("searchInput").value;
-            console.log("Searching for:", searchTerm);
-            // Implement your search functionality here
-        }
+        
+        elements.servicesContainer.innerHTML = services.map(service => `
+          <div class="service-card">
+            <h2 class="service-title">${service.title || 'Our Service'}</h2>
+            <img src="${service.image || '/images/default-service.jpg'}" 
+                 alt="${service.title || 'Service'}"
+                 class="service-image"
+                 onerror="this.src='/images/default-service.jpg'">
+            <p class="service-description">${service.description || ''}</p>
+          </div>
+        `).join('');
+      }
+    
+      // Initialize page
+      window.addEventListener('DOMContentLoaded', () => {
+        loadHomeContent();
+      });
     </script>
 </body>
 </html>
