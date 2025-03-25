@@ -109,6 +109,57 @@
     </footer>
 
     <script>
+      async function loadHomeContent() {
+    try {
+        // Try to fetch fresh content
+        const response = await safeFetch('/api/home-content');
+        
+        // Handle different response formats
+        let content;
+        if (response && typeof response === 'object') {
+            content = response.data || response; // Handle both {data: {...}} and direct response
+        } else {
+            throw new Error('Invalid response format');
+        }
+
+        // Update header
+        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+        elements.headerTitle.classList.remove('loading');
+        
+        if (content.header?.image) {
+            elements.logo.src = content.header.image;
+            elements.logo.style.display = "block";
+        } else {
+            elements.logo.src = config.defaultContent.header.image;
+            elements.logo.style.display = "block";
+        }
+        
+        // Update services
+        if (content.services && Array.isArray(content.services)) {
+            renderServices(content.services);
+        } else {
+            renderServices(config.defaultContent.services);
+        }
+        
+        // Update footer
+        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+        elements.footerText.classList.remove('loading');
+        
+    } catch (error) {
+        console.error('Error loading content:', error);
+        // Fallback to default content
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.headerTitle.classList.remove('loading');
+        
+        elements.logo.src = config.defaultContent.header.image;
+        elements.logo.style.display = "block";
+        
+        renderServices(config.defaultContent.services);
+        
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+        elements.footerText.classList.remove('loading');
+    }
+}
       // Configuration
       const config = {
         backendUrl: "", // Same origin
@@ -157,39 +208,7 @@
         }
       }
     
-      // Load and display home content
-      async function loadHomeContent() {
-        try {
-          // Try to fetch fresh content
-          const response = await safeFetch('/api/home-content');
-          const content = response.data || response; // Handle both formats
-          
-          // Update header
-          elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-          elements.logo.src = content.header?.image || config.defaultContent.header.image;
-          elements.logo.style.display = "block";
-          
-          // Update services
-          if (Array.isArray(content.services)) {
-            renderServices(content.services);
-          } else {
-            renderServices(config.defaultContent.services);
-          }
-          
-          // Update footer
-          elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
-          
-        } catch (error) {
-          console.error('Using default content due to error:', error);
-          // Fallback to default content
-          elements.headerTitle.textContent = config.defaultContent.header.title;
-          elements.logo.src = config.defaultContent.header.image;
-          elements.logo.style.display = "block";
-          renderServices(config.defaultContent.services);
-          elements.footerText.textContent = config.defaultContent.footer.footerText;
-        }
-      }
-    
+      
       // Render services list
       function renderServices(services) {
         if (!services || services.length === 0) {
