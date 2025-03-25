@@ -74,7 +74,26 @@ app.get('/api/services', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+// In your server.js, ensure all API routes:
+// 1. Start with /api
+// 2. Return proper JSON responses
+// 3. Have error handling
 
+app.get('/api/content/header', async (req, res) => {
+  try {
+    const header = await Header.findOne();
+    if (!header) {
+      return res.status(404).json({ error: 'Header not found' });
+    }
+    res.json({
+      title: header.title,
+      image: header.logoUrl
+    });
+  } catch (error) {
+    console.error('Error fetching header:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 
 app.use((req, res, next) => {

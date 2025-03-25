@@ -102,88 +102,86 @@
 
     <!-- ✅ Fetch Data from MongoDB -->
     <script>
-        fetch("/api/content/header")  // Now uses same origin
-  .then(response => response.json())
-  .then(data => {
-    // Update your DOM
-  });
-        // Function to fetch and update header data
+        // Define backendUrl at the top (empty for same-origin)
+        const backendUrl = "";
+      
         async function fetchContent() {
-            try {
-                const response = await fetch(`${backendUrl}/api/content/header`);
-                if (!response.ok) throw new Error("Failed to fetch header");
-
-                const data = await response.json();
-
-                // ✅ Update header title
-                if (document.getElementById("home-header-title"))
-                    document.getElementById("home-header-title").innerText = data.title || "Welcome!";
-
-                // ✅ Update logo image
-                const logoElement = document.getElementById("logo");
-                if (logoElement && data.image) {
-                    logoElement.src = `${backendUrl}/${data.image}`;
-                    logoElement.style.display = "block";
-                } else {
-                    console.warn("⚠️ No image found for header.");
-                    if (logoElement) logoElement.style.display = "none";
-                }
-            } catch (error) {
-                console.error("❌ Error fetching header:", error);
+          try {
+            const response = await fetch(`${backendUrl}/api/content/header`);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
+            const data = await response.json();
+            
+            if (document.getElementById("home-header-title")) {
+              document.getElementById("home-header-title").innerText = data.title || "Welcome!";
+            }
+            
+            const logoElement = document.getElementById("logo");
+            if (logoElement) {
+              if (data.image) {
+                logoElement.src = data.image;
+                logoElement.style.display = "block";
+              } else {
+                logoElement.style.display = "none";
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching header:", error);
+          }
         }
-
-        // Function to fetch and display services
+      
         async function fetchServices() {
-            try {
-                const response = await axios.get(`${backendUrl}/api/services`);
-                const services = response.data;
-
-                if (!Array.isArray(services)) throw new Error("Invalid service data");
-
-                const servicesContainer = document.getElementById("services-container");
-                servicesContainer.innerHTML = "";
-
-                services.forEach(service => {
-                    const serviceCard = document.createElement("div");
-                    serviceCard.classList.add("service-card");
-
-                    serviceCard.innerHTML = `
-                        <h2 class="service-title">${service.title}</h2>
-                        <img src="${backendUrl}/${service.image}" alt="${service.title}" class="service-image">
-                        <p class="service-description">${service.description}</p>
-                    `;
-
-                    servicesContainer.appendChild(serviceCard);
-                });
-            } catch (error) {
-                console.error("❌ Error fetching services:", error);
+          try {
+            const response = await fetch(`${backendUrl}/api/services`);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
+            const services = await response.json();
+            
+            const servicesContainer = document.getElementById("services-container");
+            if (servicesContainer) {
+              servicesContainer.innerHTML = "";
+              
+              services.forEach(service => {
+                const serviceCard = document.createElement("div");
+                serviceCard.classList.add("service-card");
+                serviceCard.innerHTML = `
+                  <h2 class="service-title">${service.title}</h2>
+                  <img src="${service.image}" alt="${service.title}" class="service-image">
+                  <p class="service-description">${service.description}</p>
+                `;
+                servicesContainer.appendChild(serviceCard);
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching services:", error);
+          }
         }
-
-        // Function to fetch footer content
-        function fetchFooter() {
-            fetch(`${backendUrl}/api/content/footer`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Footer API failed with status ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.footerText) {
-                        document.getElementById("home-footer-text").textContent = data.footerText;
-                    }
-                })
-                .catch(error => console.error("❌ Error fetching footer:", error));
+      
+        async function fetchFooter() {
+          try {
+            const response = await fetch(`${backendUrl}/api/content/footer`);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            const footerTextElement = document.getElementById("home-footer-text");
+            if (footerTextElement && data.footerText) {
+              footerTextElement.textContent = data.footerText;
+            }
+          } catch (error) {
+            console.error("Error fetching footer:", error);
+          }
         }
-
+      
         // Run all functions on page load
         window.onload = function() {
-            fetchContent();
-            fetchServices();
-            fetchFooter();
+          fetchContent();
+          fetchServices();
+          fetchFooter();
         };
-    </script>
+      </script>
 </body>
 </html>
