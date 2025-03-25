@@ -9,7 +9,6 @@ const dotenv = require('dotenv');
 
 // Load environment variables
 dotenv.config();
-
 // Models
 const HomeContent = require('./models/HomeContent');
 const User = require('./models/User');
@@ -23,9 +22,6 @@ const Header = require("./models/Header");
 const Logo = require('./models/Logo');
 const Message = require('./models/Message');
 const Vacancy = require('./models/Vacancy');
-const ScholarHeader = require('./models/ScholarHeader');
-const ScholarFooter = require('./models/ScholarFooter');
-
 // Create upload directories
 const uploadDir = 'uploads';
 const imageDir = `${uploadDir}/images`;
