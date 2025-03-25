@@ -66,6 +66,110 @@
       </form>
     </section>
   </div>
+  ,<style>/* Reset */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      /* Overall Layout */
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        background-color: #f4f4f9;
+      }
+      
+      /* Sidebar */
+      .sidebar {
+        width: 250px;
+        background-color: #2d3a3f;
+        color: #fff;
+        height: 100vh;
+        padding: 20px;
+        position: fixed;
+        left: 0;
+        top: 0;
+      }
+      
+      .sidebar h3 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      
+      .sidebar ul {
+        list-style: none;
+        padding: 0;
+      }
+      
+      .sidebar ul li {
+        margin: 15px 0;
+      }
+      
+      .sidebar ul li a {
+        color: #fff;
+        text-decoration: none;
+        padding: 10px;
+        display: block;
+        transition: background-color 0.3s;
+      }
+      
+      .sidebar ul li a:hover {
+        background-color: #1d2629;
+      }
+      
+      /* Main Content */
+      .main-content {
+        margin-left: 270px;
+        padding: 20px;
+        width: 100%;
+      }
+      
+      /* Section Styles */
+      section {
+        margin-bottom: 40px;
+      }
+      
+      h2 {
+        margin-bottom: 20px;
+        color: #333;
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      
+      input[type="text"],
+      input[type="url"],
+      textarea {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      
+      textarea {
+        resize: vertical;
+      }
+      
+      button {
+        background-color: #002147;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+      
+      button:hover {
+        background-color: #002147;
+      }
+      </style>
   <script>
   const backendUrl = "https://my-website-backend-ixzh.onrender.com"; // Use your Render backend URL
 
