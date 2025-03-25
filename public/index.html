@@ -109,70 +109,6 @@
     </footer>
 
     <script>
-      async function loadHomeContent() {
-    try {
-        const response = await safeFetch('/api/home-content');
-        
-        // More robust response handling
-        let content;
-        if (!response) {
-            throw new Error('Empty response from server');
-        }
-
-        // Handle both response formats
-        if (response.data !== undefined) {
-            content = response.data;
-        } else {
-            content = response;
-        }
-
-        // Validate content structure
-        if (typeof content !== 'object' || content === null) {
-            throw new Error('Invalid content format');
-        }
-
-        // Update header
-        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-        elements.headerTitle.classList.remove('loading');
-        
-        // Update logo
-        elements.logo.src = content.header?.image || config.defaultContent.header.image;
-        elements.logo.style.display = "block";
-        
-        // Update services
-        renderServices(content.services || config.defaultContent.services);
-        
-        // Update footer
-        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
-        elements.footerText.classList.remove('loading');
-        
-    } catch (error) {
-        console.error('Error loading content:', error);
-        // Fallback to default content
-        elements.headerTitle.textContent = config.defaultContent.header.title;
-        elements.headerTitle.classList.remove('loading');
-        
-        elements.logo.src = config.defaultContent.header.image;
-        elements.logo.style.display = "block";
-        
-        renderServices(config.defaultContent.services);
-        
-        elements.footerText.textContent = config.defaultContent.footer.footerText;
-        elements.footerText.classList.remove('loading');
-        
-        // Optional: Show error to user
-        showToastMessage('Could not load latest content. Showing cached version.');
-    }
-}
-
-// Helper function to show user feedback
-function showToastMessage(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-message';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
       // Configuration
       const config = {
         backendUrl: "", // Same origin
@@ -221,7 +157,39 @@ function showToastMessage(message) {
         }
       }
     
-      
+      // Load and display home content
+      async function loadHomeContent() {
+        try {
+          // Try to fetch fresh content
+          const response = await safeFetch('/api/home-content');
+          const content = response.data || response; // Handle both formats
+          
+          // Update header
+          elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+          elements.logo.src = content.header?.image || config.defaultContent.header.image;
+          elements.logo.style.display = "block";
+          
+          // Update services
+          if (Array.isArray(content.services)) {
+            renderServices(content.services);
+          } else {
+            renderServices(config.defaultContent.services);
+          }
+          
+          // Update footer
+          elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+          
+        } catch (error) {
+          console.error('Using default content due to error:', error);
+          // Fallback to default content
+          elements.headerTitle.textContent = config.defaultContent.header.title;
+          elements.logo.src = config.defaultContent.header.image;
+          elements.logo.style.display = "block";
+          renderServices(config.defaultContent.services);
+          elements.footerText.textContent = config.defaultContent.footer.footerText;
+        }
+      }
+    
       // Render services list
       function renderServices(services) {
         if (!services || services.length === 0) {
@@ -240,47 +208,7 @@ function showToastMessage(message) {
           </div>
         `).join('');
       }
-      // Modify your safeFetch function to include cache-busting
-async function safeFetch(url, options = {}) {
-    // Add timestamp to prevent caching
-    const cacheBuster = `_=${Date.now()}`;
-    url += (url.includes('?') ? '&' : '?') + cacheBuster;
-    
-    try {
-        const response = await fetch(url, options);
-        // ... rest of your existing code ...
-    } catch (error) {
-        console.error(`API call to ${url} failed:`, error);
-        throw error;
-    }
-}
-// Add this to your script section
-let refreshInterval;
-
-function startContentRefresh(interval = 30000) { // 30 seconds by default
-    refreshInterval = setInterval(loadHomeContent, interval);
-}
-
-function stopContentRefresh() {
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-    }
-}
-
-// Initialize with refresh
-window.addEventListener('DOMContentLoaded', () => {
-    loadHomeContent();
-    startContentRefresh();
-});
-
-// Optionally stop when tab is inactive
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        stopContentRefresh();
-    } else {
-        startContentRefresh();
-    }
-});
+      
     
       // Initialize page
       window.addEventListener('DOMContentLoaded', () => {
