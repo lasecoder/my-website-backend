@@ -61,21 +61,20 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Your routes
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API routes (keep all your existing routes)
 app.get('/api/services', (req, res) => {
-  res.json([
-    { title: 'AI Strategy', description: 'Let us help you adopt AI', image: 'uploads/service1.jpg' },
-    { title: 'Cloud Migration', description: 'Move to the cloud seamlessly', image: 'uploads/service2.jpg' }
-  ]);
+  // Your existing implementation
 });
 
-app.get('/api/content/header', (req, res) => {
-  res.json({ title: 'Welcome to FutureTechTalent', image: 'uploads/default-logo.png' });
+// All other requests go to frontend
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/api/content/footer', (req, res) => {
-  res.json({ footerText: '© 2025 FutureTechTalent. All rights reserved.' });
-});
 
 
 app.use((req, res, next) => {

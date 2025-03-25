@@ -102,8 +102,11 @@
 
     <!-- ✅ Fetch Data from MongoDB -->
     <script>
-        const backendUrl = "https://my-backend-service.onrender.com"; // Use your Render backend URL
-
+        fetch("/api/content/header")  // Now uses same origin
+  .then(response => response.json())
+  .then(data => {
+    // Update your DOM
+  });
         // Function to fetch and update header data
         async function fetchContent() {
             try {
