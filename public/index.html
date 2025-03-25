@@ -4,23 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FutureTechTalent - Business Solutions</title>
-    
-    <!-- ✅ Use relative path for CSS -->
     <link rel="stylesheet" href="./css/style.css">
-
-    <!-- ✅ Axios for API Calls -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-    <!-- ✅ FontAwesome Icons -->
     <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
+    <style>
+        .loading {
+            opacity: 0.6;
+            position: relative;
+        }
+        .loading::after {
+            content: "Loading...";
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    
     <header>
         <div class="container">
             <div class="header-left">
-                <!-- ✅ Updated Image Path -->
-                <img id="logo" src="https://my-backend-service.onrender.com/uploads/default-logo.png" alt="Company Logo">
+                <img id="logo" src="/images/default-logo.png" alt="Company Logo" style="display:none;">
             </div>
             <div class="register">
                 <button class="btn" onclick="location.href='login.html'">Login</button>
@@ -48,7 +53,7 @@
 
     <main class="container">
         <section class="intro">
-            <h2 id="home-header-title"></h2>
+            <h2 id="home-header-title" class="loading"></h2>
             <p id="home-intro-text"></p>
         </section>
 
@@ -57,7 +62,9 @@
         </div>
 
         <section class="services">
-            <div id="services-container" class="services-container"></div>
+            <div id="services-container" class="services-container loading">
+                <!-- Services will be loaded here -->
+            </div>
         </section>
 
         <section class="contact-cta">
@@ -65,6 +72,7 @@
             <p>Contact us today to learn how we can help you succeed.</p>
             <a id="home-cta-link" href="contact.html" class="button-primary">Get in Touch</a>
         </section>
+        
         <div id="chat-bot">
             <button id="chat-toggle">💬 Chat with Us</button>
             <div id="chat-window">
@@ -88,7 +96,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-left">
-                    <p id="home-footer-text"></p>
+                    <p id="home-footer-text" class="loading"></p>
                 </div>
             </div>
             <div class="social-media">
@@ -100,95 +108,167 @@
         </div>
     </footer>
 
-    <!-- ✅ Fetch Data from MongoDB -->
     <script>
-        // Define backendUrl at the top (empty for same-origin)
-        const backendUrl = "";
-      
-        async function fetchContent() {
-  const apiUrl = '/api/content/header'; // Using relative path
-  
-  try {
-    const response = await fetch(apiUrl);
-    
-    // Check if response is HTML
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('text/html')) {
-      const html = await response.text();
-      console.warn('Received HTML:', html.substring(0, 200));
-      throw new Error('API returned HTML instead of JSON');
-    }
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} - ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // Update your DOM
-    document.getElementById("home-header-title").textContent = data.title || "Welcome";
-    if (data.image) {
-      document.getElementById("logo").src = data.image;
-    }
-    
-  } catch (error) {
-    console.error('Header load failed:', error);
-    // Fallback content
-    document.getElementById("home-header-title").textContent = "Welcome to Our Site";
-    document.getElementById("logo").src = "/images/default-logo.png";
-  }
-}
-        async function fetchServices() {
-          try {
-            const response = await fetch(`${backendUrl}/api/services`);
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const services = await response.json();
-            
-            const servicesContainer = document.getElementById("services-container");
-            if (servicesContainer) {
-              servicesContainer.innerHTML = "";
-              
-              services.forEach(service => {
-                const serviceCard = document.createElement("div");
-                serviceCard.classList.add("service-card");
-                serviceCard.innerHTML = `
-                  <h2 class="service-title">${service.title}</h2>
-                  <img src="${service.image}" alt="${service.title}" class="service-image">
-                  <p class="service-description">${service.description}</p>
-                `;
-                servicesContainer.appendChild(serviceCard);
-              });
-            }
-          } catch (error) {
-            console.error("Error fetching services:", error);
-          }
-        }
-      
-        async function fetchFooter() {
-          try {
-            const response = await fetch(`${backendUrl}/api/content/footer`);
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            
-            const footerTextElement = document.getElementById("home-footer-text");
-            if (footerTextElement && data.footerText) {
-              footerTextElement.textContent = data.footerText;
-            }
-          } catch (error) {
-            console.error("Error fetching footer:", error);
-          }
-        }
-      
-        // Run all functions on page load
-        window.onload = function() {
-          fetchContent();
-          fetchServices();
-          fetchFooter();
+        // Configuration
+        const config = {
+            backendUrl: "", // Same-origin since frontend/backend are together
+            defaultLogo: "/images/default-logo.png",
+            defaultServices: [
+                {
+                    title: "AI Strategy",
+                    description: "Let us help you adopt AI",
+                    image: "/images/default-service1.jpg"
+                },
+                {
+                    title: "Cloud Migration",
+                    description: "Move to the cloud seamlessly", 
+                    image: "/images/default-service2.jpg"
+                }
+            ]
         };
-      </script>
+
+        // DOM Elements
+        const elements = {
+            headerTitle: document.getElementById("home-header-title"),
+            logo: document.getElementById("logo"),
+            footerText: document.getElementById("home-footer-text"),
+            servicesContainer: document.getElementById("services-container")
+        };
+
+        // Enhanced fetch with timeout and retries
+        async function safeFetch(endpoint, options = {}, timeout = 8000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            try {
+                const response = await fetch(`${config.backendUrl}${endpoint}`, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+
+                clearTimeout(timeoutId);
+
+                // Verify JSON response
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error(`Expected JSON but got: ${contentType}`, text.substring(0, 100));
+                    throw new Error('Invalid content type');
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP error ${response.status}`);
+                }
+
+                return await response.json();
+
+            } catch (error) {
+                clearTimeout(timeoutId);
+                console.error(`API call failed to ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        // Content Loaders with Error Handling
+        async function loadHeader() {
+            try {
+                const data = await safeFetch('/api/content/header');
+                
+                elements.headerTitle.textContent = data.title || "Welcome to FutureTechTalent";
+                elements.headerTitle.classList.remove("loading");
+                
+                if (data.image) {
+                    elements.logo.src = data.image;
+                    elements.logo.style.display = "block";
+                } else {
+                    elements.logo.src = config.defaultLogo;
+                }
+                
+            } catch (error) {
+                console.error('Using default header due to error:', error);
+                elements.headerTitle.textContent = "Welcome to FutureTechTalent";
+                elements.headerTitle.classList.remove("loading");
+                elements.logo.src = config.defaultLogo;
+                elements.logo.style.display = "block";
+            }
+        }
+
+        async function loadFooter() {
+            try {
+                const data = await safeFetch('/api/content/footer');
+                elements.footerText.textContent = data.footerText || "© 2025 FutureTechTalent. All Rights Reserved.";
+                elements.footerText.classList.remove("loading");
+            } catch (error) {
+                console.error('Using default footer due to error:', error);
+                elements.footerText.textContent = "© 2025 FutureTechTalent. All Rights Reserved.";
+                elements.footerText.classList.remove("loading");
+            }
+        }
+
+        async function loadServices() {
+            try {
+                let services = await safeFetch('/api/services');
+                
+                // Ensure we have valid services data
+                if (!Array.isArray(services)) {
+                    throw new Error('Invalid services data format');
+                }
+                
+                if (services.length === 0) {
+                    services = config.defaultServices;
+                }
+                
+                renderServices(services);
+                
+            } catch (error) {
+                console.error('Using default services due to error:', error);
+                renderServices(config.defaultServices);
+            }
+        }
+
+        function renderServices(services) {
+            elements.servicesContainer.innerHTML = services.map(service => `
+                <div class="service-card">
+                    <h2 class="service-title">${service.title || 'Our Service'}</h2>
+                    <img src="${service.image || '/images/default-service.jpg'}" 
+                         alt="${service.title || 'Service Image'}"
+                         class="service-image"
+                         onerror="this.src='/images/default-service.jpg'">
+                    <p class="service-description">${service.description || ''}</p>
+                </div>
+            `).join('');
+            
+            elements.servicesContainer.classList.remove("loading");
+        }
+
+        // Initialize Page
+        async function initializePage() {
+            try {
+                // Load all content in parallel
+                await Promise.all([
+                    loadHeader(),
+                    loadFooter(),
+                    loadServices()
+                ]);
+            } catch (error) {
+                console.error('Page initialization error:', error);
+            }
+        }
+
+        // Start when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializePage);
+
+        // Search function (placeholder)
+        function searchFunction() {
+            const searchTerm = document.getElementById("searchInput").value;
+            console.log("Searching for:", searchTerm);
+            // Implement your search functionality here
+        }
+    </script>
 </body>
 </html>
