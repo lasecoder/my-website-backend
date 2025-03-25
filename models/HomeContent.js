@@ -5,7 +5,7 @@ const HomeContentSchema = new mongoose.Schema({
   header: {
     title: {
       type: String,
-      default: "FutureTechTalent - Professional Business "
+      default: ""
     },
     content: String,
     image: {
@@ -25,7 +25,7 @@ const HomeContentSchema = new mongoose.Schema({
   footer: {
     footerText: {
       type: String,
-      default: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+      default: ""
     }
   }
 }, { timestamps: true });
