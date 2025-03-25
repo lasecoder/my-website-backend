@@ -5,7 +5,7 @@ const HomeContentSchema = new mongoose.Schema({
   header: {
     title: {
       type: String,
-      default: "FutureTechTalent - Professional Business Solutions"
+      default: "FutureTechTalent - Professional Business "
     },
     content: String,
     image: {

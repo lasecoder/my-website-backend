@@ -173,54 +173,43 @@
   <script>
   const backendUrl = "https://my-website-backend-ixzh.onrender.com"; // Use your Render backend URL
 
-    // In admin_dashboard.html
-async function updateContent(section, data) {
-  try {
-    const formData = new FormData();
+    async function updateContent(section, title, description, image = null) {
+      try {
+        const formData = new FormData();
+        formData.append("section", section);
     
-    // Append all data fields
-    for (const key in data) {
-      if (data[key] !== undefined) {
-        formData.append(key, data[key]);
+        if (section === "footer") {
+          formData.append("footerText", description); // Correctly append footer text
+        } else {
+          formData.append("title", title);
+          formData.append("description", description);
+          if (image) formData.append("image", image);
+        }
+    
+        console.log("📤 Sending data to server:", {
+          section,
+          title,
+          description,
+          footerText: description,  // Log footerText explicitly
+          image: image ? image.name : "No image",
+        });
+    
+        const response = await fetch(`${backendUrl}/api/content`, {
+          method: "POST",
+          body: formData,
+        });
+    
+        if (!response.ok) throw new Error("Failed to update content");
+    
+        const data = await response.json();
+        console.log("✅ Server response:", data);
+        alert(`${section} updated successfully!`);
+      } catch (error) {
+        console.error("❌ Error updating content:", error);
+        alert("Error updating content: " + error.message);
       }
     }
     
-    // Append file if exists
-    if (data.imageFile) {
-      formData.append('image', data.imageFile);
-    }
-
-    const response = await fetch(`/api/content/${section}`, {
-      method: 'PUT',
-      body: formData
-    });
-
-    const result = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(result.error || 'Update failed');
-    }
-
-    alert(`${section} updated successfully!`);
-    return result.data;
-    
-  } catch (error) {
-    console.error(`Error updating ${section}:`, error);
-    alert(`Error: ${error.message}`);
-    throw error;
-  }
-}
-
-// Update header handler
-document.getElementById('update-header-btn').addEventListener('click', async () => {
-  const title = document.getElementById('home-header-title').value;
-  const imageFile = document.getElementById('home-header-image').files[0];
-  
-  await updateContent('header', {
-    title,
-    imageFile
-  });
-});
     document.addEventListener("DOMContentLoaded", function () {
       const updateService1Button = document.getElementById("update-service1-btn");
       const updateHeaderButton = document.getElementById("update-header-btn");
