@@ -74,26 +74,6 @@ app.get('/api/services', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-// In your server.js, ensure all API routes:
-// 1. Start with /api
-// 2. Return proper JSON responses
-// 3. Have error handling
-
-app.get('/api/content/header', async (req, res) => {
-  try {
-    const header = await Header.findOne();
-    if (!header) {
-      return res.status(404).json({ error: 'Header not found' });
-    }
-    res.json({
-      title: header.title,
-      image: header.logoUrl
-    });
-  } catch (error) {
-    console.error('Error fetching header:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 
 app.use((req, res, next) => {
@@ -174,39 +154,43 @@ app.post('/api/content', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Failed to update content' });
   }
 });
-// API: Fetch Home Content
-app.get('/api/content', async (req, res) => {
-  try {
-    const content = await HomeContent.findOne();
-    if (!content) {
-      return res.status(404).json({ message: 'No content found' });
-    }
-    res.json(content);
-  } catch (error) {
-    console.error('❌ Error fetching content:', error);
-    res.status(500).json({ message: 'Failed to fetch content' });
-  }
-});
+// In your server.js, ensure you have these routes:
 
-// API: Fetch Header Content
+// Header endpoint
 app.get('/api/content/header', async (req, res) => {
   try {
-    const content = await HomeContent.findOne();
-    res.json(content?.header || { title: "Default Title", image: "default-logo.png" });
+    const header = await Header.findOne();
+    res.json({
+      title: header?.title || "Default Title",
+      image: header?.image || "/uploads/default-logo.png"
+    });
   } catch (error) {
-    console.error('❌ Error fetching header:', error);
-    res.status(500).json({ message: 'Failed to fetch header' });
+    console.error('Error fetching header:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// API: Fetch Services
+// Footer endpoint
+app.get('/api/content/footer', async (req, res) => {
+  try {
+    const footer = await Footer.findOne();
+    res.json({
+      footerText: footer?.content || "© 2025 FutureTechTalent. All Rights Reserved."
+    });
+  } catch (error) {
+    console.error('Error fetching footer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Services endpoint
 app.get('/api/services', async (req, res) => {
   try {
     const services = await Service.find();
     res.json(services);
   } catch (error) {
     console.error('Error fetching services:', error);
-    res.status(500).json({ message: 'Failed to fetch services' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
