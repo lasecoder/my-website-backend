@@ -106,30 +106,44 @@
         const backendUrl = "";
       
         async function fetchContent() {
-          try {
-            const response = await fetch(`${backendUrl}/api/content/header`);
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            
-            if (document.getElementById("home-header-title")) {
-              document.getElementById("home-header-title").innerText = data.title || "Welcome!";
-            }
-            
-            const logoElement = document.getElementById("logo");
-            if (logoElement) {
-              if (data.image) {
-                logoElement.src = data.image;
-                logoElement.style.display = "block";
-              } else {
-                logoElement.style.display = "none";
-              }
-            }
-          } catch (error) {
-            console.error("Error fetching header:", error);
-          }
-        }
+  try {
+    const response = await fetch(`${backendUrl}/api/content/header`);
+    
+    // First check if we got HTML instead of JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Received HTML instead of JSON:', text.substring(0, 100));
+      throw new Error('Server returned HTML instead of JSON');
+    }
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Update your DOM elements
+    if (document.getElementById("home-header-title")) {
+      document.getElementById("home-header-title").innerText = data.title || "Welcome!";
+    }
+    
+    const logoElement = document.getElementById("logo");
+    if (logoElement) {
+      if (data.image) {
+        logoElement.src = data.image;
+        logoElement.style.display = "block";
+      } else {
+        logoElement.style.display = "none";
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching header:", error);
+    // Fallback to default values
+    document.getElementById("home-header-title").innerText = "Welcome to Our Site";
+    document.getElementById("logo").src = "/images/default-logo.png";
+  }
+}
       
         async function fetchServices() {
           try {
