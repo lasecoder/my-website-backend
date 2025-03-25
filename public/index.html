@@ -7,69 +7,103 @@
     <link rel="stylesheet" href="./css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
-    <style>
-        .loading {
-            opacity: 0.6;
-            position: relative;
-        }
-        .loading::after {
-            content: "Loading...";
-            position: absolute;
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: #666;
-        }
-        
-        /* Toast notifications */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            border-radius: 4px;
-            color: white;
-            z-index: 1000;
-            animation: slideIn 0.5s ease-out;
-        }
-        
-        .toast-info {
-            background-color: #002147;
-        }
-        
-        .toast-error {
-            background-color: #d32f2f;
-        }
-        
-        .fade-out {
-            animation: fadeOut 0.5s ease-out;
-            opacity: 0;
-        }
-        
-        @keyframes slideIn {
-            from { bottom: -50px; opacity: 0; }
-            to { bottom: 20px; opacity: 1; }
-        }
-        
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-    </style>
+    
 </head>
 <body>
-    <!-- Your HTML content remains the same until the script section -->
-    
+    <header>
+        <div class="container">
+            <div class="header-left">
+                <img id="logo" src="/images/default-logo.png" alt="Company Logo" style="display:none;">
+            </div>
+            <div class="register">
+                <button class="btn" onclick="location.href='login.html'">Login</button>
+                <button class="btn" onclick="location.href='signup.html'">Sign Up</button>
+            </div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search..." />
+                <button onclick="searchFunction()">🔍</button>
+            </div>
+            <div class="header-right">
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="vacancy.html">Vacancy</a></li>
+                        <li><a href="scholars.html">Scholarship</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="intro">
+            <h2 id="home-header-title" class=""></h2>
+            <p id="home-intro-text"></p>
+        </section>
+
+        <div id="home-content">
+            <p id="home-services-text"></p>
+        </div>
+
+        <section class="services">
+            <div id="services-container" class="">
+                <!-- Services will be loaded here -->
+            </div>
+        </section>
+
+        <section class="contact-cta">
+            <h2 id="home-cta-text">Let's Grow Your Business</h2>
+            <p>Contact us today to learn how we can help you succeed.</p>
+            <a id="home-cta-link" href="contact.html" class="button-primary">Get in Touch</a>
+        </section>
+        
+        <div id="chat-bot">
+            <button id="chat-toggle">💬 Chat with Us</button>
+            <div id="chat-window">
+                <p>Hi there! How can we help you today?</p>
+                <input type="text" id="chat-input" placeholder="Type your message...">
+                <div class="MessageComposer__ActionsWrapper-cxn0v1-3">
+                    <button id="send-button" aria-label="send message" class="SendButton__Button-rm6hl8-0" disabled>
+                        <svg width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="SendButton__SendIcon-rm6hl8-1">
+                            <defs>
+                                <path d="M21.158.222L2.568 11.815c-.8.498-.749 1.215.113 1.591l4.406 1.923 10.395-9.903c1.377-1.296 1.569-1.119.426.395L8.254 18.215v4.927c0 .953.5 1.141 1.113.418l4.473-5.282 5.055 2.207c.861.376 1.643-.092 1.736-1.04l1.81-18.404c.094-.949-.484-1.317-1.283-.819" id="send__a"></path>
+                            </defs>
+                            <use xlink:href="#send__a" fill-rule="evenodd"></use>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p id="home-footer-text" class=""></p>
+                </div>
+            </div>
+            <div class="social-media">
+                <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </footer>
+
     <script>
       // Configuration
       const config = {
         backendUrl: "", // Same origin
-        refreshInterval: 30000, // 30 seconds
         defaultContent: {
           header: {
-            title: "FutureTechTalent - Professional Business Solutions",
-            image: "/images/default-logo.png"
+            title: "",
+            image: "/uploads/default-logo.png"
           },
           services: [],
           footer: {
@@ -81,51 +115,17 @@
       // DOM Elements
       const elements = {
         headerTitle: document.getElementById("home-header-title"),
-        introText: document.getElementById("home-intro-text"),
-        servicesText: document.getElementById("home-services-text"),
         logo: document.getElementById("logo"),
         footerText: document.getElementById("home-footer-text"),
         servicesContainer: document.getElementById("services-container")
       };
-      
-      let refreshTimer;
-      let lastUpdateTime = 0;
-
-      // Start auto-refresh
-      function startAutoRefresh() {
-        // Clear any existing timer
-        stopAutoRefresh();
-        
-        // Set new timer
-        refreshTimer = setInterval(() => {
-          loadHomeContent();
-        }, config.refreshInterval);
-        
-        // Also refresh when page becomes visible again
-        document.addEventListener('visibilitychange', () => {
-          if (!document.hidden && Date.now() - lastUpdateTime > config.refreshInterval) {
-            loadHomeContent();
-          }
-        });
-      }
-
-      // Stop auto-refresh
-      function stopAutoRefresh() {
-        if (refreshTimer) {
-          clearInterval(refreshTimer);
-        }
-      }
     
-      // Enhanced fetch with error handling and cache busting
+      // Enhanced fetch with error handling
       async function safeFetch(url, options = {}) {
         try {
-          // Add cache busting parameter
-          const cacheBuster = `t=${Date.now()}`;
-          url += (url.includes('?') ? '&' : '?') + cacheBuster;
-          
           const response = await fetch(url, options);
           
-          // Check if response is JSON
+          // Check if response is HTML instead of JSON
           const contentType = response.headers.get('content-type');
           if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
@@ -137,136 +137,35 @@
             throw new Error(errorData.message || `HTTP error ${response.status}`);
           }
           
-          const data = await response.json();
-          lastUpdateTime = Date.now();
-          return data;
+          return await response.json();
           
         } catch (error) {
           console.error(`API call to ${url} failed:`, error);
           throw error;
         }
       }
-      
-      // Remove loading state
-      function removeLoadingState() {
-        document.querySelectorAll('.loading').forEach(el => {
-          el.classList.remove('loading');
-        });
-      }
-      
-      // Format image URL to ensure proper path
-      function formatImageUrl(url) {
-        if (!url) return config.defaultContent.header.image;
-        
-        // If URL is already absolute, return as-is
-        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
-          return url;
-        }
-        
-        // Handle different server configurations
-        if (url.startsWith('uploads/') || url.startsWith('images/')) {
-          return '/' + url;
-        }
-        
-        // Default case - assume it's in uploads directory
-        return '/uploads/' + url;
-      }
-    
-      // Verify image exists
-      async function verifyImage(url) {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve(url);
-          img.onerror = () => resolve(config.defaultContent.header.image);
-          img.src = url;
-        });
-      }
-    
-      // Show toast message
-      function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-          toast.classList.add('fade-out');
-          setTimeout(() => toast.remove(), 500);
-        }, 3000);
-      }
-    
-      // Render services list with image verification
-      async function renderServices(services) {
-        if (!services || services.length === 0) {
-          elements.servicesContainer.innerHTML = '<p>No services available</p>';
-          return;
-        }
-        
-        // Process each service to verify images
-        const servicesWithVerifiedImages = await Promise.all(
-          services.map(async service => {
-            const imageUrl = formatImageUrl(service.image);
-            const verifiedImageUrl = await verifyImage(imageUrl);
-            return {
-              ...service,
-              verifiedImageUrl
-            };
-          })
-        );
-        
-        elements.servicesContainer.innerHTML = servicesWithVerifiedImages.map(service => `
-          <div class="service-card">
-            <h2 class="service-title">${service.title || 'Our Service'}</h2>
-            <img src="${service.verifiedImageUrl || '/images/default-service.jpg'}" 
-                 alt="${service.title || 'Service'}"
-                 class="service-image"
-                 onerror="this.src='/images/default-service.jpg'">
-            <p class="service-description">${service.description || ''}</p>
-          </div>
-        `).join('');
-      }
     
       // Load and display home content
       async function loadHomeContent() {
         try {
-          // Show loading states
-          elements.headerTitle.classList.add('loading');
-          elements.servicesContainer.classList.add('loading');
-          
           // Try to fetch fresh content
           const response = await safeFetch('/api/home-content');
           const content = response.data || response; // Handle both formats
           
           // Update header
           elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-          
-          // Handle logo image
-          const logoUrl = formatImageUrl(content.header?.image);
-          const verifiedLogoUrl = await verifyImage(logoUrl);
-          elements.logo.src = verifiedLogoUrl;
+          elements.logo.src = content.header?.image || config.defaultContent.header.image;
           elements.logo.style.display = "block";
           
-          // Update intro text if available
-          if (content.intro?.text) {
-            elements.introText.textContent = content.intro.text;
-          }
-          
-          // Update services text if available
-          if (content.servicesText) {
-            elements.servicesText.textContent = content.servicesText;
-          }
-          
-          // Update services with image verification
+          // Update services
           if (Array.isArray(content.services)) {
-            await renderServices(content.services);
+            renderServices(content.services);
           } else {
-            await renderServices(config.defaultContent.services);
+            renderServices(config.defaultContent.services);
           }
           
           // Update footer
           elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
-          
-          removeLoadingState();
           
         } catch (error) {
           console.error('Using default content due to error:', error);
@@ -276,23 +175,32 @@
           elements.logo.style.display = "block";
           renderServices(config.defaultContent.services);
           elements.footerText.textContent = config.defaultContent.footer.footerText;
-          
-          removeLoadingState();
-          
-          // Show error to user
-          showToast('Failed to load latest content. Showing cached version.', 'error');
         }
       }
+    
+      // Render services list
+      function renderServices(services) {
+        if (!services || services.length === 0) {
+          elements.servicesContainer.innerHTML = '<p>No services available</p>';
+          return;
+        }
+        
+        elements.servicesContainer.innerHTML = services.map(service => `
+          <div class="service-card">
+            <h2 class="service-title">${service.title || 'Our Service'}</h2>
+            <img src="${service.image || '/images/default-service.jpg'}" 
+                 alt="${service.title || 'Service'}"
+                 class="service-image"
+                 onerror="this.src='/images/default-service.jpg'">
+            <p class="service-description">${service.description || ''}</p>
+          </div>
+        `).join('');
+      }
+      
     
       // Initialize page
       window.addEventListener('DOMContentLoaded', () => {
         loadHomeContent();
-        startAutoRefresh();
-      });
-      
-      // Clean up on page unload
-      window.addEventListener('beforeunload', () => {
-        stopAutoRefresh();
       });
     </script>
 </body>
