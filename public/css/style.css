@@ -186,8 +186,8 @@ main {
 .services {
     text-align: center;
     padding: 50px 20px;
-    background-color: white;
-    color: #003366;
+    background-color: #002147;
+    color: white;
 }
 
 .services h2 {
@@ -252,7 +252,7 @@ main {
 
 /* ================= FOOTER ================= */
 footer {
-    background-color: #002147;
+    background-color: #9299a0;
     color: white;
     padding: 30px 20px;
     text-align: center;
