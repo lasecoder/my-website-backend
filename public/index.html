@@ -111,16 +111,68 @@
     <script>
       async function loadHomeContent() {
     try {
-        // Try to fetch fresh content
         const response = await safeFetch('/api/home-content');
         
-        // Handle different response formats
+        // More robust response handling
         let content;
-        if (response && typeof response === 'object') {
-            content = response.data || response; // Handle both {data: {...}} and direct response
-        } else {
-            throw new Error('Invalid response format');
+        if (!response) {
+            throw new Error('Empty response from server');
         }
+
+        // Handle both response formats
+        if (response.data !== undefined) {
+            content = response.data;
+        } else {
+            content = response;
+        }
+
+        // Validate content structure
+        if (typeof content !== 'object' || content === null) {
+            throw new Error('Invalid content format');
+        }
+
+        // Update header
+        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+        elements.headerTitle.classList.remove('loading');
+        
+        // Update logo
+        elements.logo.src = content.header?.image || config.defaultContent.header.image;
+        elements.logo.style.display = "block";
+        
+        // Update services
+        renderServices(content.services || config.defaultContent.services);
+        
+        // Update footer
+        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+        elements.footerText.classList.remove('loading');
+        
+    } catch (error) {
+        console.error('Error loading content:', error);
+        // Fallback to default content
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.headerTitle.classList.remove('loading');
+        
+        elements.logo.src = config.defaultContent.header.image;
+        elements.logo.style.display = "block";
+        
+        renderServices(config.defaultContent.services);
+        
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+        elements.footerText.classList.remove('loading');
+        
+        // Optional: Show error to user
+        showToastMessage('Could not load latest content. Showing cached version.');
+    }
+}
+
+// Helper function to show user feedback
+function showToastMessage(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
         // Update header
         elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
