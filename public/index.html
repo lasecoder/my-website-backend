@@ -1,219 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FutureTechTalent - Business Solutions</title>
-    <link rel="stylesheet" href="./css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
-    
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FutureTechTalent - Business Solutions</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://kit.fontawesome.com/a033fa8b24.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-left">
-                <img id="logo" src="/images/default-logo.png" alt="Company Logo" style="display:none;">
-            </div>
-            <div class="register">
-                <button class="btn" onclick="location.href='login.html'">Login</button>
-                <button class="btn" onclick="location.href='signup.html'">Sign Up</button>
-            </div>
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Search..." />
-                <button onclick="searchFunction()">🔍</button>
-            </div>
-            <div class="header-right">
-                <nav>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="services.html">Services</a></li>
-                        <li><a href="blog.html">Blog</a></li>
-                        <li><a href="vacancy.html">Vacancy</a></li>
-                        <li><a href="scholars.html">Scholarship</a></li>
-                        <li><a href="contact.html">Contact</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                    </ul>
-                </nav>
-            </div>
+  <header>
+    <div class="container">
+      <div class="header-left">
+        <img id="logo" src="/images/default-logo.png" alt="Company Logo" />
+      </div>
+      <div class="register">
+        <button class="btn" onclick="location.href='login.html'">Login</button>
+        <button class="btn" onclick="location.href='signup.html'">Sign Up</button>
+      </div>
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search..." />
+        <button onclick="searchFunction()">🔍</button>
+      </div>
+      <div class="header-right">
+        <nav>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="blog.html">Blog</a></li>
+            <li><a href="vacancy.html">Vacancy</a></li>
+            <li><a href="scholars.html">Scholarship</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="about.html">About Us</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="intro">
+      <h2 id="home-header-title"></h2>
+      <p id="home-intro-text"></p>
+    </section>
+
+    <div id="home-content">
+      <p id="home-services-text"></p>
+    </div>
+
+    <section class="services">
+      <div id="services-container">
+        <!-- Services load here -->
+      </div>
+    </section>
+
+    <section class="contact-cta">
+      <h2 id="home-cta-text">Let's Grow Your Business</h2>
+      <p>Contact us today to learn how we can help you succeed.</p>
+      <a id="home-cta-link" href="contact.html" class="button-primary">Get in Touch</a>
+    </section>
+
+    <div id="chat-bot">
+      <button id="chat-toggle">💬 Chat with Us</button>
+      <div id="chat-window">
+        <p>Hi there! How can we help you today?</p>
+        <input type="text" id="chat-input" placeholder="Type your message..." />
+        <div class="MessageComposer__ActionsWrapper-cxn0v1-3">
+          <button id="send-button" class="SendButton__Button-rm6hl8-0" disabled>
+            <svg width="1em" height="1em" viewBox="0 0 24 24">
+              <defs>
+                <path id="send__a" d="M21.158.222L2.568 11.815c-.8.498-.749 1.215.113 1.591l4.406 1.923 10.395-9.903c1.377-1.296 1.569-1.119.426.395L8.254 18.215v4.927c0 .953.5 1.141 1.113.418l4.473-5.282 5.055 2.207c.861.376 1.643-.092 1.736-1.04l1.81-18.404c.094-.949-.484-1.317-1.283-.819"/>
+              </defs>
+              <use xlink:href="#send__a" fill-rule="evenodd"></use>
+            </svg>
+          </button>
         </div>
-    </header>
+      </div>
+    </div>
+  </main>
 
-    <main class="container">
-        <section class="intro">
-            <h2 id="home-header-title" class=""></h2>
-            <p id="home-intro-text"></p>
-        </section>
-
-        <div id="home-content">
-            <p id="home-services-text"></p>
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-left">
+          <p id="home-footer-text"></p>
         </div>
+      </div>
+      <div class="social-media">
+        <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
+        <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
+        <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+  </footer>
 
-        <section class="services">
-            <div id="services-container" class="">
-                <!-- Services will be loaded here -->
-            </div>
-        </section>
-
-        <section class="contact-cta">
-            <h2 id="home-cta-text">Let's Grow Your Business</h2>
-            <p>Contact us today to learn how we can help you succeed.</p>
-            <a id="home-cta-link" href="contact.html" class="button-primary">Get in Touch</a>
-        </section>
-        
-        <div id="chat-bot">
-            <button id="chat-toggle">💬 Chat with Us</button>
-            <div id="chat-window">
-                <p>Hi there! How can we help you today?</p>
-                <input type="text" id="chat-input" placeholder="Type your message...">
-                <div class="MessageComposer__ActionsWrapper-cxn0v1-3">
-                    <button id="send-button" aria-label="send message" class="SendButton__Button-rm6hl8-0" disabled>
-                        <svg width="1em" height="1em" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="SendButton__SendIcon-rm6hl8-1">
-                            <defs>
-                                <path d="M21.158.222L2.568 11.815c-.8.498-.749 1.215.113 1.591l4.406 1.923 10.395-9.903c1.377-1.296 1.569-1.119.426.395L8.254 18.215v4.927c0 .953.5 1.141 1.113.418l4.473-5.282 5.055 2.207c.861.376 1.643-.092 1.736-1.04l1.81-18.404c.094-.949-.484-1.317-1.283-.819" id="send__a"></path>
-                            </defs>
-                            <use xlink:href="#send__a" fill-rule="evenodd"></use>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-left">
-                    <p id="home-footer-text" class=""></p>
-                </div>
-            </div>
-            <div class="social-media">
-                <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
-                <a href="https://twitter.com" target="_blank"><i class="fab fa-twitter"></i></a>
-                <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
-                <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-      // Configuration
-      const config = {
-  backendUrl: "http://localhost:3000", // ⬅️ or your actual backend host
-  defaultContent: {
-    header: {
-      title: "",
-      image: "/uploads/default-logo.png"
-    },
-    services: [],
-    footer: {
-      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
-    }
-  }
-};
-
-      // DOM Elements
-      const elements = {
-        headerTitle: document.getElementById("home-header-title"),
-        logo: document.getElementById("logo"),
-        footerText: document.getElementById("home-footer-text"),
-        servicesContainer: document.getElementById("services-container")
-      };
-    
-      // Enhanced fetch with error handling
-      async function safeFetch(url, options = {}) {
-        try {
-          const response = await fetch(url, options);
-          
-          // Check if response is HTML instead of JSON
-          const contentType = response.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            throw new Error(`Expected JSON but got: ${contentType}`);
-          }
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `HTTP error ${response.status}`);
-          }
-          
-          return await response.json();
-          
-        } catch (error) {
-          console.error(`API call to ${url} failed:`, error);
-          throw error;
+  <!-- JavaScript -->
+  <script>
+    const config = {
+      backendUrl: "http://localhost:3000",
+      defaultContent: {
+        header: {
+          title: "",
+          image: "/uploads/default-logo.png"
+        },
+        services: [],
+        footer: {
+          footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
         }
       }
-    
-      async function loadHomeContent() {
-  try {
-    const response = await safeFetch('/api/home-content');
-    const content = response.data || response;
+    };
 
-    // Debug log
-    console.log('Fetched content:', content);
+    const elements = {
+      headerTitle: document.getElementById("home-header-title"),
+      logo: document.getElementById("logo"),
+      footerText: document.getElementById("home-footer-text"),
+      servicesContainer: document.getElementById("services-container")
+    };
 
-    // Fix logo path
-    let logoImagePath = content.header?.image || config.defaultContent.header.image;
-
-    // 👉 Fix: Prepend slash if missing
-    if (logoImagePath && !logoImagePath.startsWith('http')) {
-      logoImagePath = config.backendUrl + (logoImagePath.startsWith('/') ? logoImagePath : '/' + logoImagePath);
+    async function safeFetch(url, options = {}) {
+      try {
+        const response = await fetch(url, options);
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but got: ${contentType}`);
+        }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP error ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error(`API call to ${url} failed:`, error);
+        throw error;
+      }
     }
 
-    elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-    elements.logo.src = logoImagePath;
-    elements.logo.style.display = "block";
+    async function loadHomeContent() {
+      try {
+        const response = await safeFetch('/api/home-content');
+        const content = response.data || response;
 
-    // Render services
-    renderServices(content.services || []);
+        console.log('Fetched content:', content);
 
-    // Footer
-    elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+        let logoImagePath = content.header?.image || config.defaultContent.header.image;
+        if (logoImagePath && !logoImagePath.startsWith('http')) {
+          logoImagePath = config.backendUrl + (logoImagePath.startsWith('/') ? logoImagePath : '/' + logoImagePath);
+        }
 
-  } catch (error) {
-    console.error('Using default content due to error:', error);
+        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+        elements.logo.src = logoImagePath;
+        elements.logo.style.display = "block";
 
-    elements.headerTitle.textContent = config.defaultContent.header.title;
-    elements.logo.src = config.backendUrl + config.defaultContent.header.image;
-    elements.logo.style.display = "block";
-    renderServices(config.defaultContent.services);
-    elements.footerText.textContent = config.defaultContent.footer.footerText;
-  }
-}
-
-function renderServices(services) {
-  if (!services || services.length === 0) {
-    elements.servicesContainer.innerHTML = '<p>No services available</p>';
-    return;
-  }
-
-  elements.servicesContainer.innerHTML = services.map(service => {
-    let imageUrl = service.image || '/images/default-service.jpg';
-    
-    // 👉 Prepend backendUrl or slash
-    if (imageUrl && !imageUrl.startsWith('http')) {
-      imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+        renderServices(content.services || []);
+        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+      } catch (error) {
+        console.error('Using default content due to error:', error);
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.logo.src = config.backendUrl + config.defaultContent.header.image;
+        elements.logo.style.display = "block";
+        renderServices(config.defaultContent.services);
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+      }
     }
 
-    return `
-      <div class="service-card">
-        <h2 class="service-title">${service.title || 'Our Service'}</h2>
-        <img src="${imageUrl}" 
-             alt="${service.title || 'Service'}"
-             class="service-image"
-             onerror="this.src='/images/default-service.jpg'">
-        <p class="service-description">${service.description || ''}</p>
-      </div>
-    `;
-  }).join('');
-}
+    function renderServices(services) {
+      if (!services || services.length === 0) {
+        elements.servicesContainer.innerHTML = '<p>No services available</p>';
+        return;
+      }
 
-    
-      // Initialize page
-      window.addEventListener('DOMContentLoaded', () => {
-        loadHomeContent();
-      });
-    </script>
+      elements.servicesContainer.innerHTML = services.map(service => {
+        let imageUrl = service.image || '/images/default-service.jpg';
+        if (!imageUrl.startsWith('http')) {
+          imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+        }
+
+        return `
+          <div class="service-card">
+            <h2 class="service-title">${service.title || 'Our Service'}</h2>
+            <img src="${imageUrl}" alt="${service.title || 'Service'}"
+                 class="service-image"
+                 onerror="this.src='/images/default-service.jpg'">
+            <p class="service-description">${service.description || ''}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadHomeContent();
+    });
+  </script>
 </body>
 </html>
