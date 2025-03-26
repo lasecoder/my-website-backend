@@ -70,6 +70,25 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
+// Backend API endpoint (Node.js/Express example)
+app.get('/api/all-content', async (req, res) => {
+  try {
+    // Fetch ALL services from database (not just current/active ones)
+    const allServices = await Service.find().sort({ createdAt: -1 });
+    const headerContent = await Header.findOne();
+    const footerContent = await Footer.findOne();
+    
+    res.json({
+      data: {
+        header: headerContent || {},
+        services: allServices,
+        footer: footerContent || {}
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
   res.json({ message: "API is working", timestamp: new Date() });

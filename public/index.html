@@ -97,107 +97,168 @@
 
   <!-- JavaScript -->
   <script>
-  const isLocalhost = window.location.hostname === "localhost";
-
-const config = {
-  backendUrl: isLocalhost
-    ? "http://localhost:3000"
-    : "https://my-website-backend-ixzh.onrender.com",
-  defaultContent: {
-    header: {
-      title: "",
-      image: "/uploads/default-logo.png"
-    },
-    services: [],
-    footer: {
-      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
-    }
-  }
-};
-
-
-
+    const isLocalhost = window.location.hostname === "localhost";
+  
+    const config = {
+      backendUrl: isLocalhost
+        ? "http://localhost:3000"
+        : "https://my-website-backend-ixzh.onrender.com",
+      defaultContent: {
+        header: {
+          title: "FutureTechTalent - Professional Business Solutions",
+          image: "/images/default-logo.png"
+        },
+        services: [],
+        footer: {
+          footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+        }
+      }
+    };
+  
     const elements = {
       headerTitle: document.getElementById("home-header-title"),
       logo: document.getElementById("logo"),
       footerText: document.getElementById("home-footer-text"),
       servicesContainer: document.getElementById("services-container")
     };
-
-    async function safeFetch(url, options = {}) {
+  
+    // Function to ensure correct image URLs
+    function getFullImageUrl(imagePath) {
+      if (!imagePath) return config.backendUrl + config.defaultContent.header.image;
+      
+      // If it's already a full URL (but might be HTTP when we need HTTPS)
+      if (imagePath.startsWith('http://')) {
+        // Force HTTPS in production
+        return isLocalhost ? imagePath : imagePath.replace('http://', 'https://');
+      }
+      
+      // If already HTTPS, use as-is
+      if (imagePath.startsWith('https://')) {
+        return imagePath;
+      }
+      
+      // Handle relative paths (both /uploads/... and uploads/...)
+      if (imagePath.startsWith('/')) {
+        return `${config.backendUrl}${imagePath}`;
+      }
+      
+      // Default case (no leading slash)
+      return `${config.backendUrl}/uploads/${imagePath}`;
+    }
+  
+    async function fetchAllContent() {
       try {
-        const response = await fetch(url, options);
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Expected JSON but got: ${contentType}`);
-        }
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error ${response.status}`);
-        }
-        return await response.json();
+        // First fetch the current content
+        const currentResponse = await fetch(`${config.backendUrl}/api/home-content`);
+        const currentData = await currentResponse.json();
+        const currentContent = currentData.data || currentData;
+  
+        // Then fetch all historical content
+        const allResponse = await fetch(`${config.backendUrl}/api/all-content`);
+        const allData = await allResponse.json();
+        const allContent = allData.data || allData;
+  
+        return {
+          current: currentContent,
+          all: allContent
+        };
       } catch (error) {
-        console.error(`API call to ${url} failed:`, error);
+        console.error('Error fetching content:', error);
         throw error;
       }
     }
-
-    async function loadHomeContent() {
-      try {
-        const response = await safeFetch('/api/home-content');
-        const content = response.data || response;
-
-        console.log('Fetched content:', content);
-
-        let logoImagePath = content.header?.image || config.defaultContent.header.image;
-        if (logoImagePath && !logoImagePath.startsWith('http')) {
-          logoImagePath = config.backendUrl + (logoImagePath.startsWith('/') ? logoImagePath : '/' + logoImagePath);
-        }
-
-        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-        elements.logo.src = logoImagePath;
-        elements.logo.style.display = "block";
-
-        renderServices(content.services || []);
-        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
-      } catch (error) {
-        console.error('Using default content due to error:', error);
-        elements.headerTitle.textContent = config.defaultContent.header.title;
-        elements.logo.src = config.backendUrl + config.defaultContent.header.image;
-        elements.logo.style.display = "block";
-        renderServices(config.defaultContent.services);
-        elements.footerText.textContent = config.defaultContent.footer.footerText;
-      }
-    }
-
-    function renderServices(services) {
+  
+    function renderAllServices(services) {
       if (!services || services.length === 0) {
         elements.servicesContainer.innerHTML = '<p>No services available</p>';
         return;
       }
-
-      elements.servicesContainer.innerHTML = services.map(service => {
-        let imageUrl = service.image || '/images/default-service.jpg';
-        if (!imageUrl.startsWith('http')) {
-          imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+  
+      // Clear previous content
+      elements.servicesContainer.innerHTML = '';
+  
+      // Create a container for all services
+      const allServicesContainer = document.createElement('div');
+      allServicesContainer.className = 'all-services-container';
+  
+      // Group services by date or category if needed
+      const servicesByDate = {};
+      services.forEach(service => {
+        const date = new Date(service.createdAt).toLocaleDateString();
+        if (!servicesByDate[date]) {
+          servicesByDate[date] = [];
         }
-
-        return `
-          <div class="service-card">
+        servicesByDate[date].push(service);
+      });
+  
+      // Render each group
+      for (const [date, serviceGroup] of Object.entries(servicesByDate)) {
+        const dateHeader = document.createElement('h3');
+        dateHeader.className = 'service-date-header';
+        dateHeader.textContent = `Services from ${date}`;
+        allServicesContainer.appendChild(dateHeader);
+  
+        const groupContainer = document.createElement('div');
+        groupContainer.className = 'service-group';
+  
+        serviceGroup.forEach(service => {
+          const imageUrl = getFullImageUrl(service.image);
+          const defaultImage = getFullImageUrl('/images/default-service.jpg');
+  
+          const card = document.createElement('div');
+          card.className = 'service-card';
+  
+          card.innerHTML = `
             <h2 class="service-title">${service.title || 'Our Service'}</h2>
-            <img src="${imageUrl}" alt="${service.title || 'Service'}"
+            <img src="${imageUrl}" 
+                 alt="${service.title || 'Service'}"
                  class="service-image"
-                 onerror="this.src='/images/default-service.jpg'">
+                 onerror="this.src='${defaultImage}'">
             <p class="service-description">${service.description || ''}</p>
-          </div>
-        `;
-      }).join('');
+            <p class="service-meta">Added: ${new Date(service.createdAt).toLocaleString()}</p>
+          `;
+  
+          groupContainer.appendChild(card);
+        });
+  
+        allServicesContainer.appendChild(groupContainer);
+      }
+  
+      elements.servicesContainer.appendChild(allServicesContainer);
     }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      loadHomeContent();
-    });
+  
+    async function loadAllContent() {
+      try {
+        const { current, all } = await fetchAllContent();
+  
+        // Update header with current content
+        elements.headerTitle.textContent = current.header?.title || config.defaultContent.header.title;
+        
+        const logoUrl = getFullImageUrl(current.header?.image);
+        elements.logo.src = logoUrl;
+        elements.logo.style.display = "block";
+        elements.logo.onerror = () => {
+          elements.logo.src = getFullImageUrl(config.defaultContent.header.image);
+        };
+  
+        // Render ALL services (not just current)
+        renderAllServices(all.services || []);
+  
+        // Update footer
+        elements.footerText.textContent = current.footer?.footerText || config.defaultContent.footer.footerText;
+  
+      } catch (error) {
+        console.error('Using default content due to error:', error);
+        // Fallback to default content
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.logo.src = getFullImageUrl(config.defaultContent.header.image);
+        elements.logo.style.display = "block";
+        renderAllServices(config.defaultContent.services);
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+      }
+    }
+  
+    window.addEventListener('DOMContentLoaded', loadAllContent);
   </script>
 </body>
 </html>
