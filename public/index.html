@@ -97,18 +97,18 @@
 
   <!-- JavaScript -->
   <script>
-    const isLocalhost = window.location.hostname === "localhost";
-  
     const config = {
-      backendUrl: isLocalhost
-        ? "http://localhost:3000"
-        : "https://my-website-backend-ixzh.onrender.com",
+      backendUrl: "https://my-website-backend-ixzh.onrender.com",
       defaultContent: {
         header: {
           title: "FutureTechTalent - Professional Business Solutions",
           image: "/images/default-logo.png"
         },
-        services: [],
+        services: [{
+          title: "No Services Available",
+          description: "Please check back later or contact support",
+          image: "/images/default-service.jpg"
+        }],
         footer: {
           footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
         }
@@ -122,112 +122,87 @@
       servicesContainer: document.getElementById("services-container")
     };
   
-    // Function to properly format image URLs
-    function formatImageUrl(imagePath) {
-      if (!imagePath) return config.backendUrl + config.defaultContent.header.image;
-      
-      // If it's already a full URL, return as-is
-      if (imagePath.startsWith('http')) return imagePath;
-      
-      // If it starts with /, prepend backend URL
-      if (imagePath.startsWith('/')) {
-        return config.backendUrl + imagePath;
+    // Debugging function to log API responses
+    async function debugFetch(url) {
+      try {
+        console.log(`Fetching from: ${url}`);
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        const text = await response.text();
+        console.log('Raw response:', text);
+        return JSON.parse(text);
+      } catch (error) {
+        console.error('Debug fetch error:', error);
+        return null;
       }
-      
-      // Default case - assume it's in uploads directory
-      return config.backendUrl + '/uploads/' + imagePath;
     }
   
-    // Fetch ALL content from database
+    // Fetch ALL content from database with debugging
     async function fetchAllContent() {
       try {
-        const response = await fetch(`${config.backendUrl}/api/services`);
-        if (!response.ok) throw new Error('Failed to fetch services');
-        const data = await response.json();
+        // First try the /api/services endpoint
+        let services = await debugFetch(`${config.backendUrl}/api/services`);
         
-        // Log the raw data for debugging
-        console.log('Fetched services:', data);
+        // If empty, try alternative endpoints
+        if (!services || services.length === 0) {
+          console.log('Trying alternative endpoints...');
+          
+          // Try /api/all-services
+          services = await debugFetch(`${config.backendUrl}/api/all-services`);
+          
+          if (!services || services.length === 0) {
+            // Try /api/content/all
+            services = await debugFetch(`${config.backendUrl}/api/content/all`);
+          }
+        }
         
-        return Array.isArray(data) ? data : (data.services || data.data || []);
+        return services || [];
       } catch (error) {
         console.error('Error fetching services:', error);
         return [];
       }
     }
   
-    // Render all services with their images
+    // Render services with proper error handling
     function renderServices(services) {
-      if (!services || services.length === 0) {
-        elements.servicesContainer.innerHTML = '<p>No services available</p>';
-        return;
-      }
-  
-      // Clear previous content
-      elements.servicesContainer.innerHTML = '';
-  
-      // Create and append each service card
-      services.forEach(service => {
-        const card = document.createElement('div');
-        card.className = 'service-card';
-        
-        // Create image element with proper URL
-        const img = document.createElement('img');
-        img.className = 'service-image';
-        img.alt = service.title || 'Service';
-        img.src = formatImageUrl(service.image);
-        img.onerror = function() {
-          this.src = formatImageUrl('/images/default-service.jpg');
-        };
-        
-        // Create title element
-        const title = document.createElement('h2');
-        title.className = 'service-title';
-        title.textContent = service.title || 'Our Service';
-        
-        // Create description element
-        const desc = document.createElement('p');
-        desc.className = 'service-description';
-        desc.textContent = service.description || '';
-        
-        // Create creation date element
-        const date = document.createElement('p');
-        date.className = 'service-date';
-        date.textContent = service.createdAt 
-          ? new Date(service.createdAt).toLocaleDateString() 
-          : '';
-        
-        // Append all elements to card
-        card.appendChild(img);
-        card.appendChild(title);
-        card.appendChild(desc);
-        card.appendChild(date);
-        
-        // Append card to container
-        elements.servicesContainer.appendChild(card);
-      });
+      // Use default if no services
+      const servicesToRender = services.length > 0 ? services : config.defaultContent.services;
+      
+      elements.servicesContainer.innerHTML = servicesToRender.map(service => `
+        <div class="service-card">
+          <h2 class="service-title">${service.title || 'Our Service'}</h2>
+          <img src="${formatImageUrl(service.image)}" 
+               alt="${service.title || 'Service'}"
+               class="service-image"
+               onerror="this.src='${formatImageUrl('/images/default-service.jpg')}'">
+          <p class="service-description">${service.description || ''}</p>
+          ${service.createdAt ? `<p class="service-date">Added: ${new Date(service.createdAt).toLocaleDateString()}</p>` : ''}
+        </div>
+      `).join('');
     }
   
-    // Load and display all content
+    // Format image URLs correctly
+    function formatImageUrl(imagePath) {
+      if (!imagePath) return config.backendUrl + config.defaultContent.header.image;
+      if (imagePath.startsWith('http')) return imagePath;
+      if (imagePath.startsWith('/')) return config.backendUrl + imagePath;
+      return config.backendUrl + '/uploads/' + imagePath;
+    }
+  
+    // Main load function
     async function loadAllContent() {
-      try {
-        // Fetch all services from database
-        const allServices = await fetchAllContent();
-        
-        // Render all services
-        renderServices(allServices);
-        
-        // Set default header and footer
-        elements.headerTitle.textContent = config.defaultContent.header.title;
-        elements.footerText.textContent = config.defaultContent.footer.footerText;
-        
-        // Set logo
-        elements.logo.src = formatImageUrl(config.defaultContent.header.image);
-        elements.logo.style.display = "block";
-        
-      } catch (error) {
-        console.error('Error loading content:', error);
-        elements.servicesContainer.innerHTML = '<p>Error loading services. Please try again later.</p>';
-      }
+      console.log('Starting content load...');
+      
+      // Set default content first
+      elements.headerTitle.textContent = config.defaultContent.header.title;
+      elements.logo.src = formatImageUrl(config.defaultContent.header.image);
+      elements.logo.style.display = "block";
+      elements.footerText.textContent = config.defaultContent.footer.footerText;
+      
+      // Then try to load dynamic content
+      const allServices = await fetchAllContent();
+      console.log('Services to render:', allServices);
+      renderServices(allServices);
     }
   
     // Initialize when page loads
