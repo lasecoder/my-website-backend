@@ -224,9 +224,6 @@ main {
     transition: transform 0.3s ease;
 }
 
-.service-card:hover {
-    transform: translateY(-5px);
-}
 
 .service-card h2 {
     font-size: 22px;
