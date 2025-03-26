@@ -97,26 +97,6 @@
 
   <!-- JavaScript -->
   <script>
-  const isLocalhost = window.location.hostname === "localhost";
-
-const config = {
-  backendUrl: isLocalhost
-    ? "http://localhost:3000"
-    : "https://my-website-backend-ixzh.onrender.com",
-  defaultContent: {
-    header: {
-      title: "",
-      image: "/uploads/default-logo.png"
-    },
-    services: [],
-    footer: {
-      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
-    }
-  }
-};
-
-
-
     const elements = {
       headerTitle: document.getElementById("home-header-title"),
       logo: document.getElementById("logo"),
@@ -148,7 +128,7 @@ const config = {
         const response = await safeFetch('/api/home-content');
         const content = response.data || response;
 
-        console.log('Fetched content:', content);
+       
 
         let logoImagePath = content.header?.image || config.defaultContent.header.image;
         if (logoImagePath && !logoImagePath.startsWith('http')) {
