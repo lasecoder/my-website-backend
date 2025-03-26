@@ -97,171 +97,107 @@
 
   <!-- JavaScript -->
   <script>
-    // Configuration
-const API_BASE_URL = "https://my-website-backend-ixzh.onrender.com";
-const ENDPOINTS = {
-  services: "/api/services",
-  allServices: "/api/all-services",
-  allContent: "/api/content/all",
-  header: "/api/header",
-  footer: "/api/footer"
+  const isLocalhost = window.location.hostname === "localhost";
+
+const config = {
+  backendUrl: isLocalhost
+    ? "http://localhost:3000"
+    : "https://my-website-backend-ixzh.onrender.com",
+  defaultContent: {
+    header: {
+      title: "",
+      image: "/uploads/default-logo.png"
+    },
+    services: [],
+    footer: {
+      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+    }
+  }
 };
 
-// DOM Elements
-const servicesContainer = document.getElementById('services-container');
-const headerSection = document.getElementById('header-section');
-const footerSection = document.getElementById('footer-section');
 
-// Enhanced Fetch Utility
-async function fetchData(url) {
-  try {
-    console.log(`Fetching from: ${url}`);
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+
+    const elements = {
+      headerTitle: document.getElementById("home-header-title"),
+      logo: document.getElementById("logo"),
+      footerText: document.getElementById("home-footer-text"),
+      servicesContainer: document.getElementById("services-container")
+    };
+
+    async function safeFetch(url, options = {}) {
+      try {
+        const response = await fetch(url, options);
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but got: ${contentType}`);
+        }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP error ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error(`API call to ${url} failed:`, error);
+        throw error;
       }
+    }
+
+    async function loadHomeContent() {
+      try {
+        const response = await safeFetch('/api/home-content');
+        const content = response.data || response;
+
+        console.log('Fetched content:', content);
+
+        let logoImagePath = content.header?.image || config.defaultContent.header.image;
+        if (logoImagePath && !logoImagePath.startsWith('http')) {
+          logoImagePath = config.backendUrl + (logoImagePath.startsWith('/') ? logoImagePath : '/' + logoImagePath);
+        }
+
+        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+        elements.logo.src = logoImagePath;
+        elements.logo.style.display = "block";
+
+        renderServices(content.services || []);
+        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+      } catch (error) {
+        console.error('Using default content due to error:', error);
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.logo.src = config.backendUrl + config.defaultContent.header.image;
+        elements.logo.style.display = "block";
+        renderServices(config.defaultContent.services);
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+      }
+    }
+
+    function renderServices(services) {
+      if (!services || services.length === 0) {
+        elements.servicesContainer.innerHTML = '<p>No services available</p>';
+        return;
+      }
+
+      elements.servicesContainer.innerHTML = services.map(service => {
+        let imageUrl = service.image || '/images/default-service.jpg';
+        if (!imageUrl.startsWith('http')) {
+          imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+        }
+
+        return `
+          <div class="service-card">
+            <h2 class="service-title">${service.title || 'Our Service'}</h2>
+            <img src="${imageUrl}" alt="${service.title || 'Service'}"
+                 class="service-image"
+                 onerror="this.src='/images/default-service.jpg'">
+            <p class="service-description">${service.description || ''}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadHomeContent();
     });
-    
-    console.log(`Response status: ${response.status}`);
-    const data = await response.json();
-    console.log(`Raw response:`, data);
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch data');
-    }
-    
-    return data;
-  } catch (error) {
-    console.error(`Error fetching ${url}:`, error);
-    throw error;
-  }
-}
-
-// Content Loaders
-async function loadServices() {
-  try {
-    // Try multiple endpoints
-    let services = [];
-    
-    // First try regular services endpoint
-    try {
-      const data = await fetchData(`${API_BASE_URL}${ENDPOINTS.services}`);
-      services = Array.isArray(data) ? data : [];
-    } catch (e) {
-      console.log('Primary services endpoint failed, trying alternatives');
-    }
-    
-    // If empty, try all-services endpoint
-    if (services.length === 0) {
-      try {
-        const data = await fetchData(`${API_BASE_URL}${ENDPOINTS.allServices}`);
-        services = Array.isArray(data) ? data : [];
-      } catch (e) {
-        console.log('Alternative services endpoint failed');
-      }
-    }
-    
-    // If still empty, try all content endpoint
-    if (services.length === 0) {
-      try {
-        const data = await fetchData(`${API_BASE_URL}${ENDPOINTS.allContent}`);
-        services = Array.isArray(data?.services) ? data.services : [];
-      } catch (e) {
-        console.log('All content endpoint failed for services');
-      }
-    }
-    
-    console.log('Services to render:', services);
-    renderServices(services);
-  } catch (error) {
-    console.error('Failed to load services:', error);
-    renderError(servicesContainer, 'Failed to load services. Please try again later.');
-  }
-}
-
-function renderServices(services) {
-  if (!services || services.length === 0) {
-    servicesContainer.innerHTML = `
-      <div class="alert alert-info">
-        No services available at the moment. Please check back later.
-      </div>
-    `;
-    return;
-  }
-
-  servicesContainer.innerHTML = services.map(service => `
-    <div class="service-card">
-      <h3>${service.title || 'Untitled Service'}</h3>
-      ${service.description ? `<p>${service.description}</p>` : ''}
-      ${service.image ? `<img src="${API_BASE_URL}${service.image}" alt="${service.title || 'Service Image'}" loading="lazy">` : ''}
-    </div>
-  `).join('');
-}
-
-async function loadHeader() {
-  try {
-    const data = await fetchData(`${API_BASE_URL}${ENDPOINTS.header}`) || 
-                 await fetchData(`${API_BASE_URL}${ENDPOINTS.allContent}`);
-    
-    const headerData = data.header || data;
-    renderHeader(headerData);
-  } catch (error) {
-    console.error('Failed to load header:', error);
-    renderError(headerSection, '');
-    // Default header if fetch fails
-    headerSection.innerHTML = `
-      <h1>Welcome to FutureTechTalent</h1>
-      <p>Loading content...</p>
-    `;
-  }
-}
-
-function renderHeader(header) {
-  headerSection.innerHTML = `
-    <h1>${header.text || 'Welcome to FutureTechTalent'}</h1>
-    ${header.description ? `<p>${header.description}</p>` : ''}
-  `;
-}
-
-async function loadFooter() {
-  try {
-    const data = await fetchData(`${API_BASE_URL}${ENDPOINTS.footer}`) || 
-                 await fetchData(`${API_BASE_URL}${ENDPOINTS.allContent}`);
-    
-    const footerData = data.footer || data;
-    renderFooter(footerData);
-  } catch (error) {
-    console.error('Failed to load footer:', error);
-    renderError(footerSection, '');
-    // Default footer if fetch fails
-    footerSection.innerHTML = `
-      <p>© ${new Date().getFullYear()} FutureTechTalent. All Rights Reserved.</p>
-    `;
-  }
-}
-
-function renderFooter(footer) {
-  footerSection.innerHTML = `
-    <p>${footer.footerText || `© ${new Date().getFullYear()} FutureTechTalent. All Rights Reserved.`}</p>
-  `;
-}
-
-function renderError(container, message) {
-  container.innerHTML = `
-    <div class="alert alert-error">
-      ${message || 'Failed to load content. Please refresh the page.'}
-    </div>
-  `;
-}
-
-// Initialize everything
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('Starting content load...');
-  loadHeader();
-  loadServices();
-  loadFooter();
-});
   </script>
 </body>
 </html>

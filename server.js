@@ -70,63 +70,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
-// Backend API endpoint (Node.js/Express example)
-app.get('/api/all-content', async (req, res) => {
-  try {
-    // Fetch ALL services from database (not just current/active ones)
-    const allServices = await Service.find().sort({ createdAt: -1 });
-    const headerContent = await Header.findOne();
-    const footerContent = await Footer.findOne();
-    
-    res.json({
-      data: {
-        header: headerContent || {},
-        services: allServices,
-        footer: footerContent || {}
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-// Option 1: Basic endpoint
-app.get('/api/services', async (req, res) => {
-  try {
-    const services = await Service.find({}).sort({ createdAt: -1 });
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Option 2: Alternative endpoint
-app.get('/api/all-services', async (req, res) => {
-  try {
-    const services = await Service.find({}).sort({ createdAt: -1 });
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Option 3: Comprehensive endpoint
-app.get('/api/content/all', async (req, res) => {
-  try {
-    const [services, header, footer] = await Promise.all([
-      Service.find({}).sort({ createdAt: -1 }),
-      Header.findOne(),
-      Footer.findOne()
-    ]);
-    
-    res.json({
-      services,
-      header: header || {},
-      footer: footer || {}
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
   res.json({ message: "API is working", timestamp: new Date() });
