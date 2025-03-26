@@ -97,12 +97,9 @@
 
   <!-- JavaScript -->
   <script>
-    const isLocalhost = window.location.hostname === "localhost";
-  
     const config = {
-      backendUrl: isLocalhost
-        ? "http://localhost:3000"
-        : "https://my-website-backend-ixzh.onrender.com",
+      // Always use HTTPS for production
+      backendUrl: "https://my-website-backend-ixzh.onrender.com",
       defaultContent: {
         header: {
           title: "FutureTechTalent - Professional Business Solutions",
@@ -122,28 +119,36 @@
       servicesContainer: document.getElementById("services-container")
     };
   
-    // Helper function to properly construct image URLs
-    function getFullImageUrl(imagePath) {
-      if (!imagePath) return config.backendUrl + config.defaultContent.header.image;
-      
-      // If it's already a full URL, return as-is
-      if (imagePath.startsWith('http')) return imagePath;
-      
-      // If it starts with /, prepend backend URL
-      if (imagePath.startsWith('/')) {
-        return config.backendUrl + imagePath;
+    // Improved image URL handler with protocol correction
+    function getCorrectImageUrl(imagePath) {
+      if (!imagePath) {
+        return `${config.backendUrl}${config.defaultContent.header.image}`;
+      }
+  
+      // If already a full URL (but might be HTTP when we need HTTPS)
+      if (imagePath.startsWith('http://')) {
+        // Force HTTPS in production
+        return imagePath.replace('http://', 'https://');
       }
       
-      // Default case - assume it's in uploads directory
-      return config.backendUrl + '/uploads/' + imagePath;
+      // If already HTTPS, use as-is
+      if (imagePath.startsWith('https://')) {
+        return imagePath;
+      }
+      
+      // Handle relative paths (both /uploads/... and uploads/...)
+      if (imagePath.startsWith('/')) {
+        return `${config.backendUrl}${imagePath}`;
+      }
+      
+      // Default case (no leading slash)
+      return `${config.backendUrl}/uploads/${imagePath}`;
     }
   
     async function safeFetch(url, options = {}) {
       try {
         const response = await fetch(url, options);
-        if (!response.ok) {
-          throw new Error(`HTTP error ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
       } catch (error) {
         console.error('Fetch error:', error);
@@ -152,23 +157,22 @@
     }
   
     function renderServices(services) {
-      if (!services || services.length === 0) {
+      if (!services?.length) {
         elements.servicesContainer.innerHTML = '<p>No services available</p>';
         return;
       }
   
       elements.servicesContainer.innerHTML = services.map(service => {
-        const imageUrl = getFullImageUrl(service.image);
-        const defaultImageUrl = getFullImageUrl('/images/default-service.jpg');
+        const imageUrl = getCorrectImageUrl(service.image);
+        const defaultImage = getCorrectImageUrl('/images/default-service.jpg');
         
         return `
           <div class="service-card">
-            <h2 class="service-title">${service.title || 'Our Service'}</h2>
+            <h2>${service.title || 'Our Service'}</h2>
             <img src="${imageUrl}" 
                  alt="${service.title || 'Service'}"
-                 class="service-image"
-                 onerror="this.src='${defaultImageUrl}'">
-            <p class="service-description">${service.description || ''}</p>
+                 onerror="this.src='${defaultImage}'">
+            <p>${service.description || ''}</p>
           </div>
         `;
       }).join('');
@@ -179,33 +183,29 @@
         const response = await safeFetch(`${config.backendUrl}/api/home-content`);
         const content = response.data || response;
   
-        // Update header
+        // Update content
         elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
         
-        const logoUrl = getFullImageUrl(content.header?.image);
+        const logoUrl = getCorrectImageUrl(content.header?.image);
         elements.logo.src = logoUrl;
-        elements.logo.style.display = "block";
         elements.logo.onerror = () => {
-          elements.logo.src = getFullImageUrl(config.defaultContent.header.image);
+          elements.logo.src = getCorrectImageUrl(config.defaultContent.header.image);
         };
   
-        // Render services
-        renderServices(content.services || []);
-  
-        // Update footer
+        renderServices(content.services);
         elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
   
       } catch (error) {
-        console.error('Error loading content:', error);
-        // Fallback to default content
+        console.error('Loading failed:', error);
+        // Fallback to defaults
         elements.headerTitle.textContent = config.defaultContent.header.title;
-        elements.logo.src = getFullImageUrl(config.defaultContent.header.image);
-        elements.logo.style.display = "block";
+        elements.logo.src = getCorrectImageUrl(config.defaultContent.header.image);
         renderServices(config.defaultContent.services);
         elements.footerText.textContent = config.defaultContent.footer.footerText;
       }
     }
   
+    // Initialize
     window.addEventListener('DOMContentLoaded', loadHomeContent);
   </script>
 </body>
