@@ -182,25 +182,33 @@
   }
 }
 
-      // Render services list
-      function renderServices(services) {
-        if (!services || services.length === 0) {
-          elements.servicesContainer.innerHTML = '<p>No services available</p>';
-          return;
-        }
-        
-        elements.servicesContainer.innerHTML = services.map(service => `
-          <div class="service-card">
-            <h2 class="service-title">${service.title || 'Our Service'}</h2>
-            <img src="${service.image || '/images/default-service.jpg'}" 
-                 alt="${service.title || 'Service'}"
-                 class="service-image"
-                 onerror="this.src='/images/default-service.jpg'">
-            <p class="service-description">${service.description || ''}</p>
-          </div>
-        `).join('');
-      }
-      
+function renderServices(services) {
+  if (!services || services.length === 0) {
+    elements.servicesContainer.innerHTML = '<p>No services available</p>';
+    return;
+  }
+
+  elements.servicesContainer.innerHTML = services.map(service => {
+    let imageUrl = service.image || '/images/default-service.jpg';
+    
+    // 👉 Prepend backendUrl or slash
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+    }
+
+    return `
+      <div class="service-card">
+        <h2 class="service-title">${service.title || 'Our Service'}</h2>
+        <img src="${imageUrl}" 
+             alt="${service.title || 'Service'}"
+             class="service-image"
+             onerror="this.src='/images/default-service.jpg'">
+        <p class="service-description">${service.description || ''}</p>
+      </div>
+    `;
+  }).join('');
+}
+
     
       // Initialize page
       window.addEventListener('DOMContentLoaded', () => {
