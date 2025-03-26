@@ -145,41 +145,46 @@
         }
       }
     
-      // Load and display home content
       async function loadHomeContent() {
-        try {
-          // Try to fetch fresh content
-          const response = await safeFetch('/api/home-content');
-          const content = response.data || response; // Handle both formats
-          
-          // Update header
-          elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-          elements.logo.src = content.header?.image || config.defaultContent.header.image;
-          elements.logo.style.display = "block";
-          
-          // Update services
-          if (Array.isArray(content.services)) {
-            renderServices(content.services);
-          } else {
-            renderServices(config.defaultContent.services);
-          }
-          
-          // Update footer
-          elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
-          
-        } catch (error) {
-          console.error('Using default content due to error:', error);
-          // Fallback to default content
-          elements.headerTitle.textContent = config.defaultContent.header.title;
-          elements.logo.src = config.defaultContent.header.image;
-          elements.logo.style.display = "block";
-          renderServices(config.defaultContent.services);
-          elements.footerText.textContent = config.defaultContent.footer.footerText;
-        }
-        console.log('Fetched content:', content);
+  try {
+    const response = await safeFetch('/api/home-content');
+    const content = response.data || response;
 
-      }
-    
+    // Debug log
+    console.log('Fetched content:', content);
+
+    // Update header
+    let logoImagePath = content.header?.image || config.defaultContent.header.image;
+    if (logoImagePath.startsWith('/')) {
+      logoImagePath = config.backendUrl + logoImagePath;
+    }
+
+    elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+    elements.logo.src = logoImagePath;
+    elements.logo.style.display = "block";
+
+    // Update services
+    if (Array.isArray(content.services)) {
+      renderServices(content.services);
+    } else {
+      renderServices(config.defaultContent.services);
+    }
+
+    // Update footer
+    elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+
+  } catch (error) {
+    console.error('Using default content due to error:', error);
+
+    // Fallback
+    elements.headerTitle.textContent = config.defaultContent.header.title;
+    elements.logo.src = config.backendUrl + config.defaultContent.header.image;
+    elements.logo.style.display = "block";
+    renderServices(config.defaultContent.services);
+    elements.footerText.textContent = config.defaultContent.footer.footerText;
+  }
+}
+
       // Render services list
       function renderServices(services) {
         if (!services || services.length === 0) {
