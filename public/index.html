@@ -97,19 +97,25 @@
 
   <!-- JavaScript -->
   <script>
-    const config = {
-      backendUrl: "http://localhost:3000",
-      defaultContent: {
-        header: {
-          title: "",
-          image: "/uploads/default-logo.png"
-        },
-        services: [],
-        footer: {
-          footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
-        }
-      }
-    };
+  const isLocalhost = window.location.hostname === "localhost";
+
+const config = {
+  backendUrl: isLocalhost
+    ? "http://localhost:3000"
+    : "https://my-website-backend-ixzh.onrender.com",
+  defaultContent: {
+    header: {
+      title: "",
+      image: "/uploads/default-logo.png"
+    },
+    services: [],
+    footer: {
+      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+    }
+  }
+};
+
+
 
     const elements = {
       headerTitle: document.getElementById("home-header-title"),
