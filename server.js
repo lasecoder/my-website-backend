@@ -70,7 +70,29 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
+// ✅ Signup Route
+app.post('/signup', async (req, res) => {
+  try {
+    const { name, email, password, confirmPassword } = req.body;
 
+    if (password !== confirmPassword) {
+      return res.status(400).send('Passwords do not match');
+    }
+
+    const existingUser = await Account.findOne({ email });
+    if (existingUser) {
+      return res.status(409).send('Email already registered');
+    }
+
+    const newAccount = new Account({ name, email, password });
+    await newAccount.save();
+
+    res.status(201).json({ message: 'Account created successfully' });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
   res.json({ message: "API is working", timestamp: new Date() });
