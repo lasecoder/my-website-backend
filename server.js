@@ -71,26 +71,44 @@ const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
 // ✅ Signup Route
+// Fixed signup route
 app.post('/signup', async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
 
+    // Check if all required fields are provided
+    if (!name || !email || !password || !confirmPassword) {
+      return res.status(400).json({ message: 'Please fill all fields' });
+    }
+
+    // Check if passwords match
     if (password !== confirmPassword) {
-      return res.status(400).send('Passwords do not match');
+      return res.status(400).json({ message: 'Passwords do not match' });
     }
 
-    const existingUser = await Account.findOne({ email });
+    // Check if the email is already registered
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).send('Email already registered');
+      return res.status(400).json({ message: 'Email already in use' });
     }
 
-    const newAccount = new Account({ name, email, password });
-    await newAccount.save();
+    // Hash the password before saving to the database
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    res.status(201).json({ message: 'Account created successfully' });
+    // Create a new user instance
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    // Save the user to the database
+    await newUser.save();
+
+    res.status(200).json({ message: 'Signup successful' });
   } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error during signup:', error);
+    res.status(500).json({ message: 'Something went wrong' });
   }
 });
 // Simple test route - add this temporarily
