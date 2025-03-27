@@ -70,39 +70,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
-// ✅ Define User model, check if already exists in mongoose
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-});
 
-// If model doesn't exist, create it; else, use the existing model
-let User = mongoose.models.User || mongoose.model('User', userSchema);
-
-// ✅ Signup Route
-app.post('/signup', async (req, res) => {
-  try {
-    const { name, email, password, confirmPassword } = req.body;
-
-    if (password !== confirmPassword) {
-      return res.status(400).send('Passwords do not match');
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).send('Email already registered');
-    }
-
-    const newUser = new User({ name, email, password });
-    await newUser.save();
-
-    res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
   res.json({ message: "API is working", timestamp: new Date() });
