@@ -71,16 +71,14 @@ const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
 // ✅ Define User model, check if already exists in mongoose
-let User;
-try {
-  User = mongoose.model('User');
-} catch (error) {
-  User = mongoose.model('User', new mongoose.Schema({
-    name: String,
-    email: String,
-    password: String
-  }));
-}
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+});
+
+// If model doesn't exist, create it; else, use the existing model
+let User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // ✅ Signup Route
 app.post('/signup', async (req, res) => {
