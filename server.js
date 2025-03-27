@@ -70,12 +70,17 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
-// ✅ Define User model
-const User = mongoose.model('User', new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String
-}));
+// ✅ Define User model, check if already exists in mongoose
+let User;
+try {
+  User = mongoose.model('User');
+} catch (error) {
+  User = mongoose.model('User', new mongoose.Schema({
+    name: String,
+    email: String,
+    password: String
+  }));
+}
 
 // ✅ Signup Route
 app.post('/signup', async (req, res) => {
