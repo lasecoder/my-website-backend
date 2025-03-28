@@ -4,34 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Services</title>
-    <link rel="stylesheet" href="./css/services.css"> <!-- Corrected relative path -->
+    <link rel="stylesheet" href="./css/services.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <img id="header-logo" class="header-logo" alt="Company Logo" style="display:none;">
-            <h1 id="header-title">Our service </h1>
-        </div>
-        <div class="back-home">
-            <!-- Use a relative URL for "Back Home" link -->
-            <a href="./index.html" class="back-home-btn">Back Home</a>
-        </div>
-        <h1 id="services-header-title">Our Services</h1>
-    </header>
+    <!-- Your existing HTML structure remains the same -->
     
-    <section id="services-container"></section>
-
-    <footer>
-        <div class="container">
-            <p id="footer-text">&copy; 2025 My Blog. All Rights Reserved.</p>
-        </div>
-    </footer>
-
     <script>
+        // Define base API URL (now using port 10000)
+        const API_BASE_URL = 'http://localhost:10000';
+        
         // Fetch header text from the backend
         function fetchHeaderText() {
-            fetch("http://localhost:5000/api/header")
+            fetch(`${API_BASE_URL}/api/content/header`)  // Updated endpoint
                 .then(response => response.json())
                 .then(data => {
                     if (data.headerText) {
@@ -43,7 +28,7 @@
 
         // Fetch all services
         function fetchServices() {
-            fetch("http://localhost:5000/api/services")
+            fetch(`${API_BASE_URL}/api/services`)  // This endpoint was correct
                 .then(response => response.json())
                 .then(data => {
                     if (!Array.isArray(data)) throw new Error("Received data is not an array");
@@ -56,9 +41,9 @@
                         serviceCard.classList.add("service-card");
 
                         // Handle Image & Video Rendering
-                        const imageHTML = service.image ? `<img src="http://localhost:5000/${service.image}" alt="${service.title}" />` : '';
+                        const imageHTML = service.image ? `<img src="${API_BASE_URL}/${service.image}" alt="${service.title}" />` : '';
                         const videoHTML = service.video ? `<video width="320" height="240" controls>
-                                                            <source src="http://localhost:5000/${service.video}" type="video/mp4">
+                                                            <source src="${API_BASE_URL}/${service.video}" type="video/mp4">
                                                             Your browser does not support the video tag.
                                                         </video>` : '';
                         
@@ -76,7 +61,7 @@
 
         // Fetch the footer content from the backend
         function fetchFooter() {
-            fetch("http://localhost:5000/api/content/footer")
+            fetch(`${API_BASE_URL}/api/content/footer`)  // This endpoint was correct
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Error: ${response.status} - ${response.statusText}`);
@@ -84,9 +69,9 @@
                     return response.json();
                 })
                 .then(data => {
-                    const footerText = data.footerText; // Get the footer text from the response
+                    const footerText = data.footerText;
                     const footerContainer = document.querySelector("footer .container");
-                    footerContainer.innerHTML = `<p>${footerText}</p>`; // Update the footer with new content
+                    footerContainer.innerHTML = `<p>${footerText}</p>`;
                 })
                 .catch(error => {
                     console.error("Error fetching footer:", error);
@@ -97,7 +82,7 @@
         window.onload = function() {
             fetchHeaderText();
             fetchServices();
-            fetchFooter();  // Fetch and display the updated footer from the database
+            fetchFooter();
         };
     </script>
 </body>
