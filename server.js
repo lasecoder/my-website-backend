@@ -23,7 +23,6 @@ const Logo = require('./models/Logo');
 const Message = require('./models/Message');
 const Vacancy = require('./models/Vacancy');
 // Create upload directories
-const uploadDir = 'uploads';
 const imageDir = `${uploadDir}/images`;
 const videoDir = `${uploadDir}/videos`;
 
@@ -37,6 +36,22 @@ const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is undefined. Check your .env file.");
   process.exit(1);
+}
+const fs = require('fs');
+const path = require('path');
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('Created uploads directory');
+}
+
+// Add default image if missing
+const defaultImagePath = path.join(uploadDir, 'default-logo.png');
+if (!fs.existsSync(defaultImagePath)) {
+  fs.writeFileSync(defaultImagePath, fs.readFileSync(path.join(__dirname, 'public', 'default-logo.png')));
+  console.log('Created default image');
 }
 
 mongoose.connect(MONGO_URI)
@@ -64,13 +79,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadDir); // Use the absolute path
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage });
+
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
   res.json({ message: "API is working", timestamp: new Date() });
@@ -84,11 +99,20 @@ app.get('/health', (req, res) => {
   });
 });
 // Serve static files from 'uploads'
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+app.use('/uploads', express.static(uploadDir, {
   setHeaders: (res) => {
-    res.set('Content-Type', 'image/png'); // Force image MIME type
+    res.set('Cache-Control', 'no-store');
   }
 }));
+app.use('/api/*', (req, res, next) => {
+  if (req.method === 'GET' && req.query.image) {
+    const filePath = path.join(uploadDir, req.query.image);
+    if (!fs.existsSync(filePath)) {
+      console.warn('Missing image:', filePath);
+    }
+  }
+  next();
+});
 
 // Add this ABOVE your catch-all route
 app.get('/uploads/:filename', (req, res) => {
