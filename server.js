@@ -1,11 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
+const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const dotenv = require('dotenv');
 const fs = require('fs');
-const path = require('path');
+const dotenv = require('dotenv');
+
 // Load environment variables
 dotenv.config();
 // Models
@@ -22,6 +23,7 @@ const Logo = require('./models/Logo');
 const Message = require('./models/Message');
 const Vacancy = require('./models/Vacancy');
 // Create upload directories
+const uploadDir = 'uploads';
 const imageDir = `${uploadDir}/images`;
 const videoDir = `${uploadDir}/videos`;
 
@@ -35,21 +37,6 @@ const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
   console.error("❌ MongoDB URI is undefined. Check your .env file.");
   process.exit(1);
-}
-
-
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log('Created uploads directory');
-}
-
-// Add default image if missing
-const defaultImagePath = path.join(uploadDir, 'default-logo.png');
-if (!fs.existsSync(defaultImagePath)) {
-  fs.writeFileSync(defaultImagePath, fs.readFileSync(path.join(__dirname, 'public', 'default-logo.png')));
-  console.log('Created default image');
 }
 
 mongoose.connect(MONGO_URI)
@@ -69,21 +56,18 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-// Replace existing static file middleware with this:
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  fallthrough: false // Strictly handle only /uploads
-}));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir); // Use the absolute path
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
-
+const upload = multer({ storage });
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
   res.json({ message: "API is working", timestamp: new Date() });
@@ -97,56 +81,7 @@ app.get('/health', (req, res) => {
   });
 });
 // Serve static files from 'uploads'
-app.use('/uploads', express.static(uploadDir, {
-  setHeaders: (res) => {
-    res.set('Cache-Control', 'no-store');
-  }
-}));
-app.use('/api/*', (req, res, next) => {
-  if (req.method === 'GET' && req.query.image) {
-    const filePath = path.join(uploadDir, req.query.image);
-    if (!fs.existsSync(filePath)) {
-      console.warn('Missing image:', filePath);
-    }
-  }
-  next();
-});
-
-// Add this ABOVE your catch-all route
-app.get('/uploads/:filename', (req, res) => {
-  const file = path.join(__dirname, 'uploads', req.params.filename);
-  
-  if (fs.existsSync(file)) {
-    res.sendFile(file);
-  } else {
-    res.status(404).send('Image not found');
-  }
-});
-app.get('/fix-images', async (req, res) => {
-  // 1. Delete all existing content
-  await HomeContent.deleteMany({});
-  
-  // 2. Create fresh entry with test image
-  await HomeContent.create({
-    header: {
-      title: "TEST TITLE",
-      image: "/uploads/default-logo.png" // MUST exist in uploads/
-    }
-  });
-  
-  res.send("Database reset with test image");
-});
-
-// Add this route to test file access
-app.get('/debug-file', (req, res) => {
-  const testFile = path.join(__dirname, 'uploads', 'default-logo.png');
-  
-  if (fs.existsSync(testFile)) {
-    res.send(`File exists at: ${testFile}`);
-  } else {
-    res.status(404).send(`File NOT FOUND at: ${testFile}`);
-  }
-});
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ==================== API ROUTES ====================
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
@@ -156,43 +91,26 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   res.json({ path: `/uploads/${req.file.filename}` });
 });
 // ✅ API: Update Home Content (Header, Services, Footer)
-// Modify your upload endpoint:
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
     const imagePath = req.file 
-      ? `/uploads/${req.file.filename}`  // Absolute path
-      : "/uploads/default-logo.png";
+      ? `/uploads/${req.file.filename}`  // ✅ Consistent path format
+      : "/uploads/default-logo.png";    // Fallback to default
 
     const updateData = {
       header: {
         title: req.body.title || "Default Title",
-        image: imagePath,
-        content: req.body.description || ""
+        image: imagePath  // ✅ Always uses correct path format
       }
     };
 
-    const result = await HomeContent.findOneAndUpdate(
-      {},
-      updateData,
-      { upsert: true, new: true }
-    );
-    
-    res.status(200).json({ 
-      message: "Content updated successfully!",
-      data: result
-    });
+    await HomeContent.findOneAndUpdate({}, updateData, { upsert: true, new: true });
+    res.status(200).json({ message: "Content updated successfully!" });
   } catch (error) {
-    console.error('Update error:', error);
     res.status(500).json({ error: "Update failed" });
   }
 });
-// Add this before your routes
-app.use('/api/content', (req, res, next) => {
-  if (req.method === 'GET') {
-    res.setHeader('Cache-Control', 'no-store');
-  }
-  next();
-});
+
 // ✅ API: Fetch Home Content (Header, Services, Footer)
 app.get('/api/content', async (req, res) => {
   try {
@@ -268,34 +186,24 @@ app.get('/api/home-content', async (req, res) => {
     const content = await HomeContent.findOne();
     if (!content) {
       return res.status(404).json({ 
-        header: { 
-          title: "Default Title", 
-          content: "", 
-          image: "/uploads/default-logo.png" 
-        },
+        header: { title: "Default Title", content: "", image: "" },
         services: [],
         footer: { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
       });
     }
-
-    // Verify image exists
-    const headerImage = content.header?.image || "/uploads/default-logo.png";
-    const imageExists = fs.existsSync(path.join(__dirname, headerImage));
-
+    
+    // Return the content in the expected format
     res.json({
-      header: {
-        ...content.header,
-        image: imageExists ? headerImage : "/uploads/default-logo.png"
-      },
+      header: content.header || { title: "Default Title", content: "", image: "" },
       services: content.services || [],
       footer: content.footer || { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
     });
     
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error('❌ Error fetching home content:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch content',
-      details: error.message 
+      message: 'Failed to fetch home content',
+      error: error.message 
     });
   }
 });
@@ -751,12 +659,9 @@ app.get('/admin_dashboard.html', (req, res) => {
 
 // Catch-all route for frontend
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/uploads')) {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  } else {
-    res.status(404).send('Not found');
-  }
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
