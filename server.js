@@ -81,10 +81,22 @@ app.get('/health', (req, res) => {
   });
 });
 // Serve static files from 'uploads'
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res) => {
+    res.set('Content-Type', 'image/png'); // Force image MIME type
+  }
+}));
 
-
-
+// Add this ABOVE your catch-all route
+app.get('/uploads/:filename', (req, res) => {
+  const file = path.join(__dirname, 'uploads', req.params.filename);
+  
+  if (fs.existsSync(file)) {
+    res.sendFile(file);
+  } else {
+    res.status(404).send('Image not found');
+  }
+});
 app.get('/fix-images', async (req, res) => {
   // 1. Delete all existing content
   await HomeContent.deleteMany({});
@@ -703,9 +715,12 @@ app.get('/admin_dashboard.html', (req, res) => {
 
 // Catch-all route for frontend
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  if (!req.path.startsWith('/uploads')) {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  } else {
+    res.status(404).send('Not found');
+  }
 });
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
