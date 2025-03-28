@@ -97,24 +97,6 @@
 
   <!-- JavaScript -->
   <script>
-    const config = {
-      backendUrl: "https://my-backend-service.onrender.com",
-      defaultContent: {
-        header: {
-          title: "Welcome to FutureTechTalent",
-          image: "/uploads/default-logo.png"
-        },
-        services: [{
-          title: "Our Services",
-          description: "Discover our professional business solutions",
-          image: "/uploads/default-service.jpg"
-        }],
-        footer: {
-          footerText: "© 2025 FutureTechTalent. All Rights Reserved."
-        }
-      }
-    };
-  
     // DOM Elements
     const elements = {
       headerTitle: document.getElementById("home-header-title"),
@@ -122,24 +104,6 @@
       servicesContainer: document.getElementById("services-container"),
       footerText: document.getElementById("home-footer-text")
     };
-  
-    // Fetch data with error handling
-    async function fetchData(url) {
-      try {
-        const response = await fetch(url, {
-          mode: 'cors',
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-      } catch (error) {
-        console.error('Fetch error:', error);
-        return null;
-      }
-    }
-  
     // Render services with proper image handling
     function renderServices(services) {
       if (!services || services.length === 0) {
@@ -173,40 +137,59 @@
       }).join('');
     }
   
-    // Load and display all content
-    async function loadContent() {
-      try {
-        // Fetch all content
-        const content = await fetchData(`${config.backendUrl}/api/home-content`) || config.defaultContent;
-  
-        // Set header content
-        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-        
-        // Set logo - handle both absolute and relative paths
-        let logoUrl = content.header?.image;
-        if (logoUrl && !logoUrl.startsWith('http')) {
-          logoUrl = logoUrl.startsWith('/') ? config.backendUrl + logoUrl : config.backendUrl + '/' + logoUrl;
-        }
-        elements.logo.src = logoUrl || config.backendUrl + config.defaultContent.header.image;
-        elements.logo.onerror = function() {
-          this.src = config.backendUrl + config.defaultContent.header.image;
-        };
-  
-        // Render services
-        renderServices(content.services);
-  
-        // Set footer
-        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
-  
-      } catch (error) {
-        console.error('Error loading content:', error);
-        // Fallback to default content
-        elements.headerTitle.textContent = config.defaultContent.header.title;
-        elements.logo.src = config.backendUrl + config.defaultContent.header.image;
-        renderServices(config.defaultContent.services);
-        elements.footerText.textContent = config.defaultContent.footer.footerText;
+    /// Inside your script tag in index.html:
+
+const config = {
+  backendUrl: "https://my-backend-service.onrender.com",
+  // [rest of your config remains the same]
+};
+
+async function fetchData(url) {
+  try {
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
+    // Check if response has content
+    const contentLength = response.headers.get('Content-Length');
+    if (contentLength && contentLength === '0') {
+      return null;
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    throw error; // Re-throw to handle in loadContent
+  }
+}
+
+async function loadContent() {
+  try {
+    const content = await fetchData(`${config.backendUrl}/api/home-content`);
+    // [rest of your loadContent logic remains the same]
+  } catch (error) {
+    console.error('Failed to load content:', error);
+    // Fallback to default content
+    elements.headerTitle.textContent = config.defaultContent.header.title;
+    elements.logo.src = config.defaultContent.header.image;
+    renderServices(config.defaultContent.services);
+    elements.footerText.textContent = config.defaultContent.footer.footerText;
+    
+    // Show user-friendly error message
+    alert('Failed to load content. Showing default information.');
+  }
+}
+
+// [Rest of your client code remains the same]
   
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', loadContent);
