@@ -80,8 +80,16 @@ app.get('/health', (req, res) => {
     timestamp: new Date()
   });
 });
+// Serve static files from 'uploads'
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ==================== API ROUTES ====================
-
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded!" });
+  }
+  console.log("File saved at:", req.file.path); // Check the saved path
+  res.json({ path: `/uploads/${req.file.filename}` });
+});
 // ✅ API: Update Home Content (Header, Services, Footer)
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
