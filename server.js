@@ -1,12 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
 const dotenv = require('dotenv');
-
+const fs = require('fs');
+const path = require('path');
 // Load environment variables
 dotenv.config();
 // Models
@@ -37,8 +36,7 @@ if (!MONGO_URI) {
   console.error("❌ MongoDB URI is undefined. Check your .env file.");
   process.exit(1);
 }
-const fs = require('fs');
-const path = require('path');
+
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads');
