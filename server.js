@@ -192,7 +192,33 @@ app.get('/api/content/footer', async (req, res) => {
   }
 });
 
-
+// ✅ API: Fetch Home Content (alternative to /api/content)
+app.get('/api/home-content', async (req, res) => {
+  try {
+    const content = await HomeContent.findOne();
+    if (!content) {
+      return res.status(404).json({ 
+        header: { title: "Default Title", content: "", image: "" },
+        services: [],
+        footer: { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
+      });
+    }
+    
+    // Return the content in the expected format
+    res.json({
+      header: content.header || { title: "Default Title", content: "", image: "" },
+      services: content.services || [],
+      footer: content.footer || { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching home content:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch home content',
+      error: error.message 
+    });
+  }
+});
 // ==================== Blog ====================
 // Create Post (with Image and Video Upload Support)
 app.post("/api/posts", upload.fields([{ name: "image" }, { name: "video" }]), async (req, res) => {
