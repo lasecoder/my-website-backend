@@ -82,6 +82,18 @@ app.get('/health', (req, res) => {
 });
 // Serve static files from 'uploads'
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Run this ONCE in your server startup (or via MongoDB shell)
+const fixImagePaths = async () => {
+  await HomeContent.updateMany(
+    { "header.image": { $regex: /^uploads/ } }, // Finds paths starting with "uploads"
+    { $set: { "header.image": "/uploads/" + "$header.image" } } // Adds leading slash
+  );
+  
+  console.log("Fixed image paths in database");
+};
+
+fixImagePaths();
 // ==================== API ROUTES ====================
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
