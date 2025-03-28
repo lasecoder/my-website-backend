@@ -91,26 +91,43 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   res.json({ path: `/uploads/${req.file.filename}` });
 });
 // ✅ API: Update Home Content (Header, Services, Footer)
+// Modify your upload endpoint:
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
     const imagePath = req.file 
-      ? `/uploads/${req.file.filename}`  // ✅ Consistent path format
-      : "/uploads/default-logo.png";    // Fallback to default
+      ? `/uploads/${req.file.filename}`  // Absolute path
+      : "/uploads/default-logo.png";
 
     const updateData = {
       header: {
         title: req.body.title || "Default Title",
-        image: imagePath  // ✅ Always uses correct path format
+        image: imagePath,
+        content: req.body.description || ""
       }
     };
 
-    await HomeContent.findOneAndUpdate({}, updateData, { upsert: true, new: true });
-    res.status(200).json({ message: "Content updated successfully!" });
+    const result = await HomeContent.findOneAndUpdate(
+      {},
+      updateData,
+      { upsert: true, new: true }
+    );
+    
+    res.status(200).json({ 
+      message: "Content updated successfully!",
+      data: result
+    });
   } catch (error) {
+    console.error('Update error:', error);
     res.status(500).json({ error: "Update failed" });
   }
 });
-
+// Add this before your routes
+app.use('/api/content', (req, res, next) => {
+  if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+  next();
+});
 // ✅ API: Fetch Home Content (Header, Services, Footer)
 app.get('/api/content', async (req, res) => {
   try {
@@ -186,24 +203,34 @@ app.get('/api/home-content', async (req, res) => {
     const content = await HomeContent.findOne();
     if (!content) {
       return res.status(404).json({ 
-        header: { title: "Default Title", content: "", image: "" },
+        header: { 
+          title: "Default Title", 
+          content: "", 
+          image: "/uploads/default-logo.png" 
+        },
         services: [],
         footer: { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
       });
     }
-    
-    // Return the content in the expected format
+
+    // Verify image exists
+    const headerImage = content.header?.image || "/uploads/default-logo.png";
+    const imageExists = fs.existsSync(path.join(__dirname, headerImage));
+
     res.json({
-      header: content.header || { title: "Default Title", content: "", image: "" },
+      header: {
+        ...content.header,
+        image: imageExists ? headerImage : "/uploads/default-logo.png"
+      },
       services: content.services || [],
       footer: content.footer || { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
     });
     
   } catch (error) {
-    console.error('❌ Error fetching home content:', error);
+    console.error('Fetch error:', error);
     res.status(500).json({ 
-      message: 'Failed to fetch home content',
-      error: error.message 
+      error: 'Failed to fetch content',
+      details: error.message 
     });
   }
 });
