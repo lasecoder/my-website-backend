@@ -121,13 +121,7 @@ app.post('/api/content', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: "Update failed" });
   }
 });
-// Add this before your routes
-app.use('/api/content', (req, res, next) => {
-  if (req.method === 'GET') {
-    res.setHeader('Cache-Control', 'no-store');
-  }
-  next();
-});
+
 // ✅ API: Fetch Home Content (Header, Services, Footer)
 app.get('/api/content', async (req, res) => {
   try {
@@ -203,34 +197,24 @@ app.get('/api/home-content', async (req, res) => {
     const content = await HomeContent.findOne();
     if (!content) {
       return res.status(404).json({ 
-        header: { 
-          title: "Default Title", 
-          content: "", 
-          image: "/uploads/default-logo.png" 
-        },
+        header: { title: "Default Title", content: "", image: "" },
         services: [],
         footer: { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
       });
     }
-
-    // Verify image exists
-    const headerImage = content.header?.image || "/uploads/default-logo.png";
-    const imageExists = fs.existsSync(path.join(__dirname, headerImage));
-
+    
+    // Return the content in the expected format
     res.json({
-      header: {
-        ...content.header,
-        image: imageExists ? headerImage : "/uploads/default-logo.png"
-      },
+      header: content.header || { title: "Default Title", content: "", image: "" },
       services: content.services || [],
       footer: content.footer || { footerText: "© 2025 FutureTechTalent. All Rights Reserved." }
     });
     
   } catch (error) {
-    console.error('Fetch error:', error);
+    console.error('❌ Error fetching home content:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch content',
-      details: error.message 
+      message: 'Failed to fetch home content',
+      error: error.message 
     });
   }
 });
