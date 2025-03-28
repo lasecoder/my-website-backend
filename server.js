@@ -56,7 +56,10 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Replace existing static file middleware with this:
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  fallthrough: false // Strictly handle only /uploads
+}));
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -110,6 +113,17 @@ app.get('/fix-images', async (req, res) => {
   });
   
   res.send("Database reset with test image");
+});
+
+// Add this route to test file access
+app.get('/debug-file', (req, res) => {
+  const testFile = path.join(__dirname, 'uploads', 'default-logo.png');
+  
+  if (fs.existsSync(testFile)) {
+    res.send(`File exists at: ${testFile}`);
+  } else {
+    res.status(404).send(`File NOT FOUND at: ${testFile}`);
+  }
 });
 // ==================== API ROUTES ====================
 app.post('/api/upload', upload.single('image'), (req, res) => {
