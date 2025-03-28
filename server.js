@@ -93,41 +93,21 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 // ✅ API: Update Home Content (Header, Services, Footer)
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
-    const { section, title, description, footerText } = req.body;
-    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;  // Normalize file path for cross-platform compatibility
+    const imagePath = req.file 
+      ? `/uploads/${req.file.filename}`  // ✅ Consistent path format
+      : "/uploads/default-logo.png";    // Fallback to default
 
-    // Prepare the data to update based on section
-    const updateData = {};
+    const updateData = {
+      header: {
+        title: req.body.title || "Default Title",
+        image: imagePath  // ✅ Always uses correct path format
+      }
+    };
 
-    // Handle different sections
-    if (section === "header") {
-      updateData["header"] = {
-        title: title || "Default Header Title", // Default if title is not provided
-        content: description || "",  // Default empty content
-        image: imagePath || "No image"  // Default to "No image" if no image provided
-      };
-    } else if (section === "footer") {
-      updateData["footer"] = { footerText: footerText || "© 2025 FutureTechTalent. All Rights Reserved." };
-    } else if (section === "services") {
-      // Push new service to the services array
-      updateData["$push"] = { services: { title, description, image: imagePath || "No image" } };
-    } else {
-      return res.status(400).json({ message: "Invalid section specified." });  // Return error if section is invalid
-    }
-
-    // Find the document in MongoDB and update it (upsert will create a new document if none is found)
-    const updatedContent = await HomeContent.findOneAndUpdate(
-      {},  // Find the first document in the collection (empty filter {})
-      updateData,  // The data to update
-      { new: true, upsert: true }  // Return the updated document and create if not found
-    );
-
-    // Respond with the updated content
-    res.status(200).json({ message: `${section} updated successfully!`, data: updatedContent });
-
+    await HomeContent.findOneAndUpdate({}, updateData, { upsert: true, new: true });
+    res.status(200).json({ message: "Content updated successfully!" });
   } catch (error) {
-    console.error('❌ Error updating content:', error);
-    res.status(500).json({ message: 'Failed to update content' });
+    res.status(500).json({ error: "Update failed" });
   }
 });
 
