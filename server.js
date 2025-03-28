@@ -82,6 +82,23 @@ app.get('/health', (req, res) => {
 });
 // Serve static files from 'uploads'
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+
+app.get('/fix-images', async (req, res) => {
+  // 1. Delete all existing content
+  await HomeContent.deleteMany({});
+  
+  // 2. Create fresh entry with test image
+  await HomeContent.create({
+    header: {
+      title: "TEST TITLE",
+      image: "/uploads/default-logo.png" // MUST exist in uploads/
+    }
+  });
+  
+  res.send("Database reset with test image");
+});
 // ==================== API ROUTES ====================
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
