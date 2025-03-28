@@ -97,104 +97,117 @@
 
   <!-- JavaScript -->
   <script>
-  const isLocalhost = window.location.hostname === "localhost";
-
-const config = {
-  backendUrl: isLocalhost
-    ? ""
-    : "https://my-website-backend-ixzh.onrender.com",
-  defaultContent: {
-    header: {
-      title: "",
-      image: ""
-    },
-    services: [],
-    footer: {
-      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
-    }
-  }
-};
+    const config = {
+      backendUrl: "https://my-backend-service.onrender.com",
+      defaultContent: {
+        header: {
+          title: "Welcome to FutureTechTalent",
+          image: "/uploads/default-logo.png"
+        },
+        services: [{
+          title: "Our Services",
+          description: "Discover our professional business solutions",
+          image: "/uploads/default-service.jpg"
+        }],
+        footer: {
+          footerText: "© 2025 FutureTechTalent. All Rights Reserved."
+        }
+      }
+    };
+  
+    // DOM Elements
     const elements = {
       headerTitle: document.getElementById("home-header-title"),
       logo: document.getElementById("logo"),
-      footerText: document.getElementById("home-footer-text"),
-      servicesContainer: document.getElementById("services-container")
+      servicesContainer: document.getElementById("services-container"),
+      footerText: document.getElementById("home-footer-text")
     };
-
-    async function safeFetch(url, options = {}) {
+  
+    // Fetch data with error handling
+    async function fetchData(url) {
       try {
-        const response = await fetch(url, options);
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Expected JSON but got: ${contentType}`);
-        }
+        const response = await fetch(url);
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         return await response.json();
       } catch (error) {
-        console.error(`API call to ${url} failed:`, error);
-        throw error;
+        console.error('Fetch error:', error);
+        return null;
       }
     }
-
-    async function loadHomeContent() {
-      try {
-        const response = await safeFetch('/api/home-content');
-        const content = response.data || response;
-
-       
-
-        let logoImagePath = content.header?.image || config.defaultContent.header.image;
-        if (logoImagePath && !logoImagePath.startsWith('http')) {
-          logoImagePath = config.backendUrl + (logoImagePath.startsWith('/') ? logoImagePath : '/' + logoImagePath);
-        }
-
-        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
-        elements.logo.src = logoImagePath;
-        elements.logo.style.display = "block";
-
-        renderServices(content.services || []);
-        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
-      } catch (error) {
-        console.error('Using default content due to error:', error);
-        elements.headerTitle.textContent = config.defaultContent.header.title;
-        elements.logo.src = config.backendUrl + config.defaultContent.header.image;
-        elements.logo.style.display = "block";
-        renderServices(config.defaultContent.services);
-        elements.footerText.textContent = config.defaultContent.footer.footerText;
-      }
-    }
-
+  
+    // Render services with proper image handling
     function renderServices(services) {
       if (!services || services.length === 0) {
-        elements.servicesContainer.innerHTML = '<p>No services available</p>';
-        return;
+        services = config.defaultContent.services;
       }
-
+  
       elements.servicesContainer.innerHTML = services.map(service => {
-        let imageUrl = service.image || '/images/default-service.jpg';
-        if (!imageUrl.startsWith('http')) {
-          imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+        // Handle image paths
+        let imageUrl = service.image;
+        if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+          imageUrl = `/${imageUrl}`;
         }
-
+        if (imageUrl && !imageUrl.startsWith('http')) {
+          imageUrl = config.backendUrl + imageUrl;
+        }
+  
         return `
           <div class="service-card">
-            <h2 class="service-title">${service.title || 'Our Service'}</h2>
-            <img src="${imageUrl}" alt="${service.title || 'Service'}"
-                 class="service-image"
-                 onerror="this.src='/images/default-service.jpg'">
-            <p class="service-description">${service.description || ''}</p>
+            <div class="service-image-container">
+              <img src="${imageUrl || config.backendUrl + config.defaultContent.services[0].image}" 
+                   alt="${service.title || 'Service Image'}"
+                   class="service-image"
+                   onerror="this.src='${config.backendUrl + config.defaultContent.services[0].image}'">
+            </div>
+            <div class="service-content">
+              <h3 class="service-title">${service.title || 'Our Service'}</h3>
+              <p class="service-description">${service.description || 'Professional business solutions'}</p>
+            </div>
           </div>
         `;
       }).join('');
     }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      loadHomeContent();
-    });
+  
+    // Load and display all content
+    async function loadContent() {
+      try {
+        // Fetch all content
+        const content = await fetchData(`${config.backendUrl}/api/home-content`) || config.defaultContent;
+  
+        // Set header content
+        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+        
+        // Set logo - handle both absolute and relative paths
+        let logoUrl = content.header?.image;
+        if (logoUrl && !logoUrl.startsWith('http')) {
+          logoUrl = logoUrl.startsWith('/') ? config.backendUrl + logoUrl : config.backendUrl + '/' + logoUrl;
+        }
+        elements.logo.src = logoUrl || config.backendUrl + config.defaultContent.header.image;
+        elements.logo.onerror = function() {
+          this.src = config.backendUrl + config.defaultContent.header.image;
+        };
+  
+        // Render services
+        renderServices(content.services);
+  
+        // Set footer
+        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+  
+      } catch (error) {
+        console.error('Error loading content:', error);
+        // Fallback to default content
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.logo.src = config.backendUrl + config.defaultContent.header.image;
+        renderServices(config.defaultContent.services);
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+      }
+    }
+  
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', loadContent);
+  </script>
   </script>
 </body>
 </html>

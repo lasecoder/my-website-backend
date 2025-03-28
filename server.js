@@ -153,17 +153,39 @@ app.get('/api/header', async (req, res) => {
 });
 // Update these routes in your server.js
 
-// Get complete home content
+// Consolidated home content endpoint
 app.get('/api/home-content', async (req, res) => {
   try {
-    const content = await HomeContent.findOne();
-    if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
-    }
-    res.json(content);
+    // Get all content in parallel
+    const [header, services, footer] = await Promise.all([
+      Header.findOne(),
+      Service.find().sort({ createdAt: -1 }),
+      Footer.findOne()
+    ]);
+
+    // Construct response
+    const response = {
+      header: {
+        title: header?.title || "Welcome to FutureTechTalent",
+        image: header?.logoUrl || "/uploads/default-logo.png"
+      },
+      services: services.map(service => ({
+        title: service.title,
+        description: service.description,
+        image: service.image || "/uploads/default-service.jpg"
+      })),
+      footer: {
+        footerText: footer?.content || "© 2025 FutureTechTalent. All Rights Reserved."
+      }
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Error fetching home content:', error);
-    res.status(500).json({ message: 'Failed to fetch content' });
+    res.status(500).json({ 
+      error: 'Failed to fetch content',
+      details: error.message 
+    });
   }
 });
 
@@ -235,6 +257,38 @@ app.get('/api/content/header', async (req, res) => {
   } catch (error) {
     console.error('Header endpoint error:', error);
     // Always return JSON, even in error cases
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
+  }
+});
+// Enhanced services endpoint
+app.get('/api/content/services', async (req, res) => {
+  try {
+    // Try to get services from database
+    const services = await Service.find().sort({ createdAt: -1 });
+    
+    // If no services exist, create default ones
+    if (!services || services.length === 0) {
+      return res.json([{
+        title: "Business Consulting",
+        description: "Professional consulting services for your business growth",
+        image: "/uploads/default-service.jpg"
+      }]);
+    }
+    
+    // Format the services data
+    const formattedServices = services.map(service => ({
+      title: service.title,
+      description: service.description,
+      image: service.image || "/uploads/default-service.jpg"
+    }));
+    
+    res.json(formattedServices);
+    
+  } catch (error) {
+    console.error('Services endpoint error:', error);
     res.status(500).json({ 
       error: 'Server error',
       details: error.message 
