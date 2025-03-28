@@ -47,31 +47,16 @@ mongoose.connect(MONGO_URI)
 const app = express();
 const port = process.env.PORT || 5000;
 
-// CORS Configuration - Updated
-const allowedOrigins = [
-  'https://my-website-backend-ixzh.onrender.com',
-  'https://my-backend-service.onrender.com'
-];
+// Middleware setup
+app.use(cors({
+  origin: 'https://my-website-backend-ixzh.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 
-// Enhanced CORS middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
-  next();
-});
-
-// [All your existing routes remain exactly the same...]
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static('uploads'));
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -85,47 +70,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==================== API ROUTES ====================
-// ✅ Signup Route
-// Fixed signup route
-app.post('/signup', async (req, res) => {
-  try {
-    const { name, email, password, confirmPassword } = req.body;
-
-    // Check if all required fields are provided
-    if (!name || !email || !password || !confirmPassword) {
-      return res.status(400).json({ message: 'Please fill all fields' });
-    }
-
-    // Check if passwords match
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    // Check if the email is already registered
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use' });
-    }
-
-    // Hash the password before saving to the database
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create a new user instance
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    // Save the user to the database
-    await newUser.save();
-
-    res.status(200).json({ message: 'Signup successful' });
-  } catch (error) {
-    console.error('Error during signup:', error);
-    res.status(500).json({ message: 'Something went wrong' });
-  }
-});
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
   res.json({ message: "API is working", timestamp: new Date() });
@@ -154,39 +98,17 @@ app.get('/api/header', async (req, res) => {
 });
 // Update these routes in your server.js
 
-// Consolidated home content endpoint
+// Get complete home content
 app.get('/api/home-content', async (req, res) => {
   try {
-    // Get all content in parallel
-    const [header, services, footer] = await Promise.all([
-      Header.findOne(),
-      Service.find().sort({ createdAt: -1 }),
-      Footer.findOne()
-    ]);
-
-    // Construct response
-    const response = {
-      header: {
-        title: header?.title || "Welcome to FutureTechTalent",
-        image: header?.logoUrl || "/uploads/default-logo.png"
-      },
-      services: services.map(service => ({
-        title: service.title,
-        description: service.description,
-        image: service.image || "/uploads/default-service.jpg"
-      })),
-      footer: {
-        footerText: footer?.content || "© 2025 FutureTechTalent. All Rights Reserved."
-      }
-    };
-
-    res.json(response);
+    const content = await HomeContent.findOne();
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    res.json(content);
   } catch (error) {
     console.error('Error fetching home content:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch content',
-      details: error.message 
-    });
+    res.status(500).json({ message: 'Failed to fetch content' });
   }
 });
 
@@ -258,38 +180,6 @@ app.get('/api/content/header', async (req, res) => {
   } catch (error) {
     console.error('Header endpoint error:', error);
     // Always return JSON, even in error cases
-    res.status(500).json({ 
-      error: 'Server error',
-      details: error.message 
-    });
-  }
-});
-// Enhanced services endpoint
-app.get('/api/content/services', async (req, res) => {
-  try {
-    // Try to get services from database
-    const services = await Service.find().sort({ createdAt: -1 });
-    
-    // If no services exist, create default ones
-    if (!services || services.length === 0) {
-      return res.json([{
-        title: "Business Consulting",
-        description: "Professional consulting services for your business growth",
-        image: "/uploads/default-service.jpg"
-      }]);
-    }
-    
-    // Format the services data
-    const formattedServices = services.map(service => ({
-      title: service.title,
-      description: service.description,
-      image: service.image || "/uploads/default-service.jpg"
-    }));
-    
-    res.json(formattedServices);
-    
-  } catch (error) {
-    console.error('Services endpoint error:', error);
     res.status(500).json({ 
       error: 'Server error',
       details: error.message 

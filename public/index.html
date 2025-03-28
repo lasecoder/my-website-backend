@@ -97,102 +97,107 @@
 
   <!-- JavaScript -->
   <script>
-    // DOM Elements
+  const isLocalhost = window.location.hostname === "localhost";
+
+const config = {
+  backendUrl: isLocalhost
+    ? ""
+    : "https://my-website-backend-ixzh.onrender.com",
+  defaultContent: {
+    header: {
+      title: "",
+      image: ""
+    },
+    services: [],
+    footer: {
+      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+    }
+  }
+};
+
+
+
     const elements = {
       headerTitle: document.getElementById("home-header-title"),
       logo: document.getElementById("logo"),
-      servicesContainer: document.getElementById("services-container"),
-      footerText: document.getElementById("home-footer-text")
+      footerText: document.getElementById("home-footer-text"),
+      servicesContainer: document.getElementById("services-container")
     };
-    // Render services with proper image handling
+
+    async function safeFetch(url, options = {}) {
+      try {
+        const response = await fetch(url, options);
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but got: ${contentType}`);
+        }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP error ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error(`API call to ${url} failed:`, error);
+        throw error;
+      }
+    }
+
+    async function loadHomeContent() {
+      try {
+        const response = await safeFetch('/api/home-content');
+        const content = response.data || response;
+
+       
+
+        let logoImagePath = content.header?.image || config.defaultContent.header.image;
+        if (logoImagePath && !logoImagePath.startsWith('http')) {
+          logoImagePath = config.backendUrl + (logoImagePath.startsWith('/') ? logoImagePath : '/' + logoImagePath);
+        }
+
+        elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+        elements.logo.src = logoImagePath;
+        elements.logo.style.display = "block";
+
+        renderServices(content.services || []);
+        elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+      } catch (error) {
+        console.error('Using default content due to error:', error);
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.logo.src = config.backendUrl + config.defaultContent.header.image;
+        elements.logo.style.display = "block";
+        renderServices(config.defaultContent.services);
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+      }
+    }
+
     function renderServices(services) {
       if (!services || services.length === 0) {
-        services = config.defaultContent.services;
+        elements.servicesContainer.innerHTML = '<p>No services available</p>';
+        return;
       }
-  
+
       elements.servicesContainer.innerHTML = services.map(service => {
-        // Handle image paths
-        let imageUrl = service.image;
-        if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
-          imageUrl = `/${imageUrl}`;
+        let imageUrl = service.image || '/images/default-service.jpg';
+        if (!imageUrl.startsWith('http')) {
+          imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
         }
-        if (imageUrl && !imageUrl.startsWith('http')) {
-          imageUrl = config.backendUrl + imageUrl;
-        }
-  
+
         return `
           <div class="service-card">
-            <div class="service-image-container">
-              <img src="${imageUrl || config.backendUrl + config.defaultContent.services[0].image}" 
-                   alt="${service.title || 'Service Image'}"
-                   class="service-image"
-                   onerror="this.src='${config.backendUrl + config.defaultContent.services[0].image}'">
-            </div>
-            <div class="service-content">
-              <h3 class="service-title">${service.title || 'Our Service'}</h3>
-              <p class="service-description">${service.description || 'Professional business solutions'}</p>
-            </div>
+            <h2 class="service-title">${service.title || 'Our Service'}</h2>
+            <img src="${imageUrl}" alt="${service.title || 'Service'}"
+                 class="service-image"
+                 onerror="this.src='/images/default-service.jpg'">
+            <p class="service-description">${service.description || ''}</p>
           </div>
         `;
       }).join('');
     }
-  
-    /// Inside your script tag in index.html:
 
-const config = {
-  backendUrl: "https://my-backend-service.onrender.com",
-  // [rest of your config remains the same]
-};
-
-async function fetchData(url) {
-  try {
-    const response = await fetch(url, {
-      mode: 'cors',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
+    window.addEventListener('DOMContentLoaded', () => {
+      loadHomeContent();
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    // Check if response has content
-    const contentLength = response.headers.get('Content-Length');
-    if (contentLength && contentLength === '0') {
-      return null;
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Fetch error:', error);
-    throw error; // Re-throw to handle in loadContent
-  }
-}
-
-async function loadContent() {
-  try {
-    const content = await fetchData(`${config.backendUrl}/api/home-content`);
-    // [rest of your loadContent logic remains the same]
-  } catch (error) {
-    console.error('Failed to load content:', error);
-    // Fallback to default content
-    elements.headerTitle.textContent = config.defaultContent.header.title;
-    elements.logo.src = config.defaultContent.header.image;
-    renderServices(config.defaultContent.services);
-    elements.footerText.textContent = config.defaultContent.footer.footerText;
-    
-    // Show user-friendly error message
-    alert('Failed to load content. Showing default information.');
-  }
-}
-
-// [Rest of your client code remains the same]
-  
-    // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', loadContent);
   </script>
 </body>
 </html>
