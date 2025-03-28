@@ -1,18 +1,18 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-    userMessage: {
-        type: String,
-        required: true, // Ensure userMessage is required
-    },
-    sender: {
-        type: String,
-        required: true, // Ensure sender is required
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now, // Automatically set the creation time
-    },
+  sender: {
+    type: String,
+    required: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 module.exports = mongoose.model('Message', messageSchema);

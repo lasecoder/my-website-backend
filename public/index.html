@@ -97,33 +97,120 @@
 
   <!-- JavaScript -->
   <script>
-  const isLocalhost = window.location.hostname === "localhost";
-
-const config = {
-  backendUrl: isLocalhost
-    ? ""
-    : "https://my-website-backend-ixzh.onrender.com",
-  defaultContent: {
-    header: {
-      title: "",
-      image: ""
-    },
-    services: [],
-    footer: {
-      footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
-    }
-  }
-};
-
-
-
+    // Chat functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const chatToggle = document.getElementById('chat-toggle');
+      const chatWindow = document.getElementById('chat-window');
+      const chatInput = document.getElementById('chat-input');
+      const sendButton = document.getElementById('send-button');
+      
+      // Toggle chat window
+      chatToggle.addEventListener('click', () => {
+        chatWindow.style.display = chatWindow.style.display === 'block' ? 'none' : 'block';
+      });
+      
+      // Enable/disable send button based on input
+      chatInput.addEventListener('input', () => {
+        sendButton.disabled = chatInput.value.trim() === '';
+      });
+      
+      // Send message
+      sendButton.addEventListener('click', sendMessage);
+      chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !sendButton.disabled) {
+          sendMessage();
+        }
+      });
+      
+      async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+        
+        try {
+          // Add user message to chat
+          addMessageToChat('You', message);
+          chatInput.value = '';
+          sendButton.disabled = true;
+          
+          // Send to server
+          const response = await axios.post('/api/messages', {
+            sender: 'User',
+            content: message
+          });
+          
+          // Simulate bot response after a short delay
+          setTimeout(() => {
+            const botResponses = [
+              "Thanks for your message! How can we help you?",
+              "We'll get back to you shortly with more information.",
+              "Is there anything specific you'd like to know about our services?",
+              "Our team is reviewing your inquiry and will respond soon."
+            ];
+            const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
+            addMessageToChat('Support', randomResponse);
+          }, 1000);
+          
+        } catch (error) {
+          console.error('Error sending message:', error);
+          addMessageToChat('System', 'Sorry, there was an error sending your message.');
+        }
+      }
+      
+      function addMessageToChat(sender, message) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'chat-message';
+        messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+        chatWindow.insertBefore(messageElement, chatWindow.children[chatWindow.children.length - 2]);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+      
+      // Load initial messages
+      async function loadInitialMessages() {
+        try {
+          const response = await axios.get('/api/messages');
+          if (response.data && response.data.length > 0) {
+            response.data.forEach(msg => {
+              addMessageToChat(msg.sender, msg.content);
+            });
+          } else {
+            // Default welcome message
+            addMessageToChat('Support', 'Hi there! How can we help you today?');
+          }
+        } catch (error) {
+          console.error('Error loading messages:', error);
+          addMessageToChat('Support', 'Hi there! How can we help you today?');
+        }
+      }
+      
+      loadInitialMessages();
+    });
+  
+    // Rest of your existing JavaScript code...
+    const isLocalhost = window.location.hostname === "localhost";
+  
+    const config = {
+      backendUrl: isLocalhost
+        ? ""
+        : "https://my-website-backend-ixzh.onrender.com",
+      defaultContent: {
+        header: {
+          title: "",
+          image: ""
+        },
+        services: [],
+        footer: {
+          footerText: "© 2025 FutureTechTalent Business Solutions. All Rights Reserved."
+        }
+      }
+    };
+  
     const elements = {
       headerTitle: document.getElementById("home-header-title"),
       logo: document.getElementById("logo"),
       footerText: document.getElementById("home-footer-text"),
       servicesContainer: document.getElementById("services-container")
     };
-
+  
     async function safeFetch(url, options = {}) {
       try {
         const response = await fetch(url, options);
@@ -142,23 +229,21 @@ const config = {
         throw error;
       }
     }
-
+  
     async function loadHomeContent() {
       try {
         const response = await safeFetch('/api/home-content');
         const content = response.data || response;
-
-       
-
+  
         let logoImagePath = content.header?.image || config.defaultContent.header.image;
         if (logoImagePath && !logoImagePath.startsWith('http')) {
           logoImagePath = config.backendUrl + (logoImagePath.startsWith('/') ? logoImagePath : '/' + logoImagePath);
         }
-
+  
         elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
         elements.logo.src = logoImagePath;
         elements.logo.style.display = "block";
-
+  
         renderServices(content.services || []);
         elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
       } catch (error) {
@@ -170,19 +255,19 @@ const config = {
         elements.footerText.textContent = config.defaultContent.footer.footerText;
       }
     }
-
+  
     function renderServices(services) {
       if (!services || services.length === 0) {
         elements.servicesContainer.innerHTML = '<p>No services available</p>';
         return;
       }
-
+  
       elements.servicesContainer.innerHTML = services.map(service => {
         let imageUrl = service.image || '';
         if (!imageUrl.startsWith('http')) {
           imageUrl = config.backendUrl + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
         }
-
+  
         return `
           <div class="service-card">
             <h2 class="service-title">${service.title || 'Our Service'}</h2>
@@ -194,7 +279,7 @@ const config = {
         `;
       }).join('');
     }
-
+  
     window.addEventListener('DOMContentLoaded', () => {
       loadHomeContent();
     });
