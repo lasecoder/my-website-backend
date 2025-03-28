@@ -5,84 +5,180 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Services</title>
     <link rel="stylesheet" href="./css/services.css">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,.3);
+            border-radius: 50%;
+            border-top-color: #000;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #d32f2f;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <!-- Your existing HTML structure remains the same -->
+    <header>
+        <div class="container">
+            <img id="header-logo" class="header-logo" alt="Company Logo" style="display:none;">
+            <h1 id="services-header-title">
+                <span class="loading"></span> Loading Services...
+            </h1>
+        </div>
+        <div class="back-home">
+            <a href="./index.html" class="back-home-btn">Back Home</a>
+        </div>
+    </header>
     
+    <section id="services-container">
+        <p><span class="loading"></span> Loading services...</p>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p id="footer-text"><span class="loading"></span> Loading footer...</p>
+        </div>
+    </footer>
+
     <script>
-        // Define base API URL (now using port 10000)
-        const API_BASE_URL = 'http://localhost:10000';
+        // Configuration for different environments
+        const isProduction = window.location.hostname !== 'localhost' && 
+                            window.location.hostname !== '127.0.0.1';
         
+        const API_BASE_URL = isProduction 
+            ? 'https://my-website-backend-ixzh.onrender.com' 
+            : 'http://localhost:10000';
+
+        // Enhanced fetch with timeout and error handling
+        async function safeFetch(endpoint, options = {}) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    ...options,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                console.error(`Fetch to ${endpoint} failed:`, error);
+                throw error;
+            }
+        }
+
+        // Display error message to user
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = `<div class="error-message">${message}</div>`;
+            }
+        }
+
         // Fetch header text from the backend
-        function fetchHeaderText() {
-            fetch(`${API_BASE_URL}/api/content/header`)  // Updated endpoint
-                .then(response => response.json())
-                .then(data => {
-                    if (data.headerText) {
-                        document.getElementById("services-header-title").textContent = data.headerText;
-                    }
-                })
-                .catch(error => console.error("Error fetching header text:", error));
+        async function fetchHeaderText() {
+            try {
+                const data = await safeFetch('/api/content/header');
+                const titleElement = document.getElementById("services-header-title");
+                
+                if (data?.headerText) {
+                    titleElement.innerHTML = data.headerText;
+                } else {
+                    titleElement.textContent = "Our Services";
+                }
+            } catch (error) {
+                showError("services-header-title", 
+                    "Failed to load header. Showing default title.");
+                console.error("Header fetch error:", error);
+            }
         }
 
         // Fetch all services
-        function fetchServices() {
-            fetch(`${API_BASE_URL}/api/services`)  // This endpoint was correct
-                .then(response => response.json())
-                .then(data => {
-                    if (!Array.isArray(data)) throw new Error("Received data is not an array");
-                    
-                    const servicesContainer = document.getElementById("services-container");
-                    servicesContainer.innerHTML = "";
-
-                    data.forEach(service => {
-                        const serviceCard = document.createElement("div");
-                        serviceCard.classList.add("service-card");
-
-                        // Handle Image & Video Rendering
-                        const imageHTML = service.image ? `<img src="${API_BASE_URL}/${service.image}" alt="${service.title}" />` : '';
-                        const videoHTML = service.video ? `<video width="320" height="240" controls>
-                                                            <source src="${API_BASE_URL}/${service.video}" type="video/mp4">
-                                                            Your browser does not support the video tag.
-                                                        </video>` : '';
-                        
-                        serviceCard.innerHTML = ` 
-                            <h2>${service.title}</h2>
-                            <p>${service.description}</p>
-                            ${imageHTML}
-                            ${videoHTML}
-                        `;
-                        servicesContainer.appendChild(serviceCard);
-                    });
-                })
-                .catch(error => console.error("Error fetching services:", error));
+        async function fetchServices() {
+            try {
+                const data = await safeFetch('/api/services');
+                const container = document.getElementById("services-container");
+                
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid services data format");
+                }
+                
+                if (data.length === 0) {
+                    container.innerHTML = "<p>No services available at this time.</p>";
+                    return;
+                }
+                
+                container.innerHTML = data.map(service => `
+                    <div class="service-card">
+                        <h2>${service.title || 'Untitled Service'}</h2>
+                        <p>${service.description || 'No description available.'}</p>
+                        ${service.image ? `<img src="${API_BASE_URL}${service.image.startsWith('/') ? '' : '/'}${service.image}" alt="${service.title || ''}">` : ''}
+                        ${service.video ? `
+                        <video width="320" height="240" controls>
+                            <source src="${API_BASE_URL}${service.video.startsWith('/') ? '' : '/'}${service.video}" type="video/mp4">
+                            Your browser does not support videos.
+                        </video>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                showError("services-container", 
+                    "Failed to load services. Please try again later.");
+                console.error("Services fetch error:", error);
+            }
         }
 
-        // Fetch the footer content from the backend
-        function fetchFooter() {
-            fetch(`${API_BASE_URL}/api/content/footer`)  // This endpoint was correct
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Error: ${response.status} - ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const footerText = data.footerText;
-                    const footerContainer = document.querySelector("footer .container");
-                    footerContainer.innerHTML = `<p>${footerText}</p>`;
-                })
-                .catch(error => {
-                    console.error("Error fetching footer:", error);
-                });
+        // Fetch the footer content
+        async function fetchFooter() {
+            try {
+                const data = await safeFetch('/api/content/footer');
+                const footerElement = document.querySelector("footer .container p");
+                
+                if (data?.footerText) {
+                    footerElement.textContent = data.footerText;
+                } else {
+                    footerElement.textContent = "© " + new Date().getFullYear() + " Our Company. All rights reserved.";
+                }
+            } catch (error) {
+                console.error("Footer fetch error:", error);
+                document.querySelector("footer .container p").textContent = 
+                    "© " + new Date().getFullYear() + " Our Company";
+            }
         }
 
-        // Call fetchFooter, fetchHeaderText, and fetchServices on page load
+        // Initialize everything when page loads
         window.onload = function() {
-            fetchHeaderText();
-            fetchServices();
-            fetchFooter();
+            // Show loading states
+            document.getElementById("services-header-title").innerHTML = 
+                '<span class="loading"></span> Loading...';
+            document.getElementById("services-container").innerHTML = 
+                '<p><span class="loading"></span> Loading services...</p>';
+            document.querySelector("footer p").innerHTML = 
+                '<span class="loading"></span> Loading...';
+            
+            // Fetch all data
+            Promise.all([
+                fetchHeaderText(),
+                fetchServices(),
+                fetchFooter()
+            ]).catch(error => {
+                console.error("Initialization error:", error);
+            });
         };
     </script>
 </body>
