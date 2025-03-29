@@ -97,6 +97,81 @@
 
   <!-- JavaScript -->
   <script>
+    // Add this at the TOP of your <script> section (before any other code)
+const config = {
+  backendUrl: window.location.hostname === "localhost" 
+    ? "http://localhost:3000" 
+    : "https://my-website-backend-ixzh.onrender.com",
+  defaultContent: {
+    header: {
+      title: "FutureTechTalent - Business Solutions",
+      image: "/images/logo.png" // Default logo path
+    },
+    services: [
+      {
+        title: "Our Services",
+        description: "Discover our innovative solutions",
+        image: "/images/service-placeholder.jpg"
+      }
+    ],
+    footer: {
+      footerText: "© 2024 FutureTechTalent. All rights reserved."
+    }
+  }
+};
+
+// Then modify your loadInitialMessages function:
+async function loadInitialMessages() {
+  try {
+    const response = await axios.get('/api/messages');
+    // Handle both array and object responses
+    const messages = Array.isArray(response.data) 
+      ? response.data 
+      : (response.data?.messages || []);
+      
+    if (messages.length > 0) {
+      messages.forEach(msg => {
+        addMessageToChat(msg.sender, msg.content);
+      });
+    } else {
+      addMessageToChat('Support', 'Hi there! How can we help you today?');
+    }
+  } catch (error) {
+    console.error('Error loading messages:', error);
+    addMessageToChat('Support', 'Hi there! How can we help you today?');
+  }
+}
+
+// Update your loadHomeContent function:
+async function loadHomeContent() {
+  try {
+    const response = await safeFetch('/api/home-content');
+    const content = response.data || response;
+
+    // Safely get image paths
+    const headerImage = content.header?.image || config.defaultContent.header.image;
+    elements.logo.src = headerImage.startsWith('http') 
+      ? headerImage 
+      : `${config.backendUrl}${headerImage.startsWith('/') ? '' : '/'}${headerImage}`;
+    
+    elements.headerTitle.textContent = content.header?.title || config.defaultContent.header.title;
+    elements.logo.style.display = "block";
+    
+    // Safely handle services
+    const services = content.services || config.defaultContent.services;
+    renderServices(Array.isArray(services) ? services : []);
+    
+    elements.footerText.textContent = content.footer?.footerText || config.defaultContent.footer.footerText;
+  } catch (error) {
+    console.error('Using default content due to error:', error);
+    // Fallback to default config
+    elements.headerTitle.textContent = config.defaultContent.header.title;
+    elements.logo.src = `${config.backendUrl}${config.defaultContent.header.image}`;
+    elements.logo.style.display = "block";
+    renderServices(config.defaultContent.services);
+    elements.footerText.textContent = config.defaultContent.footer.footerText;
+  }
+}
     // Chat functionality
     document.addEventListener('DOMContentLoaded', () => {
       const chatToggle = document.getElementById('chat-toggle');
@@ -163,24 +238,7 @@
         chatWindow.insertBefore(messageElement, chatWindow.children[chatWindow.children.length - 2]);
         chatWindow.scrollTop = chatWindow.scrollHeight;
       }
-      
-      // Load initial messages
-      async function loadInitialMessages() {
-        try {
-          const response = await axios.get('/api/messages');
-          if (response.data && response.data.length > 0) {
-            response.data.forEach(msg => {
-              addMessageToChat(msg.sender, msg.content);
-            });
-          } else {
-            // Default welcome message
-            addMessageToChat('Support', 'Hi there! How can we help you today?');
-          }
-        } catch (error) {
-          console.error('Error loading messages:', error);
-          addMessageToChat('Support', 'Hi there! How can we help you today?');
-        }
-      }
+    
       
       loadInitialMessages();
     });
