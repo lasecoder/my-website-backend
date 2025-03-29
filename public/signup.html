@@ -39,7 +39,9 @@
         const userData = Object.fromEntries(formData);
 
         // ✅ Replace this with your actual backend URL
-        const backendUrl = "https://my-website-backend-ixzh.onrender.com";
+        // In your frontend code, change the backend URL to:
+const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
+// Remove /api since your signup is at root (/signup)
 
         console.log('Sending signup request to:', backendUrl);
 
