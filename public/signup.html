@@ -29,68 +29,57 @@
   </div>
 
   <script>
-    // Add this before fetch() call
-console.log("Raw FormData:", [...formData.entries()]);
-console.log("JSON being sent:", JSON.stringify(userData));
-
-// Trim all string inputs
-const processedData = {
-  name: userData.name.trim(),
-  email: userData.email.trim(),
-  password: userData.password,
-  passwordConfirm: userData.passwordConfirm
-};
     document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('signup-form');
+  const form = document.getElementById('signup-form');
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        // Client-side password match validation
-        const password = document.getElementById('password').value;
-        const passwordConfirm = document.getElementById('passwordConfirm').value;
-        
-        if (password !== passwordConfirm) {
-          alert("Passwords don't match!");
-          return;
-        }
+    // Get form values directly (better than FormData for debugging)
+    const userData = {
+      name: document.getElementById('name').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value,
+      passwordConfirm: document.getElementById('passwordConfirm').value
+    };
 
-        const formData = new FormData(form);
-        const userData = Object.fromEntries(formData);
+    // Client-side validation
+    if (!userData.name || !userData.email || !userData.password || !userData.passwordConfirm) {
+      alert("All fields are required!");
+      return;
+    }
 
-        // For debugging - view what's being sent
-        console.log('Submitting:', userData);
+    if (userData.password !== userData.passwordConfirm) {
+      alert("Passwords don't match!");
+      return;
+    }
 
-        const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
+    console.log('Submitting:', userData); // Debug log
 
-        try {
-          const response = await fetch(`${backendUrl}/signup`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-          });
-
-          const result = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(result.message || 'Signup failed');
-          }
-
-          console.log('Signup success:', result);
-          alert(`✅ ${result.message || 'Signup successful!'}`);
-          form.reset();
-          
-          // Optional: Redirect after successful signup
-          // window.location.href = '/login.html';
-          
-        } catch (error) {
-          console.error('Signup error:', error);
-          alert(`❌ ${error.message || 'Signup failed. Please try again.'}`);
-        }
+    try {
+      const response = await fetch('https://my-website-backend-ixzh.onrender.com/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
       });
-    });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Signup failed');
+      }
+
+      alert(`✅ ${result.message || 'Signup successful!'}`);
+      form.reset();
+      
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert(`❌ ${error.message || 'Signup failed. Please try again.'}`);
+    }
+  });
+});
   </script>
 </body>
 </html>
