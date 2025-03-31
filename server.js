@@ -428,7 +428,7 @@ app.get('/admin_dashboard.html', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-// ==================== SIGNUP ROUTE ====================
+// ==================== SIGNUP ROUTE ===================
 app.post('/signup', async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
