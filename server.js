@@ -398,37 +398,37 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// server.js - updated login route
 app.post('/admin/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // 1) Check if email and password exist
     if (!email || !password) {
-      return res.status(400).json({
-        message: 'Please provide email and password'
-      });
+      return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    // 2) Check if user exists AND password is correct
+    // 2) Find user and explicitly select password field
     const user = await User.findOne({ email }).select('+password');
     
-    if (!user || !(await user.correctPassword(password, user.password))) {
-      return res.status(401).json({
-        message: 'Incorrect email or password'
-      });
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
     }
 
-    // 3) Check if user is admin
+    // 3) Compare passwords properly
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // 4) Check admin role
     if (user.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Access denied. Admin privileges required.'
-      });
+      return res.status(403).json({ message: 'Admin access required' });
     }
 
-    // 4) If everything ok, send token/data to client
+    // 5) Successful login
     res.status(200).json({
       success: true,
-      message: 'Admin login successful',
       user: {
         id: user._id,
         name: user.name,
@@ -438,10 +438,10 @@ app.post('/admin/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin login error:', error);
-    res.status(500).json({
-      message: 'Internal Server Error',
-      error: error.message
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: error.message 
     });
   }
 });
@@ -532,6 +532,23 @@ app.get('/api/messages', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch messages' });
   }
 });
+//===================
+// Add early in your server.js, after requiring packages
+process.on('uncaughtException', err => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.error(err.name, err.message);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', err => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.error(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+//====================
 // Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, "0.0.0.0", () => {
