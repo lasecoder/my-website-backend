@@ -399,23 +399,50 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/admin/login', async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const { email, password } = req.body;
 
-    if (user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+    // 1) Check if email and password exist
+    if (!email || !password) {
+      return res.status(400).json({
+        message: 'Please provide email and password'
+      });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    // 2) Check if user exists AND password is correct
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user || !(await user.correctPassword(password, user.password))) {
+      return res.status(401).json({
+        message: 'Incorrect email or password'
+      });
+    }
 
-    res.status(200).json({ success: true, message: 'Admin login successful', user });
+    // 3) Check if user is admin
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    // 4) If everything ok, send token/data to client
+    res.status(200).json({
+      success: true,
+      message: 'Admin login successful',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
   } catch (error) {
-    console.error('Error during admin login:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error('Admin login error:', error);
+    res.status(500).json({
+      message: 'Internal Server Error',
+      error: error.message
+    });
   }
 });
 
