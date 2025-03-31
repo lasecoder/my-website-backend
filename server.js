@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const dotenv = require('dotenv');
-
+const bucket = require("./firebase");
 // Load environment variables
 dotenv.config();
 // Models
@@ -22,14 +22,6 @@ const Header = require("./models/Header");
 const Logo = require('./models/Logo');
 const Message = require('./models/Message');
 const Vacancy = require('./models/Vacancy');
-// Create upload directories
-const uploadDir = 'uploads';
-const imageDir = `${uploadDir}/images`;
-const videoDir = `${uploadDir}/videos`;
-
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir);
-if (!fs.existsSync(videoDir)) fs.mkdirSync(videoDir);
 
 // MongoDB connection
 const MONGO_URI = process.env.MONGO_URI;
@@ -58,17 +50,14 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static('uploads'));
 
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+// Replace the current multer setup with:
+const multer = require("multer");
+const upload = multer({
+  storage: multer.memoryStorage(), // Store files in memory for Firebase upload
+  limits: {
+    fileSize: 5 * 1024 * 1024 // Limit file size to 5MB
   }
 });
-const upload = multer({ storage });
-
 // ==================== API ROUTES ====================
 // Simple test route - add this temporarily
 app.get('/api/test', (req, res) => {
@@ -231,10 +220,19 @@ app.get('/api/services', async (req, res) => {
 app.post('/api/services', upload.fields([{ name: "service-image" }, { name: "service-video" }]), async (req, res) => {
   try {
     const { "service-title": title, "service-description": description } = req.body;
-    const imagePath = req.files["service-image"] ? `uploads/images/${req.files["service-image"][0].filename}` : "";
-    const videoPath = req.files["service-video"] ? `uploads/videos/${req.files["service-video"][0].filename}` : "";
+    
+    const [imageUrl, videoUrl] = await Promise.all([
+      uploadToFirebase(req.files["service-image"]?.[0], "services/images"),
+      uploadToFirebase(req.files["service-video"]?.[0], "services/videos")
+    ]);
 
-    const newService = new Service({ title, description, image: imagePath, video: videoPath });
+    const newService = new Service({ 
+      title, 
+      description, 
+      image: imageUrl || "", 
+      video: videoUrl || "" 
+    });
+    
     await newService.save();
     res.json({ message: "Service added successfully!", service: newService });
   } catch (error) {
@@ -242,7 +240,6 @@ app.post('/api/services', upload.fields([{ name: "service-image" }, { name: "ser
     res.status(500).json({ message: "Error saving service", error: error.message });
   }
 });
-
 // Content management
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
@@ -549,6 +546,23 @@ process.on('unhandledRejection', err => {
   });
 });
 //====================
+async function uploadToFirebase(file, folder = "") {
+  if (!file) return null;
+  
+  const fileName = `${folder}/${Date.now()}-${file.originalname}`;
+  const fileUpload = bucket.file(fileName);
+
+  await fileUpload.save(file.buffer, {
+    metadata: {
+      contentType: file.mimetype
+    }
+  });
+
+  // Make the file publicly accessible
+  await fileUpload.makePublic();
+
+  return `https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`;
+}
 // Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, "0.0.0.0", () => {
