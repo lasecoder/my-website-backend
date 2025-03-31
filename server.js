@@ -458,64 +458,30 @@ app.get('*', (req, res) => {
 // ==================== SIGNUP ROUTE ===================
 app.post('/signup', async (req, res) => {
   try {
-    const { name, email, password, confirmPassword } = req.body;
+    // Destructure and trim
+    let { name, email, password, passwordConfirm } = req.body;
+    name = name?.trim();
+    email = email?.trim();
 
-    // Validation
-    if (!name || !email || !password || !confirmPassword) {
-      return res.status(400).json({ message: 'All fields are required' });
+    // Validate presence
+    if (!name || !email || !password || !passwordConfirm) {
+      return res.status(400).json({ 
+        message: 'All fields are required',
+        details: {
+          name: !name,
+          email: !email,
+          password: !password,
+          passwordConfirm: !passwordConfirm
+        }
+      });
     }
 
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: 'Email already in use' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create new user (default as regular user)
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'user' // Default role
-    });
-
-    await newUser.save();
-
-    res.status(201).json({ 
-      success: true,
-      message: 'User created successfully',
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role
-      }
-    });
-
+    // ... rest of your signup logic
   } catch (error) {
     console.error('Signup error:', error);
-    res.status(500).json({ 
-      message: 'Error creating user',
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Server error during signup' });
   }
 });
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ 
-    error: 'Internal Server Error',
-    message: err.message 
-  });
-});
-
 // Admin user creation
 async function createAdminUser() {
   const adminEmail = 'admin@example.com';

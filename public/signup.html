@@ -29,6 +29,17 @@
   </div>
 
   <script>
+    // Add this before fetch() call
+console.log("Raw FormData:", [...formData.entries()]);
+console.log("JSON being sent:", JSON.stringify(userData));
+
+// Trim all string inputs
+const processedData = {
+  name: userData.name.trim(),
+  email: userData.email.trim(),
+  password: userData.password,
+  passwordConfirm: userData.passwordConfirm
+};
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('signup-form');
 
