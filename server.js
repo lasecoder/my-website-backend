@@ -382,6 +382,7 @@ app.get('/admin_dashboard.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
 });
 // Header routes
+// Header Routes
 app.get('/api/header', async (req, res) => {
   try {
     const header = await Header.findOne();
@@ -394,7 +395,7 @@ app.get('/api/header', async (req, res) => {
 app.put('/api/header', upload.single('image'), async (req, res) => {
   try {
     const { title } = req.body;
-    const imageUrl = req.file;
+    const imageUrl = req.file ;
     
     const updatedHeader = await Header.findOneAndUpdate(
       {}, 
@@ -407,6 +408,17 @@ app.put('/api/header', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Failed to update header' });
   }
 });
+// Ensure JSON responses
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
+// Handle 404s properly
+app.use((req, res, next) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+// Similar routes for services, footer, etc.
 //================//
 // Start server
 app.listen(port, "0.0.0.0", () => {

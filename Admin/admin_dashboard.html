@@ -284,6 +284,47 @@
         "footer-status"
       );
     });
+    async function apiFetch(endpoint, options = {}) {
+  try {
+    const response = await fetch(`${backendUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        ...options.headers
+      }
+    });
+
+    // First check if response is HTML error
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Server returned ${response.status}: ${text.substring(0, 100)}`);
+    }
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || `Request failed with status ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`API request to ${endpoint} failed:`, error);
+    throw error;
+  }
+}
+
+// Usage example:
+async function loadHeader() {
+  try {
+    const header = await apiFetch('/api/header');
+    document.getElementById('home-header-title').value = header.title || '';
+    // ... update other fields
+  } catch (error) {
+    showError('header-error', error.message);
+  }
+}
   </script>
 </body>
 </html>
