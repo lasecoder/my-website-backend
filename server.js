@@ -48,6 +48,26 @@ mongoose.connect(process.env.MONGO_URI, {
   process.exit(1); // Exit if DB connection fails
 });
 // Models (your existing models)
+async function ensureAdminExists() {
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'securepassword123';
+  
+  const adminExists = await User.exists({ email: adminEmail, role: 'admin' });
+  if (!adminExists) {
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    await User.create({
+      name: 'Admin',
+      email: adminEmail,
+      password: hashedPassword,
+      role: 'admin'
+    });
+    console.log('✅ Default admin user created');
+  }
+}
+
+mongoose.connection.once('open', async () => {
+  await ensureAdminExists();
+});
 // ... [keep all your model requires] ...
 
 // Initialize Express app
@@ -224,32 +244,39 @@ app.use((err, req, res, next) => {
 });
 // Make sure you have this exact route in server.js
 app.post('/admin/login', async (req, res) => {
-  console.log('🔹 Admin login attempt received');
-  
   try {
-    // 1) Validate input
     const { email, password } = req.body;
-    if (!email?.trim() || !password?.trim()) {
+
+    // 1) Validate input
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: 'Please provide email and password'
       });
     }
 
-    // 2) Find user with explicit password selection
-    const user = await User.findOne({ email: email.trim() }).select('+password');
+    // 2) Find user with password explicitly selected
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      console.log(`❌ User not found: ${email}`);
+      console.log(`Login attempt for non-existent user: ${email}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
 
-    // 3) Verify password
-    const isMatch = await user.correctPassword(password.trim());
+    // 3) Verify password with additional checks
+    if (!user.password) {
+      console.error(`User ${email} has no password set`);
+      return res.status(500).json({
+        success: false,
+        message: 'Account configuration error'
+      });
+    }
+
+    const isMatch = await user.correctPassword(password);
     if (!isMatch) {
-      console.log(`❌ Password mismatch for user: ${email}`);
+      console.log(`Invalid password attempt for user: ${email}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -258,18 +285,25 @@ app.post('/admin/login', async (req, res) => {
 
     // 4) Verify admin role
     if (user.role !== 'admin') {
-      console.log(`❌ Non-admin login attempt: ${email}`);
+      console.log(`Non-admin login attempt: ${email}`);
       return res.status(403).json({
         success: false,
         message: 'Admin access required'
       });
     }
 
-    // 5) Successful login
+    // 5) Create JWT token
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    // 6) Successful login
     console.log(`✅ Admin login successful: ${email}`);
     res.status(200).json({
       success: true,
-      token: 'your-jwt-token', // Implement JWT here
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -282,11 +316,8 @@ app.post('/admin/login', async (req, res) => {
     console.error('❌ ADMIN LOGIN ERROR:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      ...(process.env.NODE_ENV === 'development' && {
-        error: error.message,
-        stack: error.stack
-      })
+      message: 'Login failed',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 });
@@ -408,6 +439,15 @@ app.put('/api/header', upload.single('image'), async (req, res) => {
   }
 });
 //================//
+// Add this to your User model
+userSchema.post('save', function(doc, next) {
+  if (doc.isModified('password') && !doc.password) {
+    console.error('Password was modified but is empty!');
+    // You might want to handle this differently in production
+    throw new Error('Password cannot be empty');
+  }
+  next();
+});
 // Start server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
