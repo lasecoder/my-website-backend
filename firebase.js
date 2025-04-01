@@ -1,10 +1,9 @@
 const admin = require("firebase-admin");
-const serviceAccount = require("./serviceAccountKey.json"); // Download from Firebase Console
+const serviceAccount = require("./path/to/serviceAccountKey.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: "your-project-id.appspot.com" // Replace with your bucket URL
+  storageBucket: "your-project-id.appspot.com" // ← Must match exactly!
 });
 
 const bucket = admin.storage().bucket();
-module.exports = { bucket, admin };
