@@ -288,122 +288,80 @@
 
   <script>
     const backendUrl = "https://my-website-backend-ixzh.onrender.com";
-    
-    // Check authentication on page load
-    document.addEventListener("DOMContentLoaded", function() {
-      // Redirect to login if no token
-      if (!localStorage.getItem('authToken')) {
-        window.location.href = '/admin-login.html';
-        return;
+
+// Enhanced API fetch with better error handling
+async function apiFetch(endpoint, options = {}) {
+  try {
+    const response = await fetch(`${backendUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        ...options.headers
       }
-      
-      setupImagePreview('home-header-image', 'header-image-preview');
-      setupImagePreview('service1-image', 'service-image-preview');
-      loadCurrentContent();
     });
 
-    // Utility function to show status messages
-    function showStatus(elementId, message, isSuccess) {
-      const element = document.getElementById(elementId);
-      element.textContent = message;
-      element.className = `status-message ${isSuccess ? 'success' : 'error'}`;
-      element.style.display = 'block';
-      
-      setTimeout(() => {
-        element.style.display = 'none';
-      }, 5000);
+    // Handle server errors
+    if (response.status >= 500) {
+      const errorText = await response.text();
+      console.error('Server error details:', errorText);
+      throw new Error('Server is currently unavailable. Please try again later.');
     }
-    
-    // Image preview functionality
-    function setupImagePreview(inputId, previewId) {
-      const input = document.getElementById(inputId);
-      const preview = document.getElementById(previewId);
-      
-      input.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-          const reader = new FileReader();
-          
-          reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-          }
-          
-          reader.readAsDataURL(this.files[0]);
-        }
-      });
+
+    // Handle client errors
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Request failed with status ${response.status}`);
     }
-    
-    // Enhanced API fetch with authentication
-    async function apiFetch(endpoint, options = {}) {
-      try {
-        const response = await fetch(`${backendUrl}${endpoint}`, {
-          ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            ...options.headers
-          }
-        });
 
-        // Handle 401 unauthorized
-        if (response.status === 401) {
-          localStorage.removeItem('authToken');
-          window.location.href = '/admin-login.html';
-          throw new Error('Session expired. Please login again.');
-        }
+    return await response.json();
+  } catch (error) {
+    console.error(`API request to ${endpoint} failed:`, error);
+    throw error; // Re-throw to let calling function handle it
+  }
+}
 
-        // Check for JSON response
-        const contentType = response.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Server returned ${response.status}: ${text.substring(0, 100)}`);
-        }
-
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.message || `Request failed with status ${response.status}`);
-        }
-
-        return data;
-      } catch (error) {
-        console.error(`API request to ${endpoint} failed:`, error);
-        throw error;
+// Robust content loading
+async function loadCurrentContent() {
+  try {
+    // Load header with error handling
+    try {
+      const headerData = await apiFetch('/api/header');
+      document.getElementById('home-header-title').value = headerData.title || '';
+      if (headerData.image) {
+        document.getElementById('header-image-preview').src = headerData.image;
+        document.getElementById('header-image-preview').style.display = 'block';
       }
+    } catch (headerError) {
+      showStatus('header-status', `Header: ${headerError.message}`, false);
     }
 
-    // Load current content from server
-    async function loadCurrentContent() {
-      try {
-        // Load header
-        const headerData = await apiFetch('/api/header');
-        document.getElementById('home-header-title').value = headerData.title || '';
-        if (headerData.image) {
-          document.getElementById('header-image-preview').src = headerData.image;
-          document.getElementById('header-image-preview').style.display = 'block';
-        }
-
-        // Load service
-        const serviceData = await apiFetch('/api/services/1');
-        if (serviceData) {
-          document.getElementById('service1-title').value = serviceData.title || '';
-          document.getElementById('service1-description').value = serviceData.description || '';
-          if (serviceData.image) {
-            document.getElementById('service-image-preview').src = serviceData.image;
-            document.getElementById('service-image-preview').style.display = 'block';
-          }
-        }
-
-        // Load footer
-        const footerData = await apiFetch('/api/footer');
-        document.getElementById('home-footer-text').value = footerData.text || '';
-        
-      } catch (error) {
-        console.error("Error loading content:", error);
-        showStatus('header-status', `Failed to load content: ${error.message}`, false);
+    // Load service with error handling
+    try {
+      const serviceData = await apiFetch('/api/services/1');
+      document.getElementById('service1-title').value = serviceData.title || '';
+      document.getElementById('service1-description').value = serviceData.description || '';
+      if (serviceData.image) {
+        document.getElementById('service-image-preview').src = serviceData.image;
+        document.getElementById('service-image-preview').style.display = 'block';
       }
+    } catch (serviceError) {
+      showStatus('service-status', `Service: ${serviceError.message}`, false);
+    }
+
+    // Load footer with error handling
+    try {
+      const footerData = await apiFetch('/api/footer');
+      document.getElementById('home-footer-text').value = footerData.text || '';
+    } catch (footerError) {
+      showStatus('footer-status', `Footer: ${footerError.message}`, false);
     }
     
+  } catch (error) {
+    console.error("Error loading content:", error);
+    showStatus('global-error', `Initialization error: ${error.message}`, false);
+  }
+}
     // Update content with authentication
     async function updateContent(section, formData, buttonId, spinnerId, statusId) {
       try {
