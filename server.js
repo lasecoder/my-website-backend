@@ -71,7 +71,6 @@ const Scholarship = require("./models/Scholarship");
 const Header = require("./models/Header");
 const Message = require('./models/Message');
 const Vacancy = require('./models/Vacancy');
-const ScholarHeader = require('./models/ScholarHeader');
 const Logo = require('./models/Logo');
 const Service1 = require('./models/Service1');
 const DefaultServicesContent = require('./models/DefaultServicesContent');
