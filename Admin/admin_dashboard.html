@@ -5,21 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard - Home</title>
   <link rel="stylesheet" href="admin_login.css" />
+  <style>
+    /* Add these new styles to your existing CSS */
+    .preview-image {
+      max-width: 200px;
+      max-height: 150px;
+      margin: 10px 0;
+      display: none;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0,33,71,0.3);
+      border-radius: 50%;
+      border-top-color: #002147;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .status-message {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
 </head>
 <body>
-  <!-- Sidebar Navigation -->
+  <!-- Sidebar Navigation (keep your existing sidebar) -->
   <div class="sidebar">
-    <h3>Admin Dashboard</h3>
-    <ul>
-      <li><a href="Admin\admin_dashboard.html">Home Page</a></li>
-      <li><a href="Admin\admin_dashboard_about_us.html">About Us</a></li>
-      <li><a href="Admin\admin_dashboard_services.html">Services</a></li>
-      <li><a href="Admin\admin_dashboard_blog.html">Blog</a></li>
-      <li><a href="Admin\admin_dashboard_contact.html">Contact</a></li>
-      <li><a href="Admin\admin_dashboard_vacancy.html">Vacancy</a></li>
-      <li><a href="Admin\admin_dashboard_scholars.html">Scholarships</a></li>
-    </ul>
+    <!-- ... your existing sidebar code ... -->
   </div>
+
   <!-- Main Content Area -->
   <div class="main-content">
     <!-- Home Header Section -->
@@ -27,10 +63,17 @@
       <h2>Edit Home Header</h2>
       <form id="home-header-form" enctype="multipart/form-data">
         <label for="home-header-title">Header Title:</label>
-        <input type="text" id="home-header-title" name="home-header-title" value="FutureTechTalent - Professional Business Solutions" /><br>
+        <input type="text" id="home-header-title" name="home-header-title" value="FutureTechTalent - Professional Business Solutions" />
+        
         <label for="home-header-image">Header Image:</label>
-        <input type="file" id="home-header-image" name="home-header-image" /><br>
-        <button type="button" id="update-header-btn">Update Header</button>
+        <input type="file" id="home-header-image" name="home-header-image" accept="image/*" />
+        <img id="header-image-preview" class="preview-image" src="" alt="Current header image">
+        
+        <div id="header-status" class="status-message"></div>
+        <button type="button" id="update-header-btn">
+          Update Header 
+          <span id="header-spinner" class="loading" style="display: none;"></span>
+        </button>
       </form>
     </section>
 
@@ -40,15 +83,20 @@
       <form id="home-services-form" enctype="multipart/form-data">
         <div class="service-form">
           <label for="service1-title">Title:</label>
-          <input type="text" id="service1-title" name="service1-title" placeholder="Enter title" required><br>
-
+          <input type="text" id="service1-title" name="service1-title" placeholder="Enter title" required>
+          
           <label for="service1-description">Description:</label>
-          <textarea id="service1-description" name="service1-description" placeholder="Enter description" required></textarea><br>
-
+          <textarea id="service1-description" name="service1-description" placeholder="Enter description" required></textarea>
+          
           <label for="service1-image">Upload Image:</label>
-          <input type="file" id="service1-image" name="service1-image" accept="image/*"><br>
-
-          <button type="button" id="update-service1-btn">Update Service 1</button>
+          <input type="file" id="service1-image" name="service1-image" accept="image/*">
+          <img id="service-image-preview" class="preview-image" src="" alt="Service image preview">
+          
+          <div id="service-status" class="status-message"></div>
+          <button type="button" id="update-service1-btn">
+            Update Service 
+            <span id="service-spinner" class="loading" style="display: none;"></span>
+          </button>
         </div>
       </form>
     </section>
@@ -60,211 +108,178 @@
         <label for="home-footer-text">Footer Text:</label>
         <textarea id="home-footer-text" name="home-footer-text" rows="2" cols="50">
           &copy; 2025 FutureTechTalent Business Solutions. All Rights Reserved.
-        </textarea><br>
-        <button type="button" id="update-footer-btn">Update Footer</button>
+        </textarea>
+        
+        <div id="footer-status" class="status-message"></div>
+        <button type="button" id="update-footer-btn">
+          Update Footer 
+          <span id="footer-spinner" class="loading" style="display: none;"></span>
+        </button>
       </form>
     </section>
   </div>
-  ,<style>/* Reset */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      /* Overall Layout */
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        background-color: #f4f4f9;
-      }
-      
-      /* Sidebar */
-      .sidebar {
-        width: 250px;
-        background-color: #2d3a3f;
-        color: #fff;
-        height: 100vh;
-        padding: 20px;
-        position: fixed;
-        left: 0;
-        top: 0;
-      }
-      
-      .sidebar h3 {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      
-      .sidebar ul {
-        list-style: none;
-        padding: 0;
-      }
-      
-      .sidebar ul li {
-        margin: 15px 0;
-      }
-      
-      .sidebar ul li a {
-        color: #fff;
-        text-decoration: none;
-        padding: 10px;
-        display: block;
-        transition: background-color 0.3s;
-      }
-      
-      .sidebar ul li a:hover {
-        background-color: #1d2629;
-      }
-      
-      /* Main Content */
-      .main-content {
-        margin-left: 270px;
-        padding: 20px;
-        width: 100%;
-      }
-      
-      /* Section Styles */
-      section {
-        margin-bottom: 40px;
-      }
-      
-      h2 {
-        margin-bottom: 20px;
-        color: #333;
-      }
-      
-      label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
-      
-      input[type="text"],
-      input[type="url"],
-      textarea {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-      
-      textarea {
-        resize: vertical;
-      }
-      
-      button {
-        background-color: #002147;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.3s;
-      }
-      
-      button:hover {
-        background-color: #002147;
-      }
-      </style>
-  <script>
-  const backendUrl = "https://my-website-backend-ixzh.onrender.com"; // Use your Render backend URL
 
-    async function updateContent(section, title, description, image = null) {
-      try {
-        const formData = new FormData();
-        formData.append("section", section);
+  <script>
+    const backendUrl = "https://my-website-backend-ixzh.onrender.com";
     
-        if (section === "footer") {
-          formData.append("footerText", description); // Correctly append footer text
-        } else {
-          formData.append("title", title);
-          formData.append("description", description);
-          if (image) formData.append("image", image);
+    // Utility function to show status messages
+    function showStatus(elementId, message, isSuccess) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = `status-message ${isSuccess ? 'success' : 'error'}`;
+      element.style.display = 'block';
+      
+      // Hide after 5 seconds
+      setTimeout(() => {
+        element.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Image preview functionality
+    function setupImagePreview(inputId, previewId) {
+      const input = document.getElementById(inputId);
+      const preview = document.getElementById(previewId);
+      
+      input.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+          }
+          
+          reader.readAsDataURL(this.files[0]);
         }
+      });
+    }
     
-        console.log("📤 Sending data to server:", {
-          section,
-          title,
-          description,
-          footerText: description,  // Log footerText explicitly
-          image: image ? image.name : "No image",
-        });
+    // Initialize image previews
+    document.addEventListener("DOMContentLoaded", function() {
+      setupImagePreview('home-header-image', 'header-image-preview');
+      setupImagePreview('service1-image', 'service-image-preview');
+      
+      // Load current images if available
+      loadCurrentContent();
+    });
     
+    // Load current content from server
+    async function loadCurrentContent() {
+      try {
+        // Load header
+        const headerResponse = await fetch(`${backendUrl}/api/content/header`);
+        if (headerResponse.ok) {
+          const headerData = await headerResponse.json();
+          document.getElementById('home-header-title').value = headerData.title || '';
+          if (headerData.image && headerData.image !== "/uploads/default-logo.png") {
+            document.getElementById('header-image-preview').src = headerData.image;
+            document.getElementById('header-image-preview').style.display = 'block';
+          }
+        }
+        
+        // Load footer
+        const footerResponse = await fetch(`${backendUrl}/api/content/footer`);
+        if (footerResponse.ok) {
+          const footerData = await footerResponse.json();
+          document.getElementById('home-footer-text').value = footerData.footerText || '';
+        }
+        
+      } catch (error) {
+        console.error("Error loading current content:", error);
+      }
+    }
+    
+    // Improved update function with loading states
+    async function updateContent(section, formData, buttonId, spinnerId, statusId) {
+      try {
+        // Show loading state
+        document.getElementById(buttonId).disabled = true;
+        document.getElementById(spinnerId).style.display = 'inline-block';
+        document.getElementById(statusId).style.display = 'none';
+        
         const response = await fetch(`${backendUrl}/api/content`, {
           method: "POST",
           body: formData,
         });
-    
-        if (!response.ok) throw new Error("Failed to update content");
-    
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Update failed');
+        }
+        
         const data = await response.json();
-        console.log("✅ Server response:", data);
-        alert(`${section} updated successfully!`);
+        showStatus(statusId, `${section} updated successfully!`, true);
+        console.log("✅ Update successful:", data);
+        
+        // Clear file input if successful
+        if (formData.get('image')) {
+          document.querySelector(`#${section === 'header' ? 'home-header-image' : 'service1-image'}`).value = '';
+        }
+        
       } catch (error) {
-        console.error("❌ Error updating content:", error);
-        alert("Error updating content: " + error.message);
+        console.error(`❌ Error updating ${section}:`, error);
+        showStatus(statusId, error.message, false);
+      } finally {
+        document.getElementById(buttonId).disabled = false;
+        document.getElementById(spinnerId).style.display = 'none';
       }
     }
     
-    document.addEventListener("DOMContentLoaded", function () {
-      const updateService1Button = document.getElementById("update-service1-btn");
-      const updateHeaderButton = document.getElementById("update-header-btn");
-      const updateFooterButton = document.getElementById("update-footer-btn");
-    
-      // Handle Service 1 Update
-      if (updateService1Button) {
-        updateService1Button.addEventListener("click", async (e) => {
-          e.preventDefault();
-    
-          const title = document.getElementById("service1-title").value;
-          const description = document.getElementById("service1-description").value;
-          const image = document.getElementById("service1-image").files[0];
-    
-          if (!title || !description) {
-            alert("Please fill in all required fields.");
-            return;
-          }
-    
-          await updateContent("services", title, description, image);
-        });
-      }
-    
-      // Handle Header Update
-      if (updateHeaderButton) {
-        updateHeaderButton.addEventListener("click", async (e) => {
-          e.preventDefault();
-    
-          const title = document.getElementById("home-header-title").value;
-          const image = document.getElementById("home-header-image").files[0];
-    
-          if (!title) {
-            alert("Please enter a header title.");
-            return;
-          }
-    
-          await updateContent("header", title, "", image);
-        });
-      }
-    
-      // Handle Footer Update
-      if (updateFooterButton) {
-        updateFooterButton.addEventListener("click", async (e) => {
-          e.preventDefault();
-    
-          const footerText = document.getElementById("home-footer-text").value;
-    
-          if (!footerText) {
-            alert("Please enter footer text.");
-            return;
-          }
-    
-          await updateContent("footer", "", footerText); // Just send footer text for footer section
-        });
-      }
+    // Event listeners
+    document.getElementById("update-header-btn").addEventListener("click", async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      formData.append("section", "header");
+      formData.append("title", document.getElementById("home-header-title").value);
+      
+      const imageFile = document.getElementById("home-header-image").files[0];
+      if (imageFile) formData.append("image", imageFile);
+      
+      await updateContent(
+        "header", 
+        formData, 
+        "update-header-btn", 
+        "header-spinner", 
+        "header-status"
+      );
     });
-    </script>
+    
+    document.getElementById("update-service1-btn").addEventListener("click", async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      formData.append("section", "services");
+      formData.append("title", document.getElementById("service1-title").value);
+      formData.append("description", document.getElementById("service1-description").value);
+      
+      const imageFile = document.getElementById("service1-image").files[0];
+      if (imageFile) formData.append("image", imageFile);
+      
+      await updateContent(
+        "service", 
+        formData, 
+        "update-service1-btn", 
+        "service-spinner", 
+        "service-status"
+      );
+    });
+    
+    document.getElementById("update-footer-btn").addEventListener("click", async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      formData.append("section", "footer");
+      formData.append("footerText", document.getElementById("home-footer-text").value);
+      
+      await updateContent(
+        "footer", 
+        formData, 
+        "update-footer-btn", 
+        "footer-spinner", 
+        "footer-status"
+      );
+    });
+  </script>
 </body>
 </html>
