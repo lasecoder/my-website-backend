@@ -10,6 +10,9 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+// At the top of server.js
+
+
 
 // Load environment variables
 dotenv.config();

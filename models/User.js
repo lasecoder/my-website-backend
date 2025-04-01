@@ -94,12 +94,12 @@ userSchema.post('save', function(error, doc, next) {
 
 // Password comparison method
 userSchema.methods.correctPassword = async function(candidatePassword) {
+  // Add validation
   if (!candidatePassword || !this.password) {
-    throw new Error('Password comparison failed - missing data');
+    throw new Error('Missing password for comparison');
   }
   return await bcrypt.compare(candidatePassword, this.password);
 };
-
 // Password changed after token was issued
 userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   if (this.passwordChangedAt) {
