@@ -292,35 +292,28 @@
 // Enhanced API fetch with better error handling
 async function apiFetch(endpoint, options = {}) {
   try {
-    const response = await fetch(`${backendUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        ...options.headers
-      }
-    });
-
-    // Handle server errors
-    if (response.status >= 500) {
-      const errorText = await response.text();
-      console.error('Server error details:', errorText);
-      throw new Error('Server is currently unavailable. Please try again later.');
+    const response = await fetch(`${backendUrl}${endpoint}`, options);
+    
+    // First check if response is HTML error page
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+      const text = await response.text();
+      throw new Error(`Server returned HTML error page: ${text.substring(0, 100)}`);
     }
-
-    // Handle client errors
+    
+    // Then try to parse as JSON
+    const data = await response.json();
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
+      throw new Error(data.message || `Request failed with status ${response.status}`);
     }
-
-    return await response.json();
+    
+    return data;
   } catch (error) {
     console.error(`API request to ${endpoint} failed:`, error);
-    throw error; // Re-throw to let calling function handle it
+    throw error;
   }
 }
-
 // Robust content loading
 async function loadCurrentContent() {
   try {
@@ -364,69 +357,103 @@ async function loadCurrentContent() {
 }
     // Update content with authentication
     async function updateContent(section, formData, buttonId, spinnerId, statusId) {
-      try {
-        // Show loading state
-        document.getElementById(buttonId).disabled = true;
-        document.getElementById(spinnerId).style.display = 'inline-block';
-        document.getElementById(statusId).style.display = 'none';
-        
-        const response = await fetch(`${backendUrl}/api/content`, {
-          method: "POST",
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          },
-          body: formData,
-        });
-        
-        // Handle 401 unauthorized
-        if (response.status === 401) {
-          localStorage.removeItem('authToken');
-          window.location.href = '/admin-login.html';
-          throw new Error('Session expired. Please login again.');
-        }
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Update failed');
-        }
-        
-        const data = await response.json();
-        showStatus(statusId, `${section} updated successfully!`, true);
-        
-        // Clear file input if successful
-        if (formData.get('image')) {
-          document.querySelector(`#${section === 'header' ? 'home-header-image' : 'service1-image'}`).value = '';
-        }
-        
-      } catch (error) {
-        console.error(`❌ Error updating ${section}:`, error);
-        showStatus(statusId, error.message, false);
-      } finally {
-        document.getElementById(buttonId).disabled = false;
-        document.getElementById(spinnerId).style.display = 'none';
-      }
-    }
+  try {
+    // Show loading state
+    toggleLoading(true, buttonId, spinnerId, statusId);
     
-    // Event listeners for update buttons
-    document.getElementById("update-header-btn").addEventListener("click", async (e) => {
-      e.preventDefault();
-      
-      const formData = new FormData();
-      formData.append("section", "header");
-      formData.append("title", document.getElementById("home-header-title").value);
-      
-      const imageFile = document.getElementById("home-header-image").files[0];
-      if (imageFile) formData.append("image", imageFile);
-      
-      await updateContent(
-        "header", 
-        formData, 
-        "update-header-btn", 
-        "header-spinner", 
-        "header-status"
-      );
+    const response = await fetch(`${backendUrl}/api/content`, {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: formData,
     });
     
+    // Check for HTML response first
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+      const text = await response.text();
+      throw new Error(`Server error: ${text.substring(0, 100)}`);
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Update failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    showStatus(statusId, `${section} updated successfully!`, true);
+    
+    // Clear file input if successful
+    if (formData.get('image')) {
+      document.querySelector(`#${section === 'header' ? 'home-header-image' : 'service1-image'}`).value = '';
+    }
+    
+  } catch (error) {
+    console.error(`❌ Error updating ${section}:`, error);
+    showStatus(statusId, error.message, false);
+    
+    // Special handling for 401 unauthorized
+    if (error.message.includes('401')) {
+      localStorage.removeItem('authToken');
+      window.location.href = '/admin-login.html';
+    }
+  } finally {
+    toggleLoading(false, buttonId, spinnerId, statusId);
+  }
+}
+
+function toggleLoading(isLoading, buttonId, spinnerId, statusId) {
+  const button = document.getElementById(buttonId);
+  const spinner = document.getElementById(spinnerId);
+  const status = document.getElementById(statusId);
+  
+  if (button) button.disabled = isLoading;
+  if (spinner) spinner.style.display = isLoading ? 'inline-block' : 'none';
+  if (status && !isLoading) status.style.display = 'none';
+}
+    // Event listeners for update buttons
+ // Wrap in document ready
+document.addEventListener("DOMContentLoaded", function() {
+  // Verify authentication first
+  if (!localStorage.getItem('authToken')) {
+    window.location.href = '/admin-login.html';
+    return;
+  }
+
+  // Initialize image previews
+  setupImagePreview('home-header-image', 'header-image-preview');
+  setupImagePreview('service1-image', 'service-image-preview');
+  
+  // Load initial content
+  loadCurrentContent();
+  
+  // Set up event listeners
+  setupEventListeners();
+});
+
+function setupEventListeners() {
+  document.getElementById("update-header-btn")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append("section", "header");
+    formData.append("title", document.getElementById("home-header-title").value);
+    
+    const imageFile = document.getElementById("home-header-image").files[0];
+    if (imageFile) formData.append("image", imageFile);
+    
+    await updateContent(
+      "header", 
+      formData, 
+      "update-header-btn", 
+      "header-spinner", 
+      "header-status"
+    );
+  });
+  
+  // Similar for other buttons...
+}
     document.getElementById("update-service1-btn").addEventListener("click", async (e) => {
       e.preventDefault();
       
@@ -469,6 +496,22 @@ async function loadCurrentContent() {
       localStorage.removeItem('authToken');
       window.location.href = '/admin-login.html';
     });
+    // Status message display function
+function showStatus(elementId, message, isSuccess) {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    console.error(`Element with ID ${elementId} not found`);
+    return;
+  }
+  
+  element.textContent = message;
+  element.className = `status-message ${isSuccess ? 'success' : 'error'}`;
+  element.style.display = 'block';
+  
+  setTimeout(() => {
+    element.style.display = 'none';
+  }, 5000);
+}
   </script>
 </body>
 </html>
