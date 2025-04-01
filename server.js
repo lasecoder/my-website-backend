@@ -5,6 +5,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
+const User = require('./models/User'); // Add this with other model imports
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
@@ -36,6 +37,16 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => console.log("✅ Connected to MongoDB"))
+.catch(err => {
+  console.error("❌ MongoDB connection error:", err);
+  process.exit(1); // Exit if DB connection fails
+});
 // Models (your existing models)
 // ... [keep all your model requires] ...
 
@@ -213,57 +224,52 @@ app.use((err, req, res, next) => {
 });
 // Make sure you have this exact route in server.js
 app.post('/admin/login', async (req, res) => {
-  console.log('🔹 Admin login attempt received'); // Log receipt of request
+  console.log('🔹 Admin login attempt received');
   
   try {
+    // 1) Validate input
     const { email, password } = req.body;
-    console.log('🔹 Login attempt for:', email);
-
-    // 1) Input validation
-    if (!email || !password) {
-      console.log('❌ Missing credentials');
-      return res.status(400).json({ 
+    if (!email?.trim() || !password?.trim()) {
+      return res.status(400).json({
         success: false,
-        message: 'Please provide both email and password' 
+        message: 'Email and password are required'
       });
     }
 
-    // 2) Find user
-    const user = await User.findOne({ email }).select('+password');
-    console.log(user ? '🔹 User found' : '❌ User not found');
-    
+    // 2) Find user with explicit password selection
+    const user = await User.findOne({ email: email.trim() }).select('+password');
     if (!user) {
-      return res.status(401).json({ 
+      console.log(`❌ User not found: ${email}`);
+      return res.status(401).json({
         success: false,
-        message: 'Invalid credentials' // Generic message for security
+        message: 'Invalid credentials'
       });
     }
 
     // 3) Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log(isMatch ? '🔹 Password matches' : '❌ Password mismatch');
-    
+    const isMatch = await user.correctPassword(password.trim());
     if (!isMatch) {
-      return res.status(401).json({ 
+      console.log(`❌ Password mismatch for user: ${email}`);
+      return res.status(401).json({
         success: false,
-        message: 'Invalid credentials' 
+        message: 'Invalid credentials'
       });
     }
 
     // 4) Verify admin role
-    console.log('🔹 User role:', user.role);
     if (user.role !== 'admin') {
-      return res.status(403).json({ 
+      console.log(`❌ Non-admin login attempt: ${email}`);
+      return res.status(403).json({
         success: false,
-        message: 'Admin privileges required' 
+        message: 'Admin access required'
       });
     }
 
     // 5) Successful login
-    console.log('✅ Successful admin login');
+    console.log(`✅ Admin login successful: ${email}`);
     res.status(200).json({
       success: true,
-      token: 'your-generated-jwt-here', // Implement JWT if needed
+      token: 'your-jwt-token', // Implement JWT here
       user: {
         id: user._id,
         name: user.name,
@@ -273,11 +279,30 @@ app.post('/admin/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Server error:', error);
-    res.status(500).json({ 
+    console.error('❌ ADMIN LOGIN ERROR:', error);
+    res.status(500).json({
       success: false,
       message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      ...(process.env.NODE_ENV === 'development' && {
+        error: error.message,
+        stack: error.stack
+      })
+    });
+  }
+});
+app.get('/admin/healthcheck', async (req, res) => {
+  try {
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    res.json({
+      status: 'OK',
+      database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      adminUsersExist: adminCount > 0,
+      bcryptWorking: await bcrypt.compare('test', await bcrypt.hash('test', 10))
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      error: error.message
     });
   }
 });
