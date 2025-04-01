@@ -6,10 +6,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const admin = require('firebase-admin');
 const multer = require('multer');
+const fs = require('fs');
 
-// Initialize Firebase using environment variables
-admin.initializeApp({
-  credential: admin.credential.cert({
+// Initialize Firebase with proper error handling
+try {
+  const firebaseConfig = {
     type: process.env.FIREBASE_TYPE,
     project_id: process.env.FIREBASE_PROJECT_ID,
     private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
@@ -20,9 +21,18 @@ admin.initializeApp({
     token_uri: process.env.FIREBASE_TOKEN_URI,
     auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
     client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
-  }),
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-});
+  };
+
+  admin.initializeApp({
+    credential: admin.credential.cert(firebaseConfig),
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+  });
+  console.log("✅ Firebase initialized successfully");
+} catch (error) {
+  console.error("❌ Firebase initialization error:", error.message);
+  process.exit(1);
+}
+
 const bucket = admin.storage().bucket();
 
 // Initialize Express
@@ -60,27 +70,44 @@ const Header = require("./models/Header");
 const Message = require('./models/Message');
 const Vacancy = require('./models/Vacancy');
 const ScholarHeader = require('./models/ScholarHeader');
+const Logo = require('./models/Logo');
+const Service1 = require('./models/Service1');
+const DefaultServicesContent = require('./models/DefaultServicesContent');
 
-// Firebase Upload Helper
+// Firebase Upload Helper with enhanced error handling
 async function uploadToFirebase(file, folder = '') {
   if (!file) return null;
   
-  const fileName = folder ? `${folder}/${Date.now()}-${file.originalname}` : `${Date.now()}-${file.originalname}`;
-  const fileUpload = bucket.file(fileName);
+  try {
+    const fileName = folder ? `${folder}/${Date.now()}-${file.originalname}` : `${Date.now()}-${file.originalname}`;
+    const fileUpload = bucket.file(fileName);
 
-  const stream = fileUpload.createWriteStream({
-    metadata: { contentType: file.mimetype }
-  });
-
-  return new Promise((resolve, reject) => {
-    stream.on('error', reject);
-    stream.on('finish', async () => {
-      await fileUpload.makePublic();
-      resolve(`https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`);
+    const stream = fileUpload.createWriteStream({
+      metadata: { contentType: file.mimetype }
     });
-    stream.end(file.buffer);
-  });
+
+    return new Promise((resolve, reject) => {
+      stream.on('error', (err) => {
+        console.error('Firebase upload error:', err);
+        reject(new Error('File upload failed'));
+      });
+      stream.on('finish', async () => {
+        try {
+          await fileUpload.makePublic();
+          resolve(`https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`);
+        } catch (err) {
+          console.error('Error making file public:', err);
+          reject(new Error('Failed to make file public'));
+        }
+      });
+      stream.end(file.buffer);
+    });
+  } catch (error) {
+    console.error('Error in uploadToFirebase:', error);
+    throw error;
+  }
 }
+
 // ==================== API ROUTES ====================
 
 // Health Check
@@ -92,7 +119,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Authentication
+// Authentication Routes
 app.post('/signup', async (req, res) => {
   try {
     const { name, email, password, passwordConfirm } = req.body;
@@ -187,7 +214,7 @@ app.post('/admin/login', async (req, res) => {
   }
 });
 
-// Content Management
+// Content Management Routes
 app.get('/api/home-content', async (req, res) => {
   try {
     const content = await HomeContent.findOne();
@@ -200,7 +227,7 @@ app.get('/api/home-content', async (req, res) => {
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
     const { section, title, description, footerText } = req.body;
-    const imageUrl = await uploadToFirebase(req.file, section);
+    const imageUrl = req.file ? await uploadToFirebase(req.file, section) : null;
 
     const updateData = {};
     if (section === "header") {
@@ -228,7 +255,7 @@ app.post('/api/content', upload.single('image'), async (req, res) => {
   }
 });
 
-// Header/Footer
+// Header/Footer Routes
 app.get('/api/header', async (req, res) => {
   try {
     const header = await Header.findOne();
@@ -241,7 +268,7 @@ app.get('/api/header', async (req, res) => {
 app.put('/api/header', upload.single('image'), async (req, res) => {
   try {
     const { headerText } = req.body;
-    const imageUrl = await uploadToFirebase(req.file, 'headers');
+    const imageUrl = req.file ? await uploadToFirebase(req.file, 'headers') : null;
 
     const update = { headerText };
     if (imageUrl) update.image = imageUrl;
@@ -282,7 +309,7 @@ app.put('/api/content/footer', async (req, res) => {
   }
 });
 
-// Services
+// Services Routes
 app.get('/api/services', async (req, res) => {
   try {
     const services = await Service.find();
@@ -297,8 +324,8 @@ app.post('/api/services', upload.fields([{ name: "service-image" }, { name: "ser
     const { "service-title": title, "service-description": description } = req.body;
     
     const [imageUrl, videoUrl] = await Promise.all([
-      uploadToFirebase(req.files["service-image"]?.[0], "services/images"),
-      uploadToFirebase(req.files["service-video"]?.[0], "services/videos")
+      req.files["service-image"] ? uploadToFirebase(req.files["service-image"][0], "services/images") : Promise.resolve(""),
+      req.files["service-video"] ? uploadToFirebase(req.files["service-video"][0], "services/videos") : Promise.resolve("")
     ]);
 
     const newService = new Service({ 
@@ -315,7 +342,7 @@ app.post('/api/services', upload.fields([{ name: "service-image" }, { name: "ser
   }
 });
 
-// Blog Posts
+// Blog Posts Routes
 app.get('/api/posts', async (req, res) => {
   try {
     const searchQuery = req.query.search || '';
@@ -336,8 +363,8 @@ app.post('/api/posts', upload.fields([{ name: 'image' }, { name: 'video' }]), as
     const { title, content } = req.body;
     
     const [imageUrl, videoUrl] = await Promise.all([
-      uploadToFirebase(req.files['image']?.[0], "posts/images"),
-      uploadToFirebase(req.files['video']?.[0], "posts/videos")
+      req.files['image'] ? uploadToFirebase(req.files['image'][0], "posts/images") : Promise.resolve(null),
+      req.files['video'] ? uploadToFirebase(req.files['video'][0], "posts/videos") : Promise.resolve(null)
     ]);
 
     const newPost = new Post({ 
@@ -354,7 +381,7 @@ app.post('/api/posts', upload.fields([{ name: 'image' }, { name: 'video' }]), as
   }
 });
 
-// Vacancies
+// Vacancies Routes
 app.get('/api/vacancies', async (req, res) => {
   try {
     const vacancies = await Vacancy.find();
@@ -367,7 +394,7 @@ app.get('/api/vacancies', async (req, res) => {
 app.post('/api/vacancies', upload.single('image'), async (req, res) => {
   try {
     const { title, description } = req.body;
-    const imageUrl = await uploadToFirebase(req.file, 'vacancies');
+    const imageUrl = req.file ? await uploadToFirebase(req.file, 'vacancies') : null;
 
     const newVacancy = new Vacancy({ 
       title, 
@@ -382,7 +409,7 @@ app.post('/api/vacancies', upload.single('image'), async (req, res) => {
   }
 });
 
-// Scholarships
+// Scholarships Routes
 app.get('/api/scholarships', async (req, res) => {
   try {
     const scholarships = await Scholarship.find();
@@ -395,7 +422,7 @@ app.get('/api/scholarships', async (req, res) => {
 app.post('/api/scholarships', upload.single('image'), async (req, res) => {
   try {
     const { title, description } = req.body;
-    const imageUrl = await uploadToFirebase(req.file, 'scholarships');
+    const imageUrl = req.file ? await uploadToFirebase(req.file, 'scholarships') : null;
 
     const newScholarship = new Scholarship({ 
       title, 
@@ -410,7 +437,7 @@ app.post('/api/scholarships', upload.single('image'), async (req, res) => {
   }
 });
 
-// Scholar Header/Footer
+// Scholar Header/Footer Routes
 app.get("/api/scholar-header", async (req, res) => {
   try {
     const data = await ScholarHeader.findOne({});
@@ -439,7 +466,7 @@ app.post("/api/scholar-header", async (req, res) => {
   }
 });
 
-// Chatbot Messages
+// Chatbot Messages Routes
 app.post('/api/messages', async (req, res) => {
   try {
     const { sender, content } = req.body;
@@ -460,7 +487,7 @@ app.get('/api/messages', async (req, res) => {
   }
 });
 
-// Admin Dashboard
+// Admin Dashboard Route
 app.get('/admin_dashboard.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
 });
@@ -473,7 +500,11 @@ app.get('*', (req, res) => {
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    message: err.message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
 });
 
 // Start Server
@@ -481,7 +512,15 @@ const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-// Handle uncaught exceptions and rejections
+// Handle process termination
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
 process.on('uncaughtException', err => {
   console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
   console.error(err.name, err.message);
