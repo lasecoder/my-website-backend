@@ -5,7 +5,9 @@ const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
-const User = require('./models/User'); // Add this with other model imports
+const User = require('./models/User');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
@@ -37,16 +39,12 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000
-})
-.then(() => console.log("✅ Connected to MongoDB"))
-.catch(err => {
-  console.error("❌ MongoDB connection error:", err);
-  process.exit(1); // Exit if DB connection fails
-});
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
 // Models (your existing models)
 async function ensureAdminExists() {
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
@@ -439,15 +437,7 @@ app.put('/api/header', upload.single('image'), async (req, res) => {
   }
 });
 //================//
-// Add this to your User model
-userSchema.post('save', function(doc, next) {
-  if (doc.isModified('password') && !doc.password) {
-    console.error('Password was modified but is empty!');
-    // You might want to handle this differently in production
-    throw new Error('Password cannot be empty');
-  }
-  next();
-});
+
 // Start server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
