@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard - Home</title>
   <link rel="stylesheet" href="admin_login.css" />
-  <style>/* General Styles */
+  <style>
+    /* General Styles */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
@@ -152,7 +153,7 @@
       gap: 15px;
     }
     
-    /* Preview Image Styles (already in your style tag) */
+    /* Preview Image Styles */
     .preview-image {
       max-width: 200px;
       max-height: 150px;
@@ -162,7 +163,7 @@
       border-radius: 4px;
     }
     
-    /* Loading Spinner Styles (already in your style tag) */
+    /* Loading Spinner Styles */
     .loading {
       display: inline-block;
       width: 20px;
@@ -179,7 +180,7 @@
       to { transform: rotate(360deg); }
     }
     
-    /* Status Message Styles (already in your style tag) */
+    /* Status Message Styles */
     .status-message {
       margin-top: 10px;
       padding: 8px;
@@ -203,7 +204,7 @@
         width: 100%;
         height: auto;
         position: relative;
-      padding: 15px;
+        padding: 15px;
       }
       
       .main-content {
@@ -214,14 +215,27 @@
       section {
         padding: 15px;
       }
-    }</style>
+    }
+  </style>
 </head>
 <body>
-  <!-- Sidebar Navigation (keep your existing sidebar) -->
+  <!-- Sidebar Navigation -->
   <div class="sidebar">
-    <!-- ... your existing sidebar code ... -->
+    <div class="sidebar-header">
+      <h2>Admin Dashboard</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="#" class="active">Home Content</a></li>
+        <li><a href="#">About Content</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
   </div>
+  
   <button id="logout-btn" class="logout-btn">Logout</button>
+  
   <!-- Main Content Area -->
   <div class="main-content">
     <!-- Home Header Section -->
@@ -288,6 +302,19 @@
   <script>
     const backendUrl = "https://my-website-backend-ixzh.onrender.com";
     
+    // Check authentication on page load
+    document.addEventListener("DOMContentLoaded", function() {
+      // Redirect to login if no token
+      if (!localStorage.getItem('authToken')) {
+        window.location.href = '/admin-login.html';
+        return;
+      }
+      
+      setupImagePreview('home-header-image', 'header-image-preview');
+      setupImagePreview('service1-image', 'service-image-preview');
+      loadCurrentContent();
+    });
+
     // Utility function to show status messages
     function showStatus(elementId, message, isSuccess) {
       const element = document.getElementById(elementId);
@@ -295,7 +322,6 @@
       element.className = `status-message ${isSuccess ? 'success' : 'error'}`;
       element.style.display = 'block';
       
-      // Hide after 5 seconds
       setTimeout(() => {
         element.style.display = 'none';
       }, 5000);
@@ -320,46 +346,78 @@
       });
     }
     
-    // Initialize image previews
-    document.addEventListener("DOMContentLoaded", function() {
-      setupImagePreview('home-header-image', 'header-image-preview');
-      setupImagePreview('service1-image', 'service-image-preview');
-      
-      // Load current images if available
-      loadCurrentContent();
-    });
-    
+    // Enhanced API fetch with authentication
+    async function apiFetch(endpoint, options = {}) {
+      try {
+        const response = await fetch(`${backendUrl}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            ...options.headers
+          }
+        });
+
+        // Handle 401 unauthorized
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = '/admin-login.html';
+          throw new Error('Session expired. Please login again.');
+        }
+
+        // Check for JSON response
+        const contentType = response.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Server returned ${response.status}: ${text.substring(0, 100)}`);
+        }
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || `Request failed with status ${response.status}`);
+        }
+
+        return data;
+      } catch (error) {
+        console.error(`API request to ${endpoint} failed:`, error);
+        throw error;
+      }
+    }
+
     // Load current content from server
     async function loadCurrentContent() {
-  try {
-    // Load header
-    const headerResponse = await fetch(`${backendUrl}/api/header`);
-    
-    // Check for HTML error response first
-    const contentType = headerResponse.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await headerResponse.text();
-      throw new Error(`Server returned ${headerResponse.status}: ${text.substring(0, 100)}`);
-    }
+      try {
+        // Load header
+        const headerData = await apiFetch('/api/header');
+        document.getElementById('home-header-title').value = headerData.title || '';
+        if (headerData.image) {
+          document.getElementById('header-image-preview').src = headerData.image;
+          document.getElementById('header-image-preview').style.display = 'block';
+        }
 
-    const headerData = await headerResponse.json();
-    if (headerData.error) throw new Error(headerData.error);
-    
-    document.getElementById('home-header-title').value = headerData.title || '';
-    if (headerData.image) {
-      document.getElementById('header-image-preview').src = headerData.image;
-      document.getElementById('header-image-preview').style.display = 'block';
-    }
+        // Load service
+        const serviceData = await apiFetch('/api/services/1');
+        if (serviceData) {
+          document.getElementById('service1-title').value = serviceData.title || '';
+          document.getElementById('service1-description').value = serviceData.description || '';
+          if (serviceData.image) {
+            document.getElementById('service-image-preview').src = serviceData.image;
+            document.getElementById('service-image-preview').style.display = 'block';
+          }
+        }
 
-    // Similar updates for footer...
+        // Load footer
+        const footerData = await apiFetch('/api/footer');
+        document.getElementById('home-footer-text').value = footerData.text || '';
+        
+      } catch (error) {
+        console.error("Error loading content:", error);
+        showStatus('header-status', `Failed to load content: ${error.message}`, false);
+      }
+    }
     
-  } catch (error) {
-    console.error("Error loading content:", error);
-    showStatus('global-error', `Failed to load content: ${error.message}`, false);
-  }
-}
-    
-    // Improved update function with loading states
+    // Update content with authentication
     async function updateContent(section, formData, buttonId, spinnerId, statusId) {
       try {
         // Show loading state
@@ -369,8 +427,18 @@
         
         const response = await fetch(`${backendUrl}/api/content`, {
           method: "POST",
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          },
           body: formData,
         });
+        
+        // Handle 401 unauthorized
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          window.location.href = '/admin-login.html';
+          throw new Error('Session expired. Please login again.');
+        }
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -379,7 +447,6 @@
         
         const data = await response.json();
         showStatus(statusId, `${section} updated successfully!`, true);
-        console.log("✅ Update successful:", data);
         
         // Clear file input if successful
         if (formData.get('image')) {
@@ -395,7 +462,7 @@
       }
     }
     
-    // Event listeners
+    // Event listeners for update buttons
     document.getElementById("update-header-btn").addEventListener("click", async (e) => {
       e.preventDefault();
       
@@ -420,6 +487,7 @@
       
       const formData = new FormData();
       formData.append("section", "services");
+      formData.append("serviceId", "1");
       formData.append("title", document.getElementById("service1-title").value);
       formData.append("description", document.getElementById("service1-description").value);
       
@@ -450,47 +518,12 @@
         "footer-status"
       );
     });
-    async function apiFetch(endpoint, options = {}) {
-  try {
-    const response = await fetch(`${backendUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        ...options.headers
-      }
-    });
-
-    // First check if response is HTML error
-    const contentType = response.headers.get('content-type');
-    if (!contentType?.includes('application/json')) {
-      const text = await response.text();
-      throw new Error(`Server returned ${response.status}: ${text.substring(0, 100)}`);
-    }
-
-    const data = await response.json();
     
-    if (!response.ok) {
-      throw new Error(data.message || `Request failed with status ${response.status}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.error(`API request to ${endpoint} failed:`, error);
-    throw error;
-  }
-}
-
-// Usage example:
-async function loadHeader() {
-  try {
-    const header = await apiFetch('/api/header');
-    document.getElementById('home-header-title').value = header.title || '';
-    // ... update other fields
-  } catch (error) {
-    showError('header-error', error.message);
-  }
-}
+    // Logout functionality
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      localStorage.removeItem('authToken');
+      window.location.href = '/admin-login.html';
+    });
   </script>
 </body>
 </html>
