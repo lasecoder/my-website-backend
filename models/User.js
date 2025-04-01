@@ -80,14 +80,22 @@ userSchema.pre(/^find/, function(next) {
   next();
 });
 
-// Password comparison method (FIXED VERSION)
-userSchema.methods.correctPassword = async function(candidatePassword) {
-  // Add validation checks
-  if (!candidatePassword) {
-    throw new Error('No password provided for comparison');
+// Password validation middleware
+userSchema.post('save', function(error, doc, next) {
+  if (error.name === 'MongoError' && error.code === 11000) {
+    next(new Error('Email already exists'));
+  } else if (error.name === 'ValidationError') {
+    const messages = Object.values(error.errors).map(el => el.message);
+    next(new Error(messages.join(', ')));
+  } else {
+    next(error);
   }
-  if (!this.password) {
-    throw new Error('User password not available');
+});
+
+// Password comparison method
+userSchema.methods.correctPassword = async function(candidatePassword) {
+  if (!candidatePassword || !this.password) {
+    throw new Error('Password comparison failed - missing data');
   }
   return await bcrypt.compare(candidatePassword, this.password);
 };
@@ -101,10 +109,15 @@ userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   return false;
 };
 
-// Virtual property
-userSchema.virtual('displayName').get(function() {
-  return `${this.name} (${this.role})`;
-});
+// Create password reset token
+userSchema.methods.createPasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  return resetToken;
+};
 
-const User = mongoose.model('User', userSchema);
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);
