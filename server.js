@@ -1,117 +1,80 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const admin = require('firebase-admin');
-const multer = require('multer');
 const fs = require('fs');
+const dotenv = require('dotenv');
 
-// Initialize Firebase with proper error handling
-try {
-  const firebaseConfig = {
-    type: "service_account",
-    project_id: "future-tech-254c0",
-    private_key_id: "9df3b405a281639bc122a696720964eb25a6deda",
-    private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCkEB0w/yX18QOb\nQMiUzj28LKYF1ihCXigaG8s2uLVlzJWMKFa9BLUVb3vGolNHTMK/bGe4I4S/vo78\npfHQFOtSfCk3dgqckSgoG0BMawexTz7/fwJfBlnqapOHrS8ragfcJEfmxUvghw+9\nKcZ3YZtjd4FPGt/gcEn5pjSPPIKPYUOvcWYS3nnqI+WHPPx3Gf4ZQXuC9EMO0+0v\nojEsYs90EJBe7w13tD2eVe+k0M/W/6XL7rldSNhnmwRptMfsvO7ZSDZQVxzpxlAv\nCcZdaNRnY0+lWK7spEmST+nGB8861+YhANgI36WgKxICzC25t/5o+5vz6PG2Zhcq\ncg8Hgiw1AgMBAAECggEAI7aGRDYmU0UlndQaVZoXgjDN6xNVLC1G2XgXYlAO3JwO\nKbZWO0sdCA9+iBypuCmTcwvr//9rVDns8j5FRyBmoUv5xOLjKHXIogJcmsXppMU1\nV3SUVY8SX57Xgn9Gd1LbZyZWqHtmKvf7ixfe5fnPU3WeJlQZS8flsnxlkJCBcyhF\n0ry+bpii/xAVKNg+b42TjzYmSJbJ+sTAzrivMvzTsJB7xt7D6AOP3T6c1lpZ8yMQ\naZdPzxIJ2A9AxEnw+i8cOsNCvRGkpvZnP1FykkvdhxXKNNa2F6UnkZQPZ8kMuMkc\nbnOx1kMx835D1mX4Y/G+pCHb5WG5krcUnfa77fBNwQKBgQDPez6hFVoFlqOPPLt0\nrGm4QUz38Qrm0f3ySBoWxww+QWUyuMyZYtExQbdcup1ogUVeIs6XDldFf39QAl45\naokicy0MDReNFgO/LaCtYuUH1JRLfmD+yUXYHQrleYo4c+zoW/xFUD1dFIMo+4DJ\nik7lLxTGE1FF5KRiNClxFQbJiQKBgQDKbaWz4gHAhmjA8CWYKTirQNRdsXmgQZiU\nqiJAA5MZxLyWL8LdnmOkhNfQ81TPtfcVuf+g/dYHua7x0aFT5hTRf1h5LYc8+7jW\nK2y5cfu1jR1N0neU5EC0c1/F0WGfNsnhGgmzPOd5fIrjPQZKM+TxWuk9UxY8hJ5L\nwEgUny2eTQKBgF1445VEfkLoQ5VjQfxlNFerK5bEBCpKzoJZU0+RqwVdBs9cC+jK\naP4s4gOnmwSawHqRacsJze1kbCHKf1KUmWVoyBGW0FZiZZu6XZnfZNkrPwfnzqDa\nYlnjc6ZAJDIcn81qq3M6m/qUJCbRb4rcgYCkvlIiH8pCIICRiV4FoAIpAoGAF0Lw\nVrJy9xe68+jkuQ6Ll4pUnQum6VaAXR0L4IVIox5reWq1ntfzpVUqo7VCmrfTU+jS\nykJBFRQuWVV4j3aSD9ztYsdrkgNvIxVMYicKALvdkTLNUQvFr7bOW6IK8MvP+REP\n6kvmYZyBLUm27lH2ThHfWY+xr3Sh6ByJa+06xcUCgYAgntz/4mN2HVFblkuCeMcA\nhLVPsEvpu1S+dwbI59gB9eKmp8bCVTCS6uTfLXZzStKCXyhGYO0LPaCr1N2vZQ2U\nlzoNLXzMl3Oy0otP9hr4dGudvyC2K005fJ/2ixNQEfj5oKNoQSW5SkBhvcHOjNxs\nsq/LD4lkpu5vIlOQyywN1w==\n-----END PRIVATE KEY-----\n",
-    client_email: "firebase-adminsdk-fbsvc@future-tech-254c0.iam.gserviceaccount.com",
-    client_id: "107834567041766180705",
-    auth_uri: "https://accounts.google.com/o/oauth2/auth",
-    token_uri: "https://oauth2.googleapis.com/token",
-    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-    client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40future-tech-254c0.iam.gserviceaccount.com",
-    universe_domain: "googleapis.com"
-  }
-  
-
-  admin.initializeApp({
-    credential: admin.credential.cert(firebaseConfig),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-  });
-  console.log("✅ Firebase initialized successfully");
-} catch (error) {
-  console.error("❌ Firebase initialization error:", error.message);
-  process.exit(1);
-}
-
-const bucket = admin.storage().bucket();
-
-// Initialize Express
-const app = express();
-const port = process.env.PORT || 5000;
-
-// Middleware
-app.use(cors({
-  origin: ['https://my-website-backend-ixzh.onrender.com', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Configure Multer
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
-});
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
-
+// Load environment variables
+dotenv.config();
 // Models
 const HomeContent = require('./models/HomeContent');
 const User = require('./models/User');
+const Service1 = require('./models/Service1');
 const Service = require('./models/Service');
+const DefaultServicesContent = require('./models/DefaultServicesContent');
 const Footer = require("./models/Footer");
 const Post = require('./models/Post');
 const Scholarship = require("./models/Scholarship");
 const Header = require("./models/Header");
+const Logo = require('./models/Logo');
 const Message = require('./models/Message');
 const Vacancy = require('./models/Vacancy');
-const Logo = require('./models/Logo');
-const Service1 = require('./models/Service1');
-const DefaultServicesContent = require('./models/DefaultServicesContent');
+// Create upload directories
+const uploadDir = 'uploads';
+const imageDir = `${uploadDir}/images`;
+const videoDir = `${uploadDir}/videos`;
 
-// Firebase Upload Helper with enhanced error handling
-async function uploadToFirebase(file, folder = '') {
-  if (!file) return null;
-  
-  try {
-    const fileName = folder ? `${folder}/${Date.now()}-${file.originalname}` : `${Date.now()}-${file.originalname}`;
-    const fileUpload = bucket.file(fileName);
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir);
+if (!fs.existsSync(videoDir)) fs.mkdirSync(videoDir);
 
-    const stream = fileUpload.createWriteStream({
-      metadata: { contentType: file.mimetype }
-    });
+// MongoDB connection
+const MONGO_URI = process.env.MONGO_URI;
 
-    return new Promise((resolve, reject) => {
-      stream.on('error', (err) => {
-        console.error('Firebase upload error:', err);
-        reject(new Error('File upload failed'));
-      });
-      stream.on('finish', async () => {
-        try {
-          await fileUpload.makePublic();
-          resolve(`https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`);
-        } catch (err) {
-          console.error('Error making file public:', err);
-          reject(new Error('Failed to make file public'));
-        }
-      });
-      stream.end(file.buffer);
-    });
-  } catch (error) {
-    console.error('Error in uploadToFirebase:', error);
-    throw error;
-  }
+if (!MONGO_URI) {
+  console.error("❌ MongoDB URI is undefined. Check your .env file.");
+  process.exit(1);
 }
 
-// ==================== API ROUTES ====================
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch((err) => console.error("❌ Error connecting to MongoDB:", err));
 
-// Health Check
+// Initialize Express app
+const app = express();
+const port = process.env.PORT || 5000;
+
+// Middleware setup
+app.use(cors({
+  origin: 'https://my-website-backend-ixzh.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static('uploads'));
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
+// ==================== API ROUTES ====================
+// Simple test route - add this temporarily
+app.get('/api/test', (req, res) => {
+  res.json({ message: "API is working", timestamp: new Date() });
+});
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -120,127 +83,184 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Authentication Routes
-app.post('/signup', async (req, res) => {
+// Header endpoints
+app.get('/api/header', async (req, res) => {
   try {
-    const { name, email, password, passwordConfirm } = req.body;
-
-    if (!name || !email || !password || !passwordConfirm) {
-      return res.status(400).json({ message: 'All fields are required' });
+    const header = await Header.findOne();
+    if (!header) {
+      return res.status(404).json({ message: 'Header not found' });
     }
-
-    if (password !== passwordConfirm) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: 'Email already in use' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'user'
-    });
-
-    await newUser.save();
-    res.status(201).json({ 
-      success: true,
-      message: 'User created successfully',
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role
-      }
-    });
+    res.json(header);
   } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ message: 'Error creating user', error: error.message });
+    console.error('Error fetching header:', error);
+    res.status(500).json({ message: 'Failed to fetch header' });
   }
 });
+// Update these routes in your server.js
 
-app.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password');
-    
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (!(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    res.status(200).json({ 
-      success: true, 
-      message: 'Login successful', 
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error during login', error: error.message });
-  }
-});
-
-app.post('/admin/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password');
-    
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (!(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    if (user.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
-    }
-
-    res.status(200).json({ 
-      success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error during login', error: error.message });
-  }
-});
-
-// Content Management Routes
+// Get complete home content
 app.get('/api/home-content', async (req, res) => {
   try {
     const content = await HomeContent.findOne();
-    res.json(content || { message: 'Content not found' });
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    res.json(content);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch content', error: error.message });
+    console.error('Error fetching home content:', error);
+    res.status(500).json({ message: 'Failed to fetch content' });
   }
 });
 
+// Update header content
+app.put('/api/content/header', upload.single('image'), async (req, res) => {
+  try {
+    const { title } = req.body;
+    const image = req.file ? req.file.path : null;
+
+    const update = {
+      'header.title': title,
+      ...(image && { 'header.image': image })
+    };
+
+    const content = await HomeContent.findOneAndUpdate(
+      {},
+      update,
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      success: true,
+      data: content.header
+    });
+  } catch (error) {
+    console.error('Error updating header:', error);
+    res.status(500).json({ error: 'Failed to update header' });
+  }
+});
+app.put('/api/header', async (req, res) => {
+  const { headerText } = req.body;
+
+  if (!headerText) {
+    return res.status(400).json({ message: "Header text is required" });
+  }
+
+  try {
+    let header = await Header.findOne();
+    if (!header) {
+      header = new Header({ headerText });
+    } else {
+      header.headerText = headerText;
+    }
+    await header.save();
+    res.status(200).json({ message: "Header updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating header text", error: error.message });
+  }
+});
+app.get('/api/content/header', async (req, res) => {
+  try {
+    // Try to get header from database
+    const header = await Header.findOne();
+    
+    // If no header exists, create a default one
+    if (!header) {
+      return res.json({
+        title: "Welcome to Our Site",
+        image: "/uploads/default-logo.png"
+      });
+    }
+    
+    // Return the found header
+    res.json({
+      title: header.title,
+      image: header.logoUrl || "/uploads/default-logo.png"
+    });
+    
+  } catch (error) {
+    console.error('Header endpoint error:', error);
+    // Always return JSON, even in error cases
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
+  }
+});
+// Footer endpoints
+app.get('/api/content/footer', async (req, res) => {
+  try {
+    const footer = await Footer.findOne();
+    res.json({ footerText: footer ? footer.content : "© 2025 FutureTechTalent. All Rights Reserved." });
+  } catch (error) {
+    console.error('Error fetching footer:', error);
+    res.status(500).json({ message: 'Failed to fetch footer' });
+  }
+});
+
+app.put('/api/content/footer', async (req, res) => {
+  if (!req.body["footer-text"]) {
+    return res.status(400).json({ error: "Footer text is required" });
+  }
+
+  try {
+    let footer = await Footer.findOne();
+    if (!footer) {
+      footer = new Footer({ footerText: req.body["footer-text"] });
+    } else {
+      footer.footerText = req.body["footer-text"];
+    }
+    await footer.save();
+    res.status(200).json({ message: "Footer updated successfully" });
+  } catch (error) {
+    console.error("Error updating footer:", error);
+    res.status(500).json({ error: "Failed to update footer", details: error.message });
+  }
+});
+
+// Services endpoints
+app.get('/api/services', async (req, res) => {
+  try {
+    const services = await Service.find();
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ message: 'Failed to fetch services' });
+  }
+});
+
+app.post('/api/services', upload.fields([{ name: "service-image" }, { name: "service-video" }]), async (req, res) => {
+  try {
+    const { "service-title": title, "service-description": description } = req.body;
+    const imagePath = req.files["service-image"] ? `uploads/images/${req.files["service-image"][0].filename}` : "";
+    const videoPath = req.files["service-video"] ? `uploads/videos/${req.files["service-video"][0].filename}` : "";
+
+    const newService = new Service({ title, description, image: imagePath, video: videoPath });
+    await newService.save();
+    res.json({ message: "Service added successfully!", service: newService });
+  } catch (error) {
+    console.error("Error saving service:", error);
+    res.status(500).json({ message: "Error saving service", error: error.message });
+  }
+});
+
+// Content management
 app.post('/api/content', upload.single('image'), async (req, res) => {
   try {
     const { section, title, description, footerText } = req.body;
-    const imageUrl = req.file ? await uploadToFirebase(req.file, section) : null;
+    const imagePath = req.file ? req.file.path.replace(/\\/g, "/") : null;
 
     const updateData = {};
+
     if (section === "header") {
       updateData["header"] = {
         title: title || "Default Header Title",
         content: description || "",
-        image: imageUrl || ""
+        image: imagePath || "No image"
       };
     } else if (section === "footer") {
       updateData["footer"] = { footerText: footerText || "© 2025 FutureTechTalent. All Rights Reserved." };
     } else if (section === "services") {
-      updateData["$push"] = { services: { title, description, image: imageUrl || "" } };
+      updateData["$push"] = { services: { title, description, image: imagePath || "No image" } };
     } else {
       return res.status(400).json({ message: "Invalid section specified." });
     }
@@ -250,103 +270,19 @@ app.post('/api/content', upload.single('image'), async (req, res) => {
       updateData,
       { new: true, upsert: true }
     );
+
     res.status(200).json({ message: `${section} updated successfully!`, data: updatedContent });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update content', error: error.message });
+    console.error('Error updating content:', error);
+    res.status(500).json({ message: 'Failed to update content' });
   }
 });
 
-// Header/Footer Routes
-app.get('/api/header', async (req, res) => {
-  try {
-    const header = await Header.findOne();
-    res.json(header || { title: "Welcome to Our Site", image: "" });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch header', error: error.message });
-  }
-});
-
-app.put('/api/header', upload.single('image'), async (req, res) => {
-  try {
-    const { headerText } = req.body;
-    const imageUrl = req.file ? await uploadToFirebase(req.file, 'headers') : null;
-
-    const update = { headerText };
-    if (imageUrl) update.image = imageUrl;
-
-    const header = await Header.findOneAndUpdate(
-      {},
-      update,
-      { new: true, upsert: true }
-    );
-    res.json(header);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to update header', error: error.message });
-  }
-});
-
-app.get('/api/content/footer', async (req, res) => {
-  try {
-    const footer = await Footer.findOne();
-    res.json({ footerText: footer ? footer.content : "© 2025 FutureTechTalent. All Rights Reserved." });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch footer', error: error.message });
-  }
-});
-
-app.put('/api/content/footer', async (req, res) => {
-  try {
-    const footerText = req.body["footer-text"];
-    if (!footerText) return res.status(400).json({ error: "Footer text is required" });
-
-    const footer = await Footer.findOneAndUpdate(
-      {},
-      { footerText },
-      { new: true, upsert: true }
-    );
-    res.json(footer);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to update footer', error: error.message });
-  }
-});
-
-// Services Routes
-app.get('/api/services', async (req, res) => {
-  try {
-    const services = await Service.find();
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch services', error: error.message });
-  }
-});
-
-app.post('/api/services', upload.fields([{ name: "service-image" }, { name: "service-video" }]), async (req, res) => {
-  try {
-    const { "service-title": title, "service-description": description } = req.body;
-    
-    const [imageUrl, videoUrl] = await Promise.all([
-      req.files["service-image"] ? uploadToFirebase(req.files["service-image"][0], "services/images") : Promise.resolve(""),
-      req.files["service-video"] ? uploadToFirebase(req.files["service-video"][0], "services/videos") : Promise.resolve("")
-    ]);
-
-    const newService = new Service({ 
-      title, 
-      description, 
-      image: imageUrl || "", 
-      video: videoUrl || "" 
-    });
-    
-    await newService.save();
-    res.json({ message: "Service added successfully!", service: newService });
-  } catch (error) {
-    res.status(500).json({ message: "Error saving service", error: error.message });
-  }
-});
-
-// Blog Posts Routes
+// Blog endpoints
 app.get('/api/posts', async (req, res) => {
+  const searchQuery = req.query.search || '';
+  
   try {
-    const searchQuery = req.query.search || '';
     const posts = await Post.find({
       $or: [
         { title: { $regex: searchQuery, $options: 'i' } },
@@ -355,104 +291,82 @@ app.get('/api/posts', async (req, res) => {
     });
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching posts', error: error.message });
+    res.status(500).json({ message: 'Error fetching posts', error });
   }
 });
 
 app.post('/api/posts', upload.fields([{ name: 'image' }, { name: 'video' }]), async (req, res) => {
   try {
     const { title, content } = req.body;
-    
-    const [imageUrl, videoUrl] = await Promise.all([
-      req.files['image'] ? uploadToFirebase(req.files['image'][0], "posts/images") : Promise.resolve(null),
-      req.files['video'] ? uploadToFirebase(req.files['video'][0], "posts/videos") : Promise.resolve(null)
-    ]);
-
-    const newPost = new Post({ 
-      title, 
-      content, 
-      image: imageUrl || null, 
-      video: videoUrl || null 
-    });
-    
+    const image = req.files['image'] ? req.files['image'][0].filename : null;
+    const video = req.files['video'] ? req.files['video'][0].filename : null;
+    const newPost = new Post({ title, content, image, video });
     await newPost.save();
     res.status(201).json({ message: 'Post created successfully!', post: newPost });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating post', error: error.message });
+    res.status(500).json({ message: 'Error creating post', error });
   }
 });
 
-// Vacancies Routes
+// Vacancy endpoints
 app.get('/api/vacancies', async (req, res) => {
   try {
     const vacancies = await Vacancy.find();
     res.json(vacancies);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching vacancies', details: error.message });
+    res.status(500).json({ error: 'Error fetching vacancies' });
   }
 });
 
 app.post('/api/vacancies', upload.single('image'), async (req, res) => {
   try {
     const { title, description } = req.body;
-    const imageUrl = req.file ? await uploadToFirebase(req.file, 'vacancies') : null;
-
-    const newVacancy = new Vacancy({ 
-      title, 
-      description, 
-      imageUrl: imageUrl || null 
-    });
-
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const newVacancy = new Vacancy({ title, description, imageUrl });
     await newVacancy.save();
     res.status(201).json(newVacancy);
   } catch (error) {
-    res.status(500).json({ error: 'Error creating vacancy', details: error.message });
+    res.status(500).json({ error: 'Error creating vacancy' });
   }
 });
 
-// Scholarships Routes
+// Scholarship endpoints
 app.get('/api/scholarships', async (req, res) => {
   try {
     const scholarships = await Scholarship.find();
     res.json(scholarships);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
 app.post('/api/scholarships', upload.single('image'), async (req, res) => {
   try {
     const { title, description } = req.body;
-    const imageUrl = req.file ? await uploadToFirebase(req.file, 'scholarships') : null;
-
-    const newScholarship = new Scholarship({ 
-      title, 
-      description, 
-      image: imageUrl || null 
-    });
-
-    await newScholarship.save();
-    res.status(201).json(newScholarship);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const newScholarship = new Scholarship({ title, description, image });
+    const savedScholarship = await newScholarship.save();
+    res.status(201).json(savedScholarship);
+  } catch (err) {
+    console.error("Error creating scholarship:", err);
+    res.status(400).json({ message: err.message });
   }
 });
 
-// Scholar Header/Footer Routes
+// Scholar header/footer endpoints
 app.get("/api/scholar-header", async (req, res) => {
   try {
     const data = await ScholarHeader.findOne({});
     res.json(data || { header: "" });
   } catch (error) {
-    res.status(500).json({ error: "Error fetching scholar header", details: error.message });
+    res.status(500).json({ error: "Error fetching scholar header" });
   }
 });
 
 app.post("/api/scholar-header", async (req, res) => {
+  const { header } = req.body;
   try {
-    const { header } = req.body;
     let data = await ScholarHeader.findOne({});
-    
     if (data) {
       data.header = header || data.header;
       await data.save();
@@ -460,35 +374,79 @@ app.post("/api/scholar-header", async (req, res) => {
       data = new ScholarHeader({ header });
       await data.save();
     }
+    res.json({ message: "Scholar Header updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving scholar header" });
+  }
+});
+
+// Authentication endpoints
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+
+    res.status(200).json({ success: true, message: 'Login successful', user });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// server.js - updated login route
+app.post('/admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1) Check if email and password exist
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
+    // 2) Find user and explicitly select password field
+    const user = await User.findOne({ email }).select('+password');
     
-    res.json({ message: "Scholar Header updated successfully", data });
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // 3) Compare passwords properly
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // 4) Check admin role
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    // 5) Successful login
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
   } catch (error) {
-    res.status(500).json({ error: "Error saving scholar header", details: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: error.message 
+    });
   }
 });
 
-// Chatbot Messages Routes
-app.post('/api/messages', async (req, res) => {
-  try {
-    const { sender, content } = req.body;
-    const newMessage = new Message({ sender, content });
-    await newMessage.save();
-    res.status(201).json(newMessage);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to save message', error: error.message });
-  }
-});
-
-app.get('/api/messages', async (req, res) => {
-  try {
-    const messages = await Message.find().sort({ createdAt: -1 }).limit(50);
-    res.json(messages.reverse());
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
-  }
-});
-
-// Admin Dashboard Route
+// Admin dashboard
 app.get('/admin_dashboard.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
 });
@@ -497,37 +455,92 @@ app.get('/admin_dashboard.html', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+// ==================== SIGNUP ROUTE ===================
+app.post('/signup', async (req, res) => {
+  try {
+    // Destructure and trim
+    let { name, email, password, passwordConfirm } = req.body;
+    name = name?.trim();
+    email = email?.trim();
 
-// Error Handling Middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    error: 'Internal Server Error',
-    message: err.message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
+    // Validate presence
+    if (!name || !email || !password || !passwordConfirm) {
+      return res.status(400).json({ 
+        message: 'All fields are required',
+        details: {
+          name: !name,
+          email: !email,
+          password: !password,
+          passwordConfirm: !passwordConfirm
+        }
+      });
+    }
+
+    // ... rest of your signup logic
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ message: 'Server error during signup' });
+  }
+});
+// Admin user creation
+async function createAdminUser() {
+  const adminEmail = 'admin@example.com';
+  const adminPassword = 'admin123';
+  const adminName = 'Admin User';
+
+  try {
+    const existingAdmin = await User.findOne({ email: adminEmail, role: 'admin' });
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      const adminUser = new User({
+        name: adminName,
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin'
+      });
+      await adminUser.save();
+      console.log('Admin user created:', adminEmail);
+    }
+  } catch (error) {
+    console.error('Error creating admin user:', error);
+  }
+}
+
+createAdminUser();
+//==================chat bot=====================
+// Add to your server.js after other routes but before error handling
+
+// Chat endpoints
+app.post('/api/messages', async (req, res) => {
+  try {
+    const { sender, content } = req.body;
+    const newMessage = new Message({ sender, content });
+    await newMessage.save();
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Error saving message:', error);
+    res.status(500).json({ message: 'Failed to save message' });
+  }
 });
 
-// Start Server
-const server = app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.get('/api/messages', async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ createdAt: -1 }).limit(50);
+    res.json(messages.reverse()); // Return oldest first
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ message: 'Failed to fetch messages' });
+  }
 });
-
-// Handle process termination
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
-  });
-});
-
+//===================
+// Add early in your server.js, after requiring packages
 process.on('uncaughtException', err => {
   console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
   console.error(err.name, err.message);
   process.exit(1);
 });
 
+// Handle unhandled promise rejections
 process.on('unhandledRejection', err => {
   console.error('UNHANDLED REJECTION! 💥 Shutting down...');
   console.error(err.name, err.message);
@@ -535,24 +548,9 @@ process.on('unhandledRejection', err => {
     process.exit(1);
   });
 });
-
-// Create initial admin user
-async function createAdminUser() {
-  try {
-    const existingAdmin = await User.findOne({ email: 'admin@example.com' });
-    if (!existingAdmin) {
-      const adminUser = new User({
-        name: 'Admin',
-        email: 'admin@example.com',
-        password: await bcrypt.hash('admin123', 10),
-        role: 'admin'
-      });
-      await adminUser.save();
-      console.log('✅ Admin user created');
-    }
-  } catch (error) {
-    console.error('❌ Error creating admin user:', error.message);
-  }
-}
-
-createAdminUser();
+//====================
+// Start server
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
