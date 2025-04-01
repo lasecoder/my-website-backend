@@ -211,7 +211,53 @@ app.use((err, req, res, next) => {
     message: err.message
   });
 });
+// Make sure you have this exact route in server.js
+app.post('/admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
+    // 1) Check if email and password exist
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
+    // 2) Find user and explicitly select password field
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // 3) Compare passwords properly
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // 4) Check admin role
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    // 5) Successful login - return JSON
+    res.status(200).json({
+      success: true,
+      token: 'your-jwt-token-here', // Add JWT if using
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: error.message 
+    });
+  }
+});
 // Start server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);

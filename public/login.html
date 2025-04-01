@@ -37,84 +37,58 @@
         const backendUrl = "https://my-website-backend-ixzh.onrender.com";
         
         document.getElementById('login-form').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
-            // Get form elements
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const isAdmin = document.getElementById('isAdmin').checked;
-            const loginBtn = document.getElementById('login-btn');
-            const spinner = document.getElementById('login-spinner');
-            const errorElement = document.getElementById('error-message');
-            
-            // Clear previous errors
-            errorElement.style.display = 'none';
-            errorElement.textContent = '';
-            
-            // Validate inputs
-            if (!email || !password) {
-                showError('Please fill in all fields');
-                return;
-            }
-            
-            // Show loading state
-            loginBtn.disabled = true;
-            spinner.style.display = 'inline-block';
-            
-            try {
-                const loginUrl = isAdmin ? `${backendUrl}/admin/login` : `${backendUrl}/login`;
-                
-                const response = await fetch(loginUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                // Handle non-JSON responses
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const text = await response.text();
-                    throw new Error(text || 'Invalid server response');
-                }
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.message || `Login failed (status ${response.status})`);
-                }
-                
-                // Successful login
-                localStorage.setItem('authToken', data.token || '');
-                localStorage.setItem('user', JSON.stringify(data.user || {}));
-                
-                // Redirect based on user type
-                if (isAdmin) {
-                    window.location.href = '/admin_dashboard.html';
-                } else {
-                    window.location.href = '/dashboard.html';
-                }
-                
-            } catch (error) {
-                console.error('Login error:', error);
-                
-                // Handle specific error cases
-                let errorMessage = error.message;
-                if (error.message.includes('Failed to fetch')) {
-                    errorMessage = 'Network error - please check your connection';
-                } else if (error.message.includes('Unexpected token')) {
-                    errorMessage = 'Server error - please try again later';
-                }
-                
-                showError(errorMessage);
-                
-            } finally {
-                // Reset loading state
-                loginBtn.disabled = false;
-                spinner.style.display = 'none';
-            }
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const isAdmin = document.getElementById('isAdmin').checked;
+
+    // Show loading state
+    const loginBtn = document.getElementById('login-btn');
+    loginBtn.disabled = true;
+    
+    try {
+        const endpoint = isAdmin ? '/admin/login' : '/login';
+        const response = await fetch(`${backendUrl}${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
         });
+
+        // First check if response is HTML
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+            const text = await response.text();
+            throw new Error(`Server returned HTML (${response.status}): ${text.substring(0, 50)}...`);
+        }
+
+        // Then parse as JSON
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || `Login failed (${response.status})`);
+        }
+
+        // Successful login
+        localStorage.setItem('authToken', data.token || '');
+        localStorage.setItem('user', JSON.stringify(data.user || {}));
+        
+        // Redirect
+        window.location.href = isAdmin ? '/admin_dashboard.html' : '/dashboard.html';
+
+    } catch (error) {
+        console.error('Login error:', error);
+        // Show user-friendly error
+        const errorMsg = error.message.includes('<!DOCTYPE') 
+            ? 'Server configuration error - contact support' 
+            : error.message;
+        document.getElementById('error-message').textContent = errorMsg;
+    } finally {
+        loginBtn.disabled = false;
+    }
+});
         
         function showError(message) {
             const errorElement = document.getElementById('error-message');
