@@ -213,36 +213,57 @@ app.use((err, req, res, next) => {
 });
 // Make sure you have this exact route in server.js
 app.post('/admin/login', async (req, res) => {
+  console.log('🔹 Admin login attempt received'); // Log receipt of request
+  
   try {
     const { email, password } = req.body;
+    console.log('🔹 Login attempt for:', email);
 
-    // 1) Check if email and password exist
+    // 1) Input validation
     if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
+      console.log('❌ Missing credentials');
+      return res.status(400).json({ 
+        success: false,
+        message: 'Please provide both email and password' 
+      });
     }
 
-    // 2) Find user and explicitly select password field
+    // 2) Find user
     const user = await User.findOne({ email }).select('+password');
+    console.log(user ? '🔹 User found' : '❌ User not found');
     
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid credentials' // Generic message for security
+      });
     }
 
-    // 3) Compare passwords properly
+    // 3) Verify password
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log(isMatch ? '🔹 Password matches' : '❌ Password mismatch');
+    
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid credentials' 
+      });
     }
 
-    // 4) Check admin role
+    // 4) Verify admin role
+    console.log('🔹 User role:', user.role);
     if (user.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
+      return res.status(403).json({ 
+        success: false,
+        message: 'Admin privileges required' 
+      });
     }
 
-    // 5) Successful login - return JSON
+    // 5) Successful login
+    console.log('✅ Successful admin login');
     res.status(200).json({
       success: true,
-      token: 'your-jwt-token-here', // Add JWT if using
+      token: 'your-generated-jwt-here', // Implement JWT if needed
       user: {
         id: user._id,
         name: user.name,
@@ -252,9 +273,11 @@ app.post('/admin/login', async (req, res) => {
     });
 
   } catch (error) {
+    console.error('❌ Server error:', error);
     res.status(500).json({ 
-      message: 'Server error during login',
-      error: error.message 
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
