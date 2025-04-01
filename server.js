@@ -11,17 +11,19 @@ const fs = require('fs');
 // Initialize Firebase with proper error handling
 try {
   const firebaseConfig = {
-    type: process.env.FIREBASE_TYPE,
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.FIREBASE_TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
-  };
+    type: "service_account",
+    project_id: "future-tech-254c0",
+    private_key_id: "9df3b405a281639bc122a696720964eb25a6deda",
+    private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCkEB0w/yX18QOb\nQMiUzj28LKYF1ihCXigaG8s2uLVlzJWMKFa9BLUVb3vGolNHTMK/bGe4I4S/vo78\npfHQFOtSfCk3dgqckSgoG0BMawexTz7/fwJfBlnqapOHrS8ragfcJEfmxUvghw+9\nKcZ3YZtjd4FPGt/gcEn5pjSPPIKPYUOvcWYS3nnqI+WHPPx3Gf4ZQXuC9EMO0+0v\nojEsYs90EJBe7w13tD2eVe+k0M/W/6XL7rldSNhnmwRptMfsvO7ZSDZQVxzpxlAv\nCcZdaNRnY0+lWK7spEmST+nGB8861+YhANgI36WgKxICzC25t/5o+5vz6PG2Zhcq\ncg8Hgiw1AgMBAAECggEAI7aGRDYmU0UlndQaVZoXgjDN6xNVLC1G2XgXYlAO3JwO\nKbZWO0sdCA9+iBypuCmTcwvr//9rVDns8j5FRyBmoUv5xOLjKHXIogJcmsXppMU1\nV3SUVY8SX57Xgn9Gd1LbZyZWqHtmKvf7ixfe5fnPU3WeJlQZS8flsnxlkJCBcyhF\n0ry+bpii/xAVKNg+b42TjzYmSJbJ+sTAzrivMvzTsJB7xt7D6AOP3T6c1lpZ8yMQ\naZdPzxIJ2A9AxEnw+i8cOsNCvRGkpvZnP1FykkvdhxXKNNa2F6UnkZQPZ8kMuMkc\nbnOx1kMx835D1mX4Y/G+pCHb5WG5krcUnfa77fBNwQKBgQDPez6hFVoFlqOPPLt0\nrGm4QUz38Qrm0f3ySBoWxww+QWUyuMyZYtExQbdcup1ogUVeIs6XDldFf39QAl45\naokicy0MDReNFgO/LaCtYuUH1JRLfmD+yUXYHQrleYo4c+zoW/xFUD1dFIMo+4DJ\nik7lLxTGE1FF5KRiNClxFQbJiQKBgQDKbaWz4gHAhmjA8CWYKTirQNRdsXmgQZiU\nqiJAA5MZxLyWL8LdnmOkhNfQ81TPtfcVuf+g/dYHua7x0aFT5hTRf1h5LYc8+7jW\nK2y5cfu1jR1N0neU5EC0c1/F0WGfNsnhGgmzPOd5fIrjPQZKM+TxWuk9UxY8hJ5L\nwEgUny2eTQKBgF1445VEfkLoQ5VjQfxlNFerK5bEBCpKzoJZU0+RqwVdBs9cC+jK\naP4s4gOnmwSawHqRacsJze1kbCHKf1KUmWVoyBGW0FZiZZu6XZnfZNkrPwfnzqDa\nYlnjc6ZAJDIcn81qq3M6m/qUJCbRb4rcgYCkvlIiH8pCIICRiV4FoAIpAoGAF0Lw\nVrJy9xe68+jkuQ6Ll4pUnQum6VaAXR0L4IVIox5reWq1ntfzpVUqo7VCmrfTU+jS\nykJBFRQuWVV4j3aSD9ztYsdrkgNvIxVMYicKALvdkTLNUQvFr7bOW6IK8MvP+REP\n6kvmYZyBLUm27lH2ThHfWY+xr3Sh6ByJa+06xcUCgYAgntz/4mN2HVFblkuCeMcA\nhLVPsEvpu1S+dwbI59gB9eKmp8bCVTCS6uTfLXZzStKCXyhGYO0LPaCr1N2vZQ2U\nlzoNLXzMl3Oy0otP9hr4dGudvyC2K005fJ/2ixNQEfj5oKNoQSW5SkBhvcHOjNxs\nsq/LD4lkpu5vIlOQyywN1w==\n-----END PRIVATE KEY-----\n",
+    client_email: "firebase-adminsdk-fbsvc@future-tech-254c0.iam.gserviceaccount.com",
+    client_id: "107834567041766180705",
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://oauth2.googleapis.com/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40future-tech-254c0.iam.gserviceaccount.com",
+    universe_domain: "googleapis.com"
+  }
+  
 
   admin.initializeApp({
     credential: admin.credential.cert(firebaseConfig),
