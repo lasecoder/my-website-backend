@@ -55,7 +55,7 @@
   <div class="sidebar">
     <!-- ... your existing sidebar code ... -->
   </div>
-
+  <button id="logout-btn" class="logout-btn">Logout</button>
   <!-- Main Content Area -->
   <div class="main-content">
     <!-- Home Header Section -->
@@ -165,29 +165,33 @@
     
     // Load current content from server
     async function loadCurrentContent() {
-      try {
-        // Load header
-        const headerResponse = await fetch(`${backendUrl}/api/content/header`);
-        if (headerResponse.ok) {
-          const headerData = await headerResponse.json();
-          document.getElementById('home-header-title').value = headerData.title || '';
-          if (headerData.image && headerData.image !== "/uploads/default-logo.png") {
-            document.getElementById('header-image-preview').src = headerData.image;
-            document.getElementById('header-image-preview').style.display = 'block';
-          }
-        }
-        
-        // Load footer
-        const footerResponse = await fetch(`${backendUrl}/api/content/footer`);
-        if (footerResponse.ok) {
-          const footerData = await footerResponse.json();
-          document.getElementById('home-footer-text').value = footerData.footerText || '';
-        }
-        
-      } catch (error) {
-        console.error("Error loading current content:", error);
-      }
+  try {
+    // Load header
+    const headerResponse = await fetch(`${backendUrl}/api/header`);
+    
+    // Check for HTML error response first
+    const contentType = headerResponse.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await headerResponse.text();
+      throw new Error(`Server returned ${headerResponse.status}: ${text.substring(0, 100)}`);
     }
+
+    const headerData = await headerResponse.json();
+    if (headerData.error) throw new Error(headerData.error);
+    
+    document.getElementById('home-header-title').value = headerData.title || '';
+    if (headerData.image) {
+      document.getElementById('header-image-preview').src = headerData.image;
+      document.getElementById('header-image-preview').style.display = 'block';
+    }
+
+    // Similar updates for footer...
+    
+  } catch (error) {
+    console.error("Error loading content:", error);
+    showStatus('global-error', `Failed to load content: ${error.message}`, false);
+  }
+}
     
     // Improved update function with loading states
     async function updateContent(section, formData, buttonId, spinnerId, statusId) {

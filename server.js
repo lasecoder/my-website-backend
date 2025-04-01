@@ -381,6 +381,32 @@ app.get('*', (req, res) => {
 app.get('/admin_dashboard.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
 });
+// Header routes
+app.get('/api/header', async (req, res) => {
+  try {
+    const header = await Header.findOne();
+    res.json(header || { title: '', image: '' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch header' });
+  }
+});
+
+app.put('/api/header', upload.single('image'), async (req, res) => {
+  try {
+    const { title } = req.body;
+    const imageUrl = req.file;
+    
+    const updatedHeader = await Header.findOneAndUpdate(
+      {}, 
+      { title, image: imageUrl },
+      { new: true, upsert: true }
+    );
+    
+    res.json(updatedHeader);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update header' });
+  }
+});
 //================//
 // Start server
 app.listen(port, "0.0.0.0", () => {
