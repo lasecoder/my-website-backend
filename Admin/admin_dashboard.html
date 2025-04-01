@@ -16,7 +16,13 @@
       display: flex;
       min-height: 100vh;
     }
-    
+    #global-error {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  max-width: 400px;
+  z-index: 1000;
+}
     /* Sidebar Styles */
     .sidebar {
       width: 250px;
@@ -220,7 +226,7 @@
 </head>
 <body>
   <!-- Sidebar Navigation -->
-  
+  <div id="global-error" class="status-message" style="display: none;"></div>
   <button id="logout-btn" class="logout-btn">Logout</button>
   
   <!-- Main Content Area -->
@@ -287,232 +293,168 @@
   </div>
 
   <script>// Utility Functions
-    function showStatus(elementId, message, isSuccess) {
-      const element = document.getElementById(elementId);
-      if (!element) {
-        console.error(`Element with ID ${elementId} not found`);
-        return;
+    // Configuration
+const backendUrl = "https://my-website-backend-ixzh.onrender.com";
+const apiEndpoints = {
+  header: '/api/header',
+  services: '/api/services/1',
+  footer: '/api/footer',
+  content: '/api/content'
+};
+
+// Utility Functions
+function showStatus(elementId, message, isSuccess) {
+  try {
+    const element = document.getElementById(elementId);
+    if (!element) {
+      console.error(`Status element not found: ${elementId}`);
+      return false;
+    }
+    
+    element.textContent = message;
+    element.className = `status-message ${isSuccess ? 'success' : 'error'}`;
+    element.style.display = 'block';
+    
+    setTimeout(() => {
+      element.style.display = 'none';
+    }, 5000);
+    return true;
+  } catch (error) {
+    console.error('Error showing status:', error);
+    return false;
+  }
+}
+
+function setupImagePreview(inputId, previewId) {
+  try {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    
+    if (!input || !preview) {
+      console.error(`Image preview elements not found: ${inputId}, ${previewId}`);
+      return;
+    }
+    
+    input.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(this.files[0]);
       }
-      
-      element.textContent = message;
-      element.className = `status-message ${isSuccess ? 'success' : 'error'}`;
-      element.style.display = 'block';
-      
-      setTimeout(() => {
-        element.style.display = 'none';
-      }, 5000);
-    }
-    
-    function setupImagePreview(inputId, previewId) {
-      const input = document.getElementById(inputId);
-      const preview = document.getElementById(previewId);
-      
-      if (!input || !preview) {
-        console.error(`Could not find elements for image preview: ${inputId} or ${previewId}`);
-        return;
+    });
+  } catch (error) {
+    console.error('Error setting up image preview:', error);
+  }
+}
+
+// Enhanced API Fetch with 500 Error Handling
+async function apiFetch(endpoint, options = {}) {
+  try {
+    const response = await fetch(`${backendUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        ...options.headers
       }
-      
-      input.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-          const reader = new FileReader();
-          
-          reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-          }
-          
-          reader.readAsDataURL(this.files[0]);
-        }
-      });
+    });
+
+    // Handle server errors (500)
+    if (response.status >= 500) {
+      const errorText = await response.text();
+      console.error('Server Error Details:', errorText);
+      throw new Error('Server is currently unavailable. Please try again later.');
     }
-    
-    function toggleLoading(isLoading, buttonId, spinnerId, statusId) {
-      const button = document.getElementById(buttonId);
-      const spinner = document.getElementById(spinnerId);
-      const status = document.getElementById(statusId);
-      
-      if (button) button.disabled = isLoading;
-      if (spinner) spinner.style.display = isLoading ? 'inline-block' : 'none';
-      if (status && !isLoading) status.style.display = 'none';
-    }
-    
-    // API Functions
-    async function apiFetch(endpoint, options = {}) {
+
+    // Handle client errors (400-499)
+    if (!response.ok) {
       try {
-        const response = await fetch(`${backendUrl}${endpoint}`, {
-          ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            ...options.headers
-          }
-        });
-    
-        if (response.status === 401) {
-          localStorage.removeItem('authToken');
-          window.location.href = '/admin-login.html';
-          throw new Error('Session expired. Please login again.');
-        }
-    
-        const contentType = response.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-          const text = await response.text();
-          throw new Error(`Server returned ${response.status}: ${text.substring(0, 100)}`);
-        }
-    
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.message || `Request failed with status ${response.status}`);
-        }
-    
-        return data;
-      } catch (error) {
-        console.error(`API request to ${endpoint} failed:`, error);
-        throw error;
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Request failed with status ${response.status}`);
+      } catch (parseError) {
+        throw new Error(`Request failed with status ${response.status}`);
       }
     }
-    
-    // Content Management Functions
-    async function loadCurrentContent() {
-      try {
-        // Load header
-        const headerData = await apiFetch('/api/header');
+
+    return await response.json();
+  } catch (error) {
+    console.error(`API request to ${endpoint} failed:`, error);
+    throw error;
+  }
+}
+
+// Content Management
+async function loadCurrentContent() {
+  try {
+    // Try loading header
+    try {
+      const headerData = await apiFetch(apiEndpoints.header);
+      if (headerData) {
         document.getElementById('home-header-title').value = headerData.title || '';
         if (headerData.image) {
           document.getElementById('header-image-preview').src = headerData.image;
           document.getElementById('header-image-preview').style.display = 'block';
         }
-    
-        // Load service
-        const serviceData = await apiFetch('/api/services/1');
+      }
+    } catch (headerError) {
+      console.error('Failed to load header:', headerError);
+      showStatus('header-status', `Header: ${headerError.message}`, false);
+    }
+
+    // Try loading service
+    try {
+      const serviceData = await apiFetch(apiEndpoints.services);
+      if (serviceData) {
         document.getElementById('service1-title').value = serviceData.title || '';
         document.getElementById('service1-description').value = serviceData.description || '';
         if (serviceData.image) {
           document.getElementById('service-image-preview').src = serviceData.image;
           document.getElementById('service-image-preview').style.display = 'block';
         }
-    
-        // Load footer
-        const footerData = await apiFetch('/api/footer');
+      }
+    } catch (serviceError) {
+      console.error('Failed to load service:', serviceError);
+      showStatus('service-status', `Service: ${serviceError.message}`, false);
+    }
+
+    // Try loading footer
+    try {
+      const footerData = await apiFetch(apiEndpoints.footer);
+      if (footerData) {
         document.getElementById('home-footer-text').value = footerData.text || '';
-        
-      } catch (error) {
-        console.error("Error loading content:", error);
-        showStatus('global-error', `Failed to load content: ${error.message}`, false);
       }
+    } catch (footerError) {
+      console.error('Failed to load footer:', footerError);
+      showStatus('footer-status', `Footer: ${footerError.message}`, false);
     }
-    
-    async function updateContent(section, formData, buttonId, spinnerId, statusId) {
-      try {
-        toggleLoading(true, buttonId, spinnerId, statusId);
-        
-        const response = await fetch(`${backendUrl}/api/content`, {
-          method: "POST",
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          },
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Update failed');
-        }
-        
-        const data = await response.json();
-        showStatus(statusId, `${section} updated successfully!`, true);
-        
-        if (formData.get('image')) {
-          document.querySelector(`#${section === 'header' ? 'home-header-image' : 'service1-image'}`).value = '';
-        }
-        
-      } catch (error) {
-        console.error(`❌ Error updating ${section}:`, error);
-        showStatus(statusId, error.message, false);
-      } finally {
-        toggleLoading(false, buttonId, spinnerId, statusId);
-      }
-    }
-    
-    // Event Listeners
-    function setupEventListeners() {
-      document.getElementById("update-header-btn")?.addEventListener("click", async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append("section", "header");
-        formData.append("title", document.getElementById("home-header-title").value);
-        
-        const imageFile = document.getElementById("home-header-image").files[0];
-        if (imageFile) formData.append("image", imageFile);
-        
-        await updateContent(
-          "header", 
-          formData, 
-          "update-header-btn", 
-          "header-spinner", 
-          "header-status"
-        );
-      });
-      
-      document.getElementById("update-service1-btn")?.addEventListener("click", async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append("section", "services");
-        formData.append("serviceId", "1");
-        formData.append("title", document.getElementById("service1-title").value);
-        formData.append("description", document.getElementById("service1-description").value);
-        
-        const imageFile = document.getElementById("service1-image").files[0];
-        if (imageFile) formData.append("image", imageFile);
-        
-        await updateContent(
-          "service", 
-          formData, 
-          "update-service1-btn", 
-          "service-spinner", 
-          "service-status"
-        );
-      });
-      
-      document.getElementById("update-footer-btn")?.addEventListener("click", async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append("section", "footer");
-        formData.append("footerText", document.getElementById("home-footer-text").value);
-        
-        await updateContent(
-          "footer", 
-          formData, 
-          "update-footer-btn", 
-          "footer-spinner", 
-          "footer-status"
-        );
-      });
-      
-      document.getElementById("logout-btn")?.addEventListener("click", () => {
-        localStorage.removeItem('authToken');
-        window.location.href = '/admin-login.html';
-      });
-    }
-    
-    // Initialization
-    const backendUrl = "https://my-website-backend-ixzh.onrender.com";
-    
-    document.addEventListener("DOMContentLoaded", function() {
-      if (!localStorage.getItem('authToken')) {
-        window.location.href = '/admin-login.html';
-        return;
-      }
-      
-      setupImagePreview('home-header-image', 'header-image-preview');
-      setupImagePreview('service1-image', 'service-image-preview');
-      
-      loadCurrentContent();
-      setupEventListeners();
-    });</script>
+
+  } catch (error) {
+    console.error("Error loading content:", error);
+    showStatus('global-error', `Failed to load content: ${error.message}`, false);
+  }
+}
+
+// Initialization
+document.addEventListener("DOMContentLoaded", function() {
+  // Check authentication
+  if (!localStorage.getItem('authToken')) {
+    window.location.href = '/admin-login.html';
+    return;
+  }
+
+  // Setup image previews
+  setupImagePreview('home-header-image', 'header-image-preview');
+  setupImagePreview('service1-image', 'service-image-preview');
+
+  // Load content
+  loadCurrentContent();
+
+  // Setup event listeners (from previous solution)
+  setupEventListeners();
+});
+</script>
 </body>
 </html>
