@@ -369,6 +369,18 @@ function authenticateAdmin(req, res, next) {
     return res.status(401).json({ message: 'Invalid token' });
   }
 }
+
+// Add this static files route BEFORE your catch-all route
+app.use(express.static(path.join(__dirname, 'Admin'))); // Serves files from /Admin directory
+
+// Make sure this comes AFTER other static file declarations
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+// ===============
+app.get('/admin_dashboard.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
+});
 //================//
 // Start server
 app.listen(port, "0.0.0.0", () => {

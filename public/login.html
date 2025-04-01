@@ -74,10 +74,10 @@
       throw new Error(data.message || 'Login failed');
     }
 
-    // Successful login
+    // Successful login - UPDATED REDIRECT PATHS
     localStorage.setItem('authToken', data.token || '');
     localStorage.setItem('user', JSON.stringify(data.user));
-    window.location.href = isAdmin ? './Admin/admin_dashboard.html' : './Admin/dashboard.html';
+    window.location.href = isAdmin ? '/admin_dashboard.html' : '/dashboard.html';
 
   } catch (error) {
     console.error('❌ Login error:', error);
