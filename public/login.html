@@ -7,10 +7,11 @@
     <link rel="stylesheet" href="./css/login-styles.css">
 </head>
 <body>
-
     <div class="container">
         <form id="login-form" class="login-form">
             <h2>Login</h2>
+            
+            <div id="error-message" class="error-message"></div>
             
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" placeholder="Enter your email" required>
@@ -18,31 +19,51 @@
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" placeholder="Enter your password" required>
 
-            <label for="isAdmin">
-                <input type="checkbox" id="isAdmin" name="isAdmin"> Login as Admin
-            </label>
+            <div class="checkbox-container">
+                <input type="checkbox" id="isAdmin" name="isAdmin">
+                <label for="isAdmin" style="display: inline; font-weight: normal;">Login as Admin</label>
+            </div>
 
-            <button type="submit" class="btn">Login</button>
+            <button type="submit" class="btn" id="login-btn">
+                Login
+                <span id="login-spinner" class="spinner" style="display: none;"></span>
+            </button>
             
-            <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+            <p style="text-align: center; margin-top: 1rem;">Don't have an account? <a href="signup.html">Sign Up</a></p>
         </form>
     </div>
 
     <script>
-        const backendUrl = "https://my-website-backend-ixzh.onrender.com"; // Use your Render backend URL
-    
+        const backendUrl = "https://my-website-backend-ixzh.onrender.com";
+        
         document.getElementById('login-form').addEventListener('submit', async function(event) {
             event.preventDefault();
-    
+            
+            // Get form elements
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             const isAdmin = document.getElementById('isAdmin').checked;
-    
-            const loginUrl = isAdmin ? `${backendUrl}/admin/login` : `${backendUrl}/login`;
-    
-            console.log('🔹 Sending:', { email, password, isAdmin });
-    
+            const loginBtn = document.getElementById('login-btn');
+            const spinner = document.getElementById('login-spinner');
+            const errorElement = document.getElementById('error-message');
+            
+            // Clear previous errors
+            errorElement.style.display = 'none';
+            errorElement.textContent = '';
+            
+            // Validate inputs
+            if (!email || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            // Show loading state
+            loginBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+            
             try {
+                const loginUrl = isAdmin ? `${backendUrl}/admin/login` : `${backendUrl}/login`;
+                
                 const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: {
@@ -50,27 +71,60 @@
                     },
                     body: JSON.stringify({ email, password })
                 });
-    
+                
+                // Handle non-JSON responses
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(text || 'Invalid server response');
+                }
+                
                 const data = await response.json();
-                console.log('🔹 Received:', data);
-    
+                
                 if (!response.ok) {
-                    throw new Error(data.message || `HTTP error! Status: ${response.status}`);
+                    throw new Error(data.message || `Login failed (status ${response.status})`);
                 }
-    
-                alert(data.message);
-                if (data.success) {
-                   localStorage.setItem('user', JSON.stringify(data.user));
-                  if (isAdmin) {
-                     window.location.href = '/admin_dashboard.html'; // Redirect to admin dashboard
-                  } else {
-                  window.location.href = '/dashboard.html'; // Redirect to user dashboard
-                     }
+                
+                // Successful login
+                localStorage.setItem('authToken', data.token || '');
+                localStorage.setItem('user', JSON.stringify(data.user || {}));
+                
+                // Redirect based on user type
+                if (isAdmin) {
+                    window.location.href = '/admin_dashboard.html';
+                } else {
+                    window.location.href = '/dashboard.html';
                 }
+                
             } catch (error) {
-                console.error('❌ Error:', error.message);
-                alert('Login failed: ' + error.message);
+                console.error('Login error:', error);
+                
+                // Handle specific error cases
+                let errorMessage = error.message;
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Network error - please check your connection';
+                } else if (error.message.includes('Unexpected token')) {
+                    errorMessage = 'Server error - please try again later';
+                }
+                
+                showError(errorMessage);
+                
+            } finally {
+                // Reset loading state
+                loginBtn.disabled = false;
+                spinner.style.display = 'none';
             }
+        });
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Auto-focus email field on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('email').focus();
         });
     </script>
 </body>
