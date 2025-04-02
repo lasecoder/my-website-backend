@@ -202,21 +202,41 @@ async function loadCurrentContent() {
     showStatus('service-status', error.message, false);
   }
 }
-async function updateContent(section, formData) {
+// Enhanced updateContent function for Cloudinary
+async function updateContent(section, formData, buttonId, spinnerId, statusId) {
   try {
-    const buttonId = `update-${section}-btn`;
-    const spinnerId = `${section}-spinner`;
-    const statusId = `${section}-status`;
-    
     toggleLoading(true, buttonId, spinnerId, statusId);
     
-    const response = await apiFetch(apiEndpoints[section], {
-      method: 'POST',
-      body: JSON.stringify(formData)
+    const endpoint = apiEndpoints[section];
+    const method = 'PUT';
+    const formDataObj = new FormData();
+
+    // Add text fields
+    for (const key in formData.textFields) {
+      formDataObj.append(key, formData.textFields[key]);
+    }
+
+    // Add file if exists
+    if (formData.file) {
+      formDataObj.append('media', formData.file);
+    }
+
+    const response = await fetch(endpoint, {
+      method,
+      body: formDataObj,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
     });
 
-    showStatus(statusId, response.message, true);
-    return response;
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || `Failed to update ${section}`);
+    }
+
+    showStatus(statusId, data.message, true);
+    return data;
   } catch (error) {
     showStatus(statusId, error.message, false);
     throw error;
@@ -224,6 +244,25 @@ async function updateContent(section, formData) {
     toggleLoading(false, buttonId, spinnerId, statusId);
   }
 }
+
+// Updated event listener for service update
+document.getElementById('update-service1-btn').addEventListener('click', async () => {
+  const formData = {
+    textFields: {
+      title: document.getElementById('service1-title').value,
+      description: document.getElementById('service1-description').value
+    },
+    file: document.getElementById('service1-image').files[0]
+  };
+  
+  await updateContent(
+    'services',
+    formData,
+    'update-service1-btn',
+    'service-spinner',
+    'service-status'
+  );
+});
 
     // Event Listeners Setup
     function setupEventListeners() {

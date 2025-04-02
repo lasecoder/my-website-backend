@@ -12,30 +12,74 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 // Load environment variables
 dotenv.config();
 
-// Configure Cloudinary
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
+
+// Enhanced Cloudinary Configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true // Ensure HTTPS
 });
 
-// Cloudinary storage for Multer
+// Optimized Cloudinary Storage Configuration
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: (req, file) => {
+    const resourceType = file.mimetype.startsWith('video') ? 'video' : 'image';
+    const publicId = `${req.params.section || 'general'}_${Date.now()}`;
+    
     return {
       folder: 'future_tech_talent',
-      resource_type: file.mimetype.startsWith('video') ? 'video' : 'image',
+      public_id: publicId,
+      resource_type: resourceType,
       allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'webp'],
-      transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
+      transformation: [
+        { width: 1000, height: 1000, crop: 'limit' },
+        { quality: 'auto:best' }
+      ],
+      overwrite: false,
+      tags: ['admin_dashboard', req.params.section]
     };
-  },
+  }
 });
 
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+// Configure Multer with better error handling
+const upload = multer({
+  storage: storage,
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 1 
+  },
+  fileFilter: (req, file, cb) => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4'];
+    if (validTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'), false);
+    }
+  }
 });
+
+// Error handling middleware for uploads
+const handleUploadErrors = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      message: err.code === 'LIMIT_FILE_SIZE' 
+        ? 'File too large (max 10MB)' 
+        : 'File upload error'
+    });
+  } else if (err) {
+    return res.status(400).json({ 
+      success: false, 
+      message: err.message 
+    });
+  }
+  next();
+};
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
@@ -225,59 +269,89 @@ app.get('/api/header', authenticateAdmin, async (req, res) => {
   }
 });
 
-app.put('/api/header', authenticateAdmin, upload.single('image'), async (req, res) => {
-  try {
-    const { title } = req.body;
-    let imageUrl;
-    
-    if (req.file) {
-      imageUrl = (await cloudinary.uploader.upload(req.file.path)).secure_url;
+// Upload service image/update service
+app.put('/api/services/:id', 
+  upload.single('media'),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { title, description } = req.body;
+      
+      const updateData = { title, description };
+      if (req.file) {
+        updateData.media = {
+          url: req.file.path,
+          public_id: req.file.filename,
+          resource_type: req.file.resource_type
+        };
+      }
+
+      const service = await Service.findOneAndUpdate(
+        { serviceId: parseInt(id) },
+        updateData,
+        { new: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Service updated successfully',
+        data: service
+      });
+    } catch (error) {
+      // Delete uploaded file if error occurs
+      if (req.file) {
+        await cloudinary.uploader.destroy(req.file.filename, {
+          resource_type: req.file.resource_type
+        });
+      }
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
     }
-
-    const header = await Header.findOneAndUpdate(
-      {},
-      { title, ...(imageUrl && { image: imageUrl }) },
-      { new: true, upsert: true }
-    );
-
-    res.json({
-      success: true,
-      data: header
-    });
-  } catch (error) {
-    console.error('Header update error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Failed to update header',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
   }
-});
+);
 
-app.put('/api/header', authenticateAdmin, upload.single('image'), async (req, res) => {
-  try {
-    const { title } = req.body;
-    let update = { title };
-    
-    if (req.file) {
-      update.image = await handleCloudinaryUpload(req.file, 'headers');
+// Upload header image
+app.put('/api/header', 
+  upload.single('image'),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const updateData = {
+        title: req.body.title
+      };
+
+      if (req.file) {
+        updateData.image = {
+          url: req.file.path,
+          public_id: req.file.filename
+        };
+      }
+
+      const header = await Header.findOneAndUpdate(
+        {},
+        updateData,
+        { upsert: true, new: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Header updated successfully',
+        data: header
+      });
+    } catch (error) {
+      if (req.file) {
+        await cloudinary.uploader.destroy(req.file.filename);
+      }
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
     }
-
-    const header = await Header.findOneAndUpdate({}, update, {
-      new: true,
-      upsert: true
-    });
-
-    res.json(header);
-  } catch (error) {
-    console.error('Header update error:', error);
-    res.status(500).json({ 
-      message: 'Failed to update header',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
   }
-});
-
+);
 // Services routes
 // Get service by numeric ID
 app.get('/api/services/:serviceId', async (req, res) => {
