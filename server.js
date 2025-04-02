@@ -57,9 +57,13 @@ const port = process.env.PORT || 5000;
 
 // Middleware setup
 app.use(cors({
-  origin: ['https://my-website-backend-ixzh.onrender.com', 'http://localhost:3000'],
+  origin: [
+    'https://your-frontend-domain.com', // Your production frontend
+    'http://localhost:3000'            // Local development
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -179,14 +183,51 @@ app.post('/admin/login', async (req, res) => {
 });
 
 // Header routes
+// Update your header routes to match frontend expectations
 app.get('/api/header', authenticateAdmin, async (req, res) => {
   try {
-    const header = await Header.findOne() || { title: '', image: '' };
-    res.json(header);
+    const header = await Header.findOne() || { 
+      title: 'FutureTechTalent - Professional Business Solutions',
+      image: '' 
+    };
+    res.json({
+      success: true,
+      data: header
+    });
   } catch (error) {
     console.error('Header fetch error:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Failed to fetch header',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+app.put('/api/header', authenticateAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const { title } = req.body;
+    let imageUrl;
+    
+    if (req.file) {
+      imageUrl = (await cloudinary.uploader.upload(req.file.path)).secure_url;
+    }
+
+    const header = await Header.findOneAndUpdate(
+      {},
+      { title, ...(imageUrl && { image: imageUrl }) },
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      success: true,
+      data: header
+    });
+  } catch (error) {
+    console.error('Header update error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update header',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -312,18 +353,30 @@ app.get('/admin/healthcheck', async (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
+  console.error('Server error:', err);
   
-  if (err instanceof multer.MulterError) {
-    return res.status(400).json({
-      error: 'File upload error',
-      details: err.message
+  // Handle JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({ 
+      success: false,
+      message: 'Invalid token'
     });
   }
-  
+
+  // Handle validation errors
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: Object.values(err.errors).map(e => e.message)
+    });
+  }
+
+  // Default error handler
   res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    success: false,
+    message: 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { error: err.message })
   });
 });
 

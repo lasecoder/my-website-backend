@@ -159,97 +159,86 @@
 
     // Enhanced API Fetch with Error Handling
     async function apiFetch(endpoint, options = {}) {
-      try {
-        const response = await fetch(`${backendUrl}${endpoint}`, {
-          ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            ...options.headers
-          }
-        });
+  const token = localStorage.getItem('authToken');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options.headers
+  };
 
-        // First check if response is HTML (error page)
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-          const text = await response.text();
-          throw new Error(`Server returned HTML error page: ${text.substring(0, 100)}`);
-        }
+  try {
+    const response = await fetch(`${backendUrl}${endpoint}`, {
+      ...options,
+      headers
+    });
 
-        // Handle server errors (500)
-        if (response.status >= 500) {
-          try {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Server error occurred');
-          } catch {
-            throw new Error('Server is currently unavailable. Please try again later.');
-          }
-        }
-
-        // Handle client errors (400-499)
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Request failed with status ${response.status}`);
-        }
-
-        return await response.json();
-      } catch (error) {
-        console.error(`API request to ${endpoint} failed:`, error);
-        throw error;
-      }
+    // Handle non-JSON responses
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Server returned unexpected content: ${text.substring(0, 100)}`);
     }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || `Request failed with status ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`API call to ${endpoint} failed:`, error);
+    
+    // Handle specific error cases
+    if (error.message.includes('401')) {
+      localStorage.removeItem('authToken');
+      window.location.href = '/admin-login.html';
+      return;
+    }
+    
+    throw new Error(
+      error.message.includes('Failed to fetch') 
+        ? 'Server is currently unavailable. Please try again later.'
+        : error.message
+    );
+  }
+}
 
     // Content Management
     async function loadCurrentContent() {
-      try {
-        // Try loading header
-        try {
-          const headerData = await apiFetch(apiEndpoints.header);
-          if (headerData) {
-            document.getElementById('home-header-title').value = headerData.title || '';
-            if (headerData.image) {
-              document.getElementById('header-image-preview').src = headerData.image;
-              document.getElementById('header-image-preview').style.display = 'block';
-            }
-          }
-        } catch (headerError) {
-          console.error('Failed to load header:', headerError);
-          showStatus('header-status', `Header: ${headerError.message}`, false);
-        }
-
-        // Try loading service
-        try {
-          const serviceData = await apiFetch(apiEndpoints.services);
-          if (serviceData) {
-            document.getElementById('service1-title').value = serviceData.title || '';
-            document.getElementById('service1-description').value = serviceData.description || '';
-            if (serviceData.image) {
-              document.getElementById('service-image-preview').src = serviceData.image;
-              document.getElementById('service-image-preview').style.display = 'block';
-            }
-          }
-        } catch (serviceError) {
-          console.error('Failed to load service:', serviceError);
-          showStatus('service-status', `Service: ${serviceError.message}`, false);
-        }
-
-        // Try loading footer
-        try {
-          const footerData = await apiFetch(apiEndpoints.footer);
-          if (footerData) {
-            document.getElementById('home-footer-text').value = footerData.text || '';
-          }
-        } catch (footerError) {
-          console.error('Failed to load footer:', footerError);
-          showStatus('footer-status', `Footer: ${footerError.message}`, false);
-        }
-
-      } catch (error) {
-        console.error("Error loading content:", error);
-        showStatus('global-error', `Failed to load content: ${error.message}`, false);
+  try {
+    // Load header
+    const headerResponse = await apiFetch('/api/header');
+    if (headerResponse?.success) {
+      document.getElementById('home-header-title').value = headerResponse.data.title || '';
+      if (headerResponse.data.image) {
+        document.getElementById('header-image-preview').src = headerResponse.data.image;
+        document.getElementById('header-image-preview').style.display = 'block';
       }
     }
 
+    // Load service
+    const serviceResponse = await apiFetch('/api/services/1');
+    if (serviceResponse?.success) {
+      document.getElementById('service1-title').value = serviceResponse.data.title || '';
+      document.getElementById('service1-description').value = serviceResponse.data.description || '';
+      if (serviceResponse.data.image) {
+        document.getElementById('service-image-preview').src = serviceResponse.data.image;
+        document.getElementById('service-image-preview').style.display = 'block';
+      }
+    }
+
+    // Load footer
+    const footerResponse = await apiFetch('/api/footer');
+    if (footerResponse?.success) {
+      document.getElementById('home-footer-text').value = footerResponse.data.text || '';
+    }
+
+  } catch (error) {
+    console.error("Failed to load content:", error);
+    showStatus('global-error', error.message, false);
+  }
+}
     // Update Content Function
     async function updateContent(section, formData, buttonId, spinnerId, statusId) {
       try {
