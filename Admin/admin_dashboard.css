@@ -1,10 +1,10 @@
 /* ====== CSS Variables ====== */
 :root {
-  --primary: linear-gradient(to right, #002147, #00f2fe);
+  --primary: #070e30;
   --primary-dark: #3aa3d4;
   --secondary: #3f37c9;
   --accent: #4895ef;
-  --danger: #002147;
+  --danger: #020111;
   --success: #4cc9f0;
   --warning: #f8961e;
   --dark: #212529;
