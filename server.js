@@ -45,6 +45,27 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
+  //=====////====///
+  async function initializeDefaultService() {
+    try {
+      const existingService = await Service.findOne({ serviceId: 1 });
+      if (!existingService) {
+        await Service.create({
+          serviceId: 1,
+          title: 'Default Service',
+          description: 'This is the default service description',
+          image: ''
+        });
+        console.log('✅ Default service created');
+      }
+    } catch (error) {
+      console.error('Error initializing default service:', error);
+    }
+  }
+  
+  // Call after MongoDB connection
+  mongoose.connection.once('open', initializeDefaultService);
+  ///====////====///
 // Models
 const User = require('./models/User');
 const Header = require('./models/Header');
@@ -373,6 +394,76 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+
+//===================
+// Service Endpoints
+app.get('/api/services/:id', async (req, res) => {
+  try {
+    const service = await Service.findOne({ serviceId: parseInt(req.params.id) });
+    if (!service) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Service not found' 
+      });
+    }
+    res.json({
+      success: true,
+      data: service
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Content Endpoints
+app.post('/api/content/header', async (req, res) => {
+  try {
+    // Process header update
+    res.json({ 
+      success: true,
+      message: 'Header updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+app.post('/api/content/footer', async (req, res) => {
+  try {
+    // Process footer update
+    res.json({ 
+      success: true,
+      message: 'Footer updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Error handling
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Endpoint not found'
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error'
+  });
+});
 // Start server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);

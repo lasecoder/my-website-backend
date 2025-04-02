@@ -92,11 +92,11 @@
   <script>
     // Configuration
     const backendUrl = "https://my-website-backend-ixzh.onrender.com";
-    const apiEndpoints = {
-  header: '/api/header',
-  services: '/api/services', 
-  footer: '/api/footer',
-  content: '/api/content'
+  // Update your apiEndpoints to:
+const apiEndpoints = {
+  header: '/api/content/header',
+  services: '/api/services',
+  footer: '/api/content/footer'
 };
 
     // Utility Functions
@@ -157,8 +157,7 @@
       if (status && !isLoading) status.style.display = 'none';
     }
 
-    // Enhanced API Fetch with Error Handling
-    // In your admin_dashboard.html
+// Update your apiFetch function:
 async function apiFetch(endpoint, options = {}) {
   try {
     const response = await fetch(`${backendUrl}${endpoint}`, {
@@ -176,7 +175,7 @@ async function apiFetch(endpoint, options = {}) {
       throw new Error(data.message || `Request failed with status ${response.status}`);
     }
 
-    return data.data; // Return only the data payload
+    return data;
   } catch (error) {
     console.error(`API request to ${endpoint} failed:`, error);
     throw error;
@@ -186,67 +185,45 @@ async function apiFetch(endpoint, options = {}) {
 // Updated loadCurrentContent function
 async function loadCurrentContent() {
   try {
-    // Load service data
-    const serviceData = await apiFetch(`${apiEndpoints.services}/1`);
-    
-    if (serviceData) {
-      document.getElementById('service1-title').value = serviceData.title || '';
-      document.getElementById('service1-description').value = serviceData.description || '';
+    // Load service with ID 1
+    const serviceResponse = await apiFetch(`${apiEndpoints.services}/1`);
+    if (serviceResponse.success && serviceResponse.data) {
+      const service = serviceResponse.data;
+      document.getElementById('service1-title').value = service.title || '';
+      document.getElementById('service1-description').value = service.description || '';
       
-      if (serviceData.image) {
-        document.getElementById('service-image-preview').src = serviceData.image;
+      if (service.image) {
+        document.getElementById('service-image-preview').src = service.image;
         document.getElementById('service-image-preview').style.display = 'block';
       }
     }
   } catch (error) {
     console.error("Error loading service content:", error);
-    showStatus('service-status', `Failed to load service: ${error.message}`, false);
+    showStatus('service-status', error.message, false);
   }
 }
-    async function updateContent(section, formData, buttonId, spinnerId, statusId) {
-      try {
-        toggleLoading(true, buttonId, spinnerId, statusId);
-        
-        const response = await fetch(`${backendUrl}/api/content`, {
-          method: "POST",
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          },
-          body: formData,
-        });
+async function updateContent(section, formData) {
+  try {
+    const buttonId = `update-${section}-btn`;
+    const spinnerId = `${section}-spinner`;
+    const statusId = `${section}-status`;
+    
+    toggleLoading(true, buttonId, spinnerId, statusId);
+    
+    const response = await apiFetch(apiEndpoints[section], {
+      method: 'POST',
+      body: JSON.stringify(formData)
+    });
 
-        // Check for HTML response
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-          const text = await response.text();
-          throw new Error(`Server error: ${text.substring(0, 100)}`);
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `Update failed with status ${response.status}`);
-        }
-
-        const data = await response.json();
-        showStatus(statusId, `${section} updated successfully!`, true);
-        
-        if (formData.get('image')) {
-          document.querySelector(`#${section === 'header' ? 'home-header-image' : 'service1-image'}`).value = '';
-        }
-        
-      } catch (error) {
-        console.error(`❌ Error updating ${section}:`, error);
-        showStatus(statusId, error.message, false);
-        
-        // Handle 401 unauthorized
-        if (error.message.includes('401')) {
-          localStorage.removeItem('authToken');
-          window.location.href = '/admin-login.html';
-        }
-      } finally {
-        toggleLoading(false, buttonId, spinnerId, statusId);
-      }
-    }
+    showStatus(statusId, response.message, true);
+    return response;
+  } catch (error) {
+    showStatus(statusId, error.message, false);
+    throw error;
+  } finally {
+    toggleLoading(false, buttonId, spinnerId, statusId);
+  }
+}
 
     // Event Listeners Setup
     function setupEventListeners() {
