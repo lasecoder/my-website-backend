@@ -1,7 +1,7 @@
 /* ====== CSS Variables ====== */
 :root {
-  --primary: #4361ee;
-  --primary-dark: #3a56d4;
+  --primary: linear-gradient(to right, #002147, #00f2fe);
+  --primary-dark: linear-gradient(to right, #002147, #00f2fe);
   --secondary: #3f37c9;
   --accent: #4895ef;
   --danger: #f72585;
