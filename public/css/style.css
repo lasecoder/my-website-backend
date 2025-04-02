@@ -21,7 +21,7 @@ body {
 
 /* ================= HEADER ================= */
 header {
-    background-color: #002147;
+    background: linear-gradient(to right, #002147, #00f2fe);
     color: white;
     padding: 13px 0;
     display: flex;
