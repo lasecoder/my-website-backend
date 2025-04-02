@@ -12,10 +12,6 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 // Load environment variables
 dotenv.config();
 
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const multer = require('multer');
-
 // Enhanced Cloudinary Configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -89,27 +85,6 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
-  //=====////====///
-  async function initializeDefaultService() {
-    try {
-      const existingService = await Service.findOne({ serviceId: 1 });
-      if (!existingService) {
-        await Service.create({
-          serviceId: 1,
-          title: 'Default Service',
-          description: 'This is the default service description',
-          image: ''
-        });
-        console.log('✅ Default service created');
-      }
-    } catch (error) {
-      console.error('Error initializing default service:', error);
-    }
-  }
-  
-  // Call after MongoDB connection
-  mongoose.connection.once('open', initializeDefaultService);
-  ///====////====///
 // Models
 const User = require('./models/User');
 const Header = require('./models/Header');
@@ -134,27 +109,42 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ensure admin exists on startup
-async function ensureAdminExists() {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'securepassword123';
-  
-  const adminExists = await User.exists({ email: adminEmail, role: 'admin' });
-  if (!adminExists) {
-    const hashedPassword = await bcrypt.hash(adminPassword, 12);
-    await User.create({
-      name: 'Admin',
-      email: adminEmail,
-      password: hashedPassword,
-      role: 'admin'
-    });
-    console.log('✅ Default admin user created');
+// Initialize default data
+async function initializeDefaultData() {
+  try {
+    // Ensure admin exists
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'securepassword123';
+    
+    const adminExists = await User.exists({ email: adminEmail, role: 'admin' });
+    if (!adminExists) {
+      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      await User.create({
+        name: 'Admin',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin'
+      });
+      console.log('✅ Default admin user created');
+    }
+
+    // Ensure default service exists
+    const existingService = await Service.findOne({ serviceId: 1 });
+    if (!existingService) {
+      await Service.create({
+        serviceId: 1,
+        title: 'Default Service',
+        description: 'This is the default service description',
+        image: ''
+      });
+      console.log('✅ Default service created');
+    }
+  } catch (error) {
+    console.error('Initialization error:', error);
   }
 }
 
-mongoose.connection.once('open', async () => {
-  await ensureAdminExists();
-});
+mongoose.connection.once('open', initializeDefaultData);
 
 // Authentication middleware
 function authenticateAdmin(req, res, next) {
@@ -176,21 +166,6 @@ function authenticateAdmin(req, res, next) {
   }
 }
 
-// Unified file upload handler
-const handleCloudinaryUpload = async (file, folder) => {
-  if (!file) return null;
-  
-  try {
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: `future_tech_talent/${folder}`,
-    });
-    return result.secure_url;
-  } catch (err) {
-    console.error('Cloudinary upload error:', err);
-    throw new Error('File upload failed');
-  }
-};
-
 // ==================== API Routes ====================
 
 // Admin login
@@ -206,7 +181,7 @@ app.post('/admin/login', async (req, res) => {
     }
 
     const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await user.correctPassword(password))) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -248,7 +223,6 @@ app.post('/admin/login', async (req, res) => {
 });
 
 // Header routes
-// Update your header routes to match frontend expectations
 app.get('/api/header', authenticateAdmin, async (req, res) => {
   try {
     const header = await Header.findOne() || { 
@@ -263,58 +237,13 @@ app.get('/api/header', authenticateAdmin, async (req, res) => {
     console.error('Header fetch error:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Failed to fetch header',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to fetch header'
     });
   }
 });
 
-// Upload service image/update service
-app.put('/api/services/:id', 
-  upload.single('media'),
-  handleUploadErrors,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { title, description } = req.body;
-      
-      const updateData = { title, description };
-      if (req.file) {
-        updateData.media = {
-          url: req.file.path,
-          public_id: req.file.filename,
-          resource_type: req.file.resource_type
-        };
-      }
-
-      const service = await Service.findOneAndUpdate(
-        { serviceId: parseInt(id) },
-        updateData,
-        { new: true }
-      );
-
-      res.json({
-        success: true,
-        message: 'Service updated successfully',
-        data: service
-      });
-    } catch (error) {
-      // Delete uploaded file if error occurs
-      if (req.file) {
-        await cloudinary.uploader.destroy(req.file.filename, {
-          resource_type: req.file.resource_type
-        });
-      }
-      res.status(500).json({
-        success: false,
-        message: error.message
-      });
-    }
-  }
-);
-
-// Upload header image
 app.put('/api/header', 
+  authenticateAdmin,
   upload.single('image'),
   handleUploadErrors,
   async (req, res) => {
@@ -324,10 +253,7 @@ app.put('/api/header',
       };
 
       if (req.file) {
-        updateData.image = {
-          url: req.file.path,
-          public_id: req.file.filename
-        };
+        updateData.image = req.file.path;
       }
 
       const header = await Header.findOneAndUpdate(
@@ -342,9 +268,7 @@ app.put('/api/header',
         data: header
       });
     } catch (error) {
-      if (req.file) {
-        await cloudinary.uploader.destroy(req.file.filename);
-      }
+      console.error('Header update error:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -352,47 +276,77 @@ app.put('/api/header',
     }
   }
 );
-// Services routes
-// Get service by numeric ID
-app.get('/api/services/:serviceId', async (req, res) => {
+
+// Service routes
+app.get('/api/services/:id', async (req, res) => {
   try {
-    const service = await Service.findOne({ serviceId: parseInt(req.params.serviceId) });
+    const service = await Service.findOne({ serviceId: parseInt(req.params.id) });
     if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Service not found' 
+      });
     }
-    res.json(service);
+    res.json({
+      success: true,
+      data: service
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 });
 
-// Update service
-app.put('/api/services/:serviceId', async (req, res) => {
-  try {
-    const service = await Service.findOneAndUpdate(
-      { serviceId: parseInt(req.params.serviceId) },
-      req.body,
-      { new: true }
-    );
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
+app.put('/api/services/:id', 
+  authenticateAdmin,
+  upload.single('image'),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { title, description } = req.body;
+      
+      const updateData = { title, description };
+      if (req.file) {
+        updateData.image = req.file.path;
+      }
+
+      const service = await Service.findOneAndUpdate(
+        { serviceId: parseInt(id) },
+        updateData,
+        { new: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Service updated successfully',
+        data: service
+      });
+    } catch (error) {
+      console.error('Service update error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
     }
-    res.json(service);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
   }
-});
+);
 
 // Footer routes
 app.get('/api/footer', authenticateAdmin, async (req, res) => {
   try {
     const footer = await Footer.findOne() || { text: '' };
-    res.json(footer);
+    res.json({
+      success: true,
+      data: footer
+    });
   } catch (error) {
     console.error('Footer fetch error:', error);
     res.status(500).json({ 
-      message: 'Failed to fetch footer',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false,
+      message: 'Failed to fetch footer'
     });
   }
 });
@@ -405,12 +359,16 @@ app.put('/api/footer', authenticateAdmin, async (req, res) => {
       { text },
       { new: true, upsert: true }
     );
-    res.json(footer);
+    res.json({
+      success: true,
+      message: 'Footer updated successfully',
+      data: footer
+    });
   } catch (error) {
     console.error('Footer update error:', error);
     res.status(500).json({ 
-      message: 'Failed to update footer',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false,
+      message: 'Failed to update footer'
     });
   }
 });
@@ -437,7 +395,6 @@ app.get('/admin/healthcheck', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   
-  // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({ 
       success: false,
@@ -445,7 +402,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Handle validation errors
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       success: false,
@@ -454,90 +410,12 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Default error handler
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { error: err.message })
-  });
-});
-
-// Static files and fallback
-app.use(express.static(path.join(__dirname, 'Admin')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-
-//===================
-// Service Endpoints
-app.get('/api/services/:id', async (req, res) => {
-  try {
-    const service = await Service.findOne({ serviceId: parseInt(req.params.id) });
-    if (!service) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Service not found' 
-      });
-    }
-    res.json({
-      success: true,
-      data: service
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Content Endpoints
-app.post('/api/content/header', async (req, res) => {
-  try {
-    // Process header update
-    res.json({ 
-      success: true,
-      message: 'Header updated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-app.post('/api/content/footer', async (req, res) => {
-  try {
-    // Process footer update
-    res.json({ 
-      success: true,
-      message: 'Footer updated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Error handling
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Endpoint not found'
-  });
-});
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
   res.status(500).json({
     success: false,
     message: 'Internal server error'
   });
 });
+
 // Start server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
