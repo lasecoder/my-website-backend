@@ -258,46 +258,33 @@ app.put('/api/header', authenticateAdmin, upload.single('image'), async (req, re
 });
 
 // Services routes
-app.get('/api/services/:id', authenticateAdmin, async (req, res) => {
+// Get service by numeric ID
+app.get('/api/services/:serviceId', async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id) || 
-      { title: '', description: '', image: '' };
-    res.json(service);
-  } catch (error) {
-    console.error('Service fetch error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch service',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-app.put('/api/services/:id', authenticateAdmin, upload.single('image'), async (req, res) => {
-  try {
-    const { title, description } = req.body;
-    let update = { title, description };
-    
-    if (req.file) {
-      update.image = await handleCloudinaryUpload(req.file, 'services');
-    }
-
-    const service = await Service.findByIdAndUpdate(
-      req.params.id, 
-      update,
-      { new: true }
-    );
-
+    const service = await Service.findOne({ serviceId: parseInt(req.params.serviceId) });
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
-
     res.json(service);
   } catch (error) {
-    console.error('Service update error:', error);
-    res.status(500).json({ 
-      message: 'Failed to update service',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update service
+app.put('/api/services/:serviceId', async (req, res) => {
+  try {
+    const service = await Service.findOneAndUpdate(
+      { serviceId: parseInt(req.params.serviceId) },
+      req.body,
+      { new: true }
+    );
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    res.json(service);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
