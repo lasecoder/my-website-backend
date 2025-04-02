@@ -1,12 +1,16 @@
-// In your server.js or models/Service.js
+// models/Service.js
 const mongoose = require('mongoose');
 
 const serviceSchema = new mongoose.Schema({
-  serviceId: { type: Number, required: true, unique: true }, // Numeric ID for easy reference
+  serviceId: { type: Number, required: true, unique: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
-  image: String,
-  createdAt: { type: Date, default: Date.now }
-});
+  image: String
+}, { timestamps: true });
 
-const Service = mongoose.model('Service', serviceSchema);
+// Add static method for easier querying
+serviceSchema.statics.findByServiceId = function(id) {
+  return this.findOne({ serviceId: id });
+};
+
+module.exports = mongoose.model('Service', serviceSchema);
