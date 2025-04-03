@@ -41,7 +41,9 @@ const storage = new CloudinaryStorage({
     };
   }
 });
-
+app.get('/admin_dashboard.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
+});
 // Configure Multer with better error handling
 const upload = multer({
   storage: storage,
@@ -107,6 +109,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'Admin')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize default data
