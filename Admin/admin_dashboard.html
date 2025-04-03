@@ -92,37 +92,26 @@
   <script>
    // In your admin_dashboard.html or separate config file
 // In your admin_dashboard.html
-const backendUrl = 'https://your-actual-backend-url.com'; // Replace with real URL // Your actual Render backend URL
+// In your admin_dashboard.html or main JS file
+const backendUrl = 'https://my-website-backend-ixzh.onrender.com'; // Your actual Render backend URL
 const apiEndpoints = {
-  ervices: '/api/services',
+  services: '/api/services', // Note: no trailing slash
   header: '/api/header',
   footer: '/api/footer'
 };
 
-
     // Utility Functions
     function showStatus(elementId, message, isSuccess) {
-      try {
-        const element = document.getElementById(elementId);
-        if (!element) {
-          console.error(`Status element not found: ${elementId}`);
-          return false;
-        }
-        
-        element.textContent = message;
-        element.className = `status-message ${isSuccess ? 'success' : 'error'}`;
-        element.style.display = 'block';
-        
-        setTimeout(() => {
-          element.style.display = 'none';
-        }, 5000);
-        return true;
-      } catch (error) {
-        console.error('Error showing status:', error);
-        return false;
-      }
-    }
-
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.textContent = message;
+    element.style.color = isSuccess ? 'green' : 'red';
+    element.style.display = 'block';
+    setTimeout(() => {
+      element.style.display = 'none';
+    }, 5000);
+  }
+}
     function setupImagePreview(inputId, previewId) {
       try {
         const input = document.getElementById(inputId);
@@ -160,7 +149,12 @@ const apiEndpoints = {
 
 // Enhanced apiFetch function
 async function apiFetch(endpoint, options = {}) {
-  const url = endpoint.startsWith('http') ? endpoint : `${backendUrl}${endpoint}`;
+  // Ensure endpoint starts with a slash
+  if (!endpoint.startsWith('/')) {
+    endpoint = '/' + endpoint;
+  }
+  
+  const url = `${backendUrl}${endpoint}`;
   
   try {
     const response = await fetch(url, {
@@ -188,23 +182,21 @@ async function apiFetch(endpoint, options = {}) {
     return data;
   } catch (error) {
     console.error(`API call to ${url} failed:`, error);
-    showGlobalError(error.message);
+    // Use existing showStatus function instead of showGlobalError
+    showStatus('global-error', `API Error: ${error.message}`, false);
     throw error;
   }
 }
-
 // Updated loadCurrentContent function
 async function loadCurrentContent() {
   try {
     // Load service with ID 1
-    const serviceResponse = await apiFetch(`${apiEndpoints.services}/1`);
-    if (serviceResponse.success && serviceResponse.data) {
-      const service = serviceResponse.data;
-      document.getElementById('service1-title').value = service.title || '';
-      document.getElementById('service1-description').value = service.description || '';
-      
-      if (service.image) {
-        document.getElementById('service-image-preview').src = service.image;
+    const serviceData = await apiFetch(`${apiEndpoints.services}/1`);
+    if (serviceData) {
+      document.getElementById('service1-title').value = serviceData.title || '';
+      document.getElementById('service1-description').value = serviceData.description || '';
+      if (serviceData.image) {
+        document.getElementById('service-image-preview').src = serviceData.image;
         document.getElementById('service-image-preview').style.display = 'block';
       }
     }

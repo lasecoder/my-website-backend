@@ -297,18 +297,25 @@ app.get('/api/services', async (req, res) => {
   }
 });
 
+// Service routes
 app.get('/api/services/:id', async (req, res) => {
   try {
     const service = await Service.findOne({ serviceId: req.params.id });
     if (!service) {
       return res.status(404).json({ 
-        success: false, 
+        success: false,
         message: 'Service not found' 
       });
     }
-    res.json({ success: true, data: service });
+    res.json({
+      success: true,
+      data: service
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 });
 
