@@ -91,6 +91,7 @@ const User = require('./models/User');
 const Header = require('./models/Header');
 const Service = require('./models/Service');
 const Footer = require('./models/Footer');
+const Post = require('./models/Post');
 
 // Initialize Express app
 const app = express();
@@ -432,6 +433,123 @@ app.get('/admin/healthcheck', async (req, res) => {
     });
   }
 });
+
+
+
+
+
+
+//===============Blog===
+// ========== POSTS API ROUTES ==========
+
+// Post model (add this near your other models)
+
+
+// Get all posts
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await Post.find();
+    res.json({ success: true, data: posts });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Create a new post
+app.post('/api/posts', 
+  authenticateAdmin,
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+  ]),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { title, content } = req.body;
+      const image = req.files?.image?.[0]?.path || null;
+      const video = req.files?.video?.[0]?.path || null;
+
+      const newPost = await Post.create({ title, content, image, video });
+      
+      res.status(201).json({ 
+        success: true, 
+        data: newPost 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  }
+);
+
+// Update a post
+app.put('/api/posts/:id', 
+  authenticateAdmin,
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+  ]),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { title, content } = req.body;
+      const image = req.files?.image?.[0]?.path || null;
+      const video = req.files?.video?.[0]?.path || null;
+
+      const updatedPost = await Post.findByIdAndUpdate(
+        id,
+        { title, content, image, video },
+        { new: true }
+      );
+
+      if (!updatedPost) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Post not found' 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        data: updatedPost 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  }
+);
+
+// Delete a post
+app.delete('/api/posts/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedPost = await Post.findByIdAndDelete(id);
+
+    if (!deletedPost) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Post not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Post deleted successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+});
+//=================end blog ===
 
 // Error handling middleware
 app.use((err, req, res, next) => {
