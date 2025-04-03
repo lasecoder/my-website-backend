@@ -94,12 +94,16 @@
 // In your admin_dashboard.html
 // In your admin_dashboard.html or main JS file
 const backendUrl = 'https://my-website-backend-ixzh.onrender.com'; // Your actual Render backend URL
+// Replace your current apiEndpoints with this:
 const apiEndpoints = {
-  services: '/api/services', // Note: no trailing slash
+  services: {
+    base: '/api/services',
+    getById: (id) => `/api/services/${id}`,
+    update: (id) => `/api/services/${id}`
+  },
   header: '/api/header',
   footer: '/api/footer'
 };
-
     // Utility Functions
     function showStatus(elementId, message, isSuccess) {
   const element = document.getElementById(elementId);
@@ -292,27 +296,38 @@ document.getElementById('update-service1-btn').addEventListener('click', async (
 
       // Service Update
       async function updateService(serviceId) {
-  const buttonId = 'update-service-btn';
+  const buttonId = 'update-service1-btn';
   const spinnerId = 'service-spinner';
   const statusId = 'service-status';
   
   try {
-    // Show loading state
     toggleLoading(true, buttonId, spinnerId, statusId);
     
-    const payload = {
-      title: document.getElementById('service1-title').value,
-      description: document.getElementById('service1-description').value
-    };
+    const formData = new FormData();
+    formData.append('title', document.getElementById('service1-title').value);
+    formData.append('description', document.getElementById('service1-description').value);
+    
+    const imageFile = document.getElementById('service1-image').files[0];
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
 
-    // Use the proper endpoint construction
-    const response = await apiFetch(apiEndpoints.services.byId(serviceId), {
+    const response = await fetch(`${backendUrl}${apiEndpoints.services.update(serviceId)}`, {
       method: 'PUT',
-      body: JSON.stringify(payload)
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: formData
     });
 
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Update failed');
+    }
+
+    const data = await response.json();
     showStatus(statusId, 'Service updated successfully!', true);
-    return response;
+    return data;
   } catch (error) {
     showStatus(statusId, error.message, false);
     throw error;

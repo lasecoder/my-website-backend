@@ -100,8 +100,8 @@ const port = process.env.PORT || 5000;
 // Replace your current CORS middleware with this:
 app.use(cors({
   origin: [
-    'https://my-website-backend-ixzh.onrender.com', // Your Render frontend
-    'http://localhost:3000'                         // Local development
+    'https://my-website-backend-ixzh.onrender.com',
+    'http://localhost:3000'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -109,6 +109,9 @@ app.use(cors({
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Handle preflight requests
 app.options('*', cors());
@@ -332,7 +335,8 @@ app.use((err, req, res, next) => {
 // In server.js
 app.put('/api/services/:id', 
   authenticateAdmin,
-  upload.single('image'), // If handling file uploads
+  upload.single('image'),
+  handleUploadErrors,
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -351,12 +355,20 @@ app.put('/api/services/:id',
         { new: true }
       );
 
+      if (!service) {
+        return res.status(404).json({
+          success: false,
+          message: 'Service not found'
+        });
+      }
+
       res.json({
         success: true,
         data: service,
         message: 'Service updated successfully'
       });
     } catch (error) {
+      console.error('Service update error:', error);
       res.status(500).json({
         success: false,
         message: error.message
