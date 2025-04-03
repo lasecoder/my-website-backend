@@ -193,10 +193,23 @@
       }
     }
 
-    // Enhanced Update Function
-    async function updateContent(type, id, formData) {
+   //==========
+   // Configuration
+const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
+const apiEndpoints = {
+  services: {
+    get: (id) => `${backendUrl}/api/services/${id}`,
+    update: (id) => `${backendUrl}/api/services/${id}`
+  },
+  header: `${backendUrl}/api/header`,
+  footer: `${backendUrl}/api/footer`
+};
+
+// Enhanced Update Function with better file handling
+async function updateContent(type, id, formData) {
   let buttonId, spinnerId, statusId, endpoint;
   
+  // Set element IDs based on content type
   switch(type) {
     case 'service':
       buttonId = 'update-service1-btn';
@@ -223,24 +236,34 @@
   try {
     toggleLoading(true, buttonId, spinnerId, statusId);
     
-    // Verify token exists
+    // Verify authentication token exists
     const token = localStorage.getItem('authToken');
     if (!token) {
-      throw new Error('No authentication token found');
+      throw new Error('No authentication token found. Please login again.');
     }
+
+    // Debug: Log what we're sending
+    console.log(`Updating ${type} with data:`, Array.from(formData.entries()));
 
     const response = await fetch(endpoint, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`
-        // Don't set Content-Type for FormData - browser will set it automatically
+        // Note: Don't set Content-Type header when sending FormData
+        // The browser will set it automatically with the correct boundary
       },
       body: formData
     });
 
+    // Handle non-successful responses
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to update ${type}`);
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { message: await response.text() };
+      }
+      throw new Error(errorData.message || `Server responded with status ${response.status}`);
     }
 
     const result = await response.json();
@@ -248,27 +271,93 @@
     return result;
   } catch (error) {
     console.error(`Error updating ${type}:`, error);
-    showStatus(statusId, error.message, false);
+    showStatus(statusId, error.message || `Failed to update ${type}`, false);
     throw error;
   } finally {
     toggleLoading(false, buttonId, spinnerId, statusId);
   }
 }
 
-    // Update Handlers
-    async function handleServiceUpdate() {
-      const formData = new FormData();
-      formData.append('title', document.getElementById('service1-title').value);
-      formData.append('description', document.getElementById('service1-description').value);
+// Enhanced Header Update Handler
+async function handleHeaderUpdate() {
+  try {
+    const formData = new FormData();
+    
+    // Add title - use the exact field name your backend expects
+    formData.append('title', document.getElementById('home-header-title').value);
+    
+    // Handle file upload
+    const imageFile = document.getElementById('home-header-image').files[0];
+    if (imageFile) {
+      // Use the exact field name your backend expects for the image
+      formData.append('headerImage', imageFile);
       
-      const imageFile = document.getElementById('service1-image').files[0];
-      if (imageFile) {
-        formData.append('image', imageFile);
+      // Validate file size (example: limit to 2MB)
+      if (imageFile.size > 2 * 1024 * 1024) {
+        throw new Error('Image size must be less than 2MB');
       }
       
-      await updateContent('service', 1, formData);
+      // Validate file type
+      if (!imageFile.type.match('image.*')) {
+        throw new Error('Only image files are allowed');
+      }
     }
+    
+    await updateContent('header', null, formData);
+  } catch (error) {
+    console.error('Header update failed:', error);
+    showStatus('header-status', error.message, false);
+  }
+}
 
+// Enhanced Service Update Handler
+async function handleServiceUpdate() {
+  try {
+    const formData = new FormData();
+    
+    // Add service data - use exact field names your backend expects
+    formData.append('title', document.getElementById('service1-title').value);
+    formData.append('description', document.getElementById('service1-description').value);
+    
+    // Handle file upload
+    const imageFile = document.getElementById('service1-image').files[0];
+    if (imageFile) {
+      // Use the exact field name your backend expects for the image
+      formData.append('serviceImage', imageFile);
+      
+      // Validate file size (example: limit to 2MB)
+      if (imageFile.size > 2 * 1024 * 1024) {
+        throw new Error('Image size must be less than 2MB');
+      }
+      
+      // Validate file type
+      if (!imageFile.type.match('image.*')) {
+        throw new Error('Only image files are allowed');
+      }
+    }
+    
+    await updateContent('service', 1, formData);
+  } catch (error) {
+    console.error('Service update failed:', error);
+    showStatus('service-status', error.message, false);
+  }
+}
+
+// Footer Update Handler (no file upload)
+async function handleFooterUpdate() {
+  try {
+    const formData = new FormData();
+    formData.append('text', document.getElementById('home-footer-text').value);
+    await updateContent('footer', null, formData);
+  } catch (error) {
+    console.error('Footer update failed:', error);
+    showStatus('footer-status', error.message, false);
+  }
+}
+   //==========
+
+
+    
     async function handleHeaderUpdate() {
   const formData = new FormData();
   // Use exact field names your backend expects
@@ -281,26 +370,6 @@
   
   await updateContent('header', null, formData);
 }
-
-async function handleServiceUpdate() {
-  const formData = new FormData();
-  formData.append('serviceTitle', document.getElementById('service1-title').value);
-  formData.append('serviceDescription', document.getElementById('service1-description').value);
-  
-  const imageFile = document.getElementById('service1-image').files[0];
-  if (imageFile) {
-    formData.append('serviceImage', imageFile);
-  }
-  
-  await updateContent('service', 1, formData);
-}
-
-    async function handleFooterUpdate() {
-      const formData = new FormData();
-      formData.append('text', document.getElementById('home-footer-text').value);
-      
-      await updateContent('footer', null, formData);
-    }
 
     // Event Listeners Setup
     function setupEventListeners() {
