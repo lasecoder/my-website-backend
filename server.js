@@ -287,27 +287,41 @@ app.put('/api/header',
 );
 
 // Service routes
-app.get('/api/services/:id', async (req, res) => {
+// Ensure these routes exist in your server.js
+app.get('/api/services', async (req, res) => {
   try {
-    const service = await Service.findOne({ serviceId: parseInt(req.params.id) });
-    if (!service) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Service not found' 
-      });
-    }
-    res.json({
-      success: true,
-      data: service
-    });
+    const services = await Service.find();
+    res.json({ success: true, data: services });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
+app.get('/api/services/:id', async (req, res) => {
+  try {
+    const service = await Service.findOne({ serviceId: req.params.id });
+    if (!service) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Service not found' 
+      });
+    }
+    res.json({ success: true, data: service });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Add proper error handling middleware
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  
+  // Always return JSON, even for errors
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
+});
 app.put('/api/services/:id', 
   authenticateAdmin,
   upload.single('image'),
