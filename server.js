@@ -329,33 +329,34 @@ app.use((err, req, res, next) => {
     message: err.message || 'Internal Server Error'
   });
 });
+// In server.js
 app.put('/api/services/:id', 
   authenticateAdmin,
-  upload.single('image'),
-  handleUploadErrors,
+  upload.single('image'), // If handling file uploads
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { title, description } = req.body;
-      
-      const updateData = { title, description };
+      const updateData = {
+        title: req.body.title,
+        description: req.body.description
+      };
+
       if (req.file) {
         updateData.image = req.file.path;
       }
 
       const service = await Service.findOneAndUpdate(
-        { serviceId: parseInt(id) },
+        { serviceId: id },
         updateData,
         { new: true }
       );
 
       res.json({
         success: true,
-        message: 'Service updated successfully',
-        data: service
+        data: service,
+        message: 'Service updated successfully'
       });
     } catch (error) {
-      console.error('Service update error:', error);
       res.status(500).json({
         success: false,
         message: error.message
@@ -363,7 +364,6 @@ app.put('/api/services/:id',
     }
   }
 );
-
 // Footer routes
 app.get('/api/footer', authenticateAdmin, async (req, res) => {
   try {

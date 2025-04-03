@@ -149,12 +149,12 @@ const apiEndpoints = {
 
 // Enhanced apiFetch function
 async function apiFetch(endpoint, options = {}) {
-  // Ensure endpoint starts with a slash
-  if (!endpoint.startsWith('/')) {
-    endpoint = '/' + endpoint;
+  // Validate endpoint
+  if (!endpoint) {
+    throw new Error('API endpoint is undefined');
   }
-  
-  const url = `${backendUrl}${endpoint}`;
+
+  const url = endpoint.startsWith('http') ? endpoint : `${backendUrl}${endpoint}`;
   
   try {
     const response = await fetch(url, {
@@ -166,11 +166,11 @@ async function apiFetch(endpoint, options = {}) {
       }
     });
 
-    // First check if response is HTML
+    // Handle non-JSON responses
     const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('text/html')) {
+    if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text();
-      throw new Error(`Server returned HTML: ${text.substring(0, 100)}`);
+      throw new Error(`Expected JSON but got: ${text.substring(0, 100)}`);
     }
 
     const data = await response.json();
@@ -181,10 +181,8 @@ async function apiFetch(endpoint, options = {}) {
 
     return data;
   } catch (error) {
-    console.error(`API call to ${url} failed:`, error);
-    // Use existing showStatus function instead of showGlobalError
-    showStatus('global-error', `API Error: ${error.message}`, false);
-    throw error;
+    console.error(`API request to ${url} failed:`, error);
+    throw error; // Re-throw for calling functions to handle
   }
 }
 // Updated loadCurrentContent function
@@ -293,6 +291,35 @@ document.getElementById('update-service1-btn').addEventListener('click', async (
       }
 
       // Service Update
+      async function updateService(serviceId) {
+  const buttonId = 'update-service-btn';
+  const spinnerId = 'service-spinner';
+  const statusId = 'service-status';
+  
+  try {
+    // Show loading state
+    toggleLoading(true, buttonId, spinnerId, statusId);
+    
+    const payload = {
+      title: document.getElementById('service1-title').value,
+      description: document.getElementById('service1-description').value
+    };
+
+    // Use the proper endpoint construction
+    const response = await apiFetch(apiEndpoints.services.byId(serviceId), {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+
+    showStatus(statusId, 'Service updated successfully!', true);
+    return response;
+  } catch (error) {
+    showStatus(statusId, error.message, false);
+    throw error;
+  } finally {
+    toggleLoading(false, buttonId, spinnerId, statusId);
+  }
+}
       const updateServiceBtn = document.getElementById("update-service1-btn");
       if (updateServiceBtn) {
         updateServiceBtn.addEventListener("click", async (e) => {
