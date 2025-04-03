@@ -252,7 +252,7 @@ main {
 
 /* ================= FOOTER ================= */
 footer {
-    background-color: #9299a0;
+    background-color: linear-gradient(to right, #002147, #00f2fe);
     color: white;
     padding: 30px 20px;
     text-align: center;
