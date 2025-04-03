@@ -446,12 +446,19 @@ app.get('/admin/healthcheck', async (req, res) => {
 
 
 // Get all posts
+// Get all posts - ensure this returns an array
 app.get('/api/posts', async (req, res) => {
   try {
-    const posts = await Post.find();
-    res.json({ success: true, data: posts });
+    const posts = await Post.find().lean(); // .lean() converts to plain JS objects
+    if (!posts || !Array.isArray(posts)) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+    res.status(200).json({ success: true, data: posts });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
   }
 });
 

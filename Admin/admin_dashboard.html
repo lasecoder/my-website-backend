@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard - Home</title>
   <link rel="stylesheet" href="./admin_dashboard.css" />
-  
 </head>
 <body>
   <!-- Sidebar Navigation -->
@@ -91,7 +90,6 @@
       </form>
     </section>
   </div>
-
   <script>
     // Configuration
     const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
@@ -118,15 +116,10 @@
     }
 
     function setupImagePreview(inputId, previewId) {
-      try {
-        const input = document.getElementById(inputId);
-        const preview = document.getElementById(previewId);
-        
-        if (!input || !preview) {
-          console.error(`Image preview elements not found: ${inputId}, ${previewId}`);
-          return;
-        }
-        
+      const input = document.getElementById(inputId);
+      const preview = document.getElementById(previewId);
+      
+      if (input && preview) {
         input.addEventListener('change', function() {
           if (this.files && this.files[0]) {
             const reader = new FileReader();
@@ -137,8 +130,6 @@
             reader.readAsDataURL(this.files[0]);
           }
         });
-      } catch (error) {
-        console.error('Error setting up image preview:', error);
       }
     }
 
@@ -155,9 +146,29 @@
     // Content Loading
     async function loadCurrentContent() {
       try {
+        // Load header content
+        const headerResponse = await fetch(apiEndpoints.header, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        if (headerResponse.ok) {
+          const headerData = await headerResponse.json();
+          document.getElementById('home-header-title').value = headerData.title || '';
+          if (headerData.image) {
+            document.getElementById('header-image-preview').src = headerData.image;
+            document.getElementById('header-image-preview').style.display = 'block';
+          }
+        }
+
         // Load service with ID 1
-        const serviceData = await apiFetch(apiEndpoints.services.get(1));
-        if (serviceData) {
+        const serviceResponse = await fetch(apiEndpoints.services.get(1), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        if (serviceResponse.ok) {
+          const serviceData = await serviceResponse.json();
           document.getElementById('service1-title').value = serviceData.title || '';
           document.getElementById('service1-description').value = serviceData.description || '';
           if (serviceData.image) {
@@ -165,56 +176,45 @@
             document.getElementById('service-image-preview').style.display = 'block';
           }
         }
-      } catch (error) {
-        console.error("Error loading service content:", error);
-        showStatus('service-status', error.message, false);
-      }
-    }
 
-    // API Fetch Function
-    async function apiFetch(url, options = {}) {
-      try {
-        const response = await fetch(url, {
-          ...options,
+        // Load footer content
+        const footerResponse = await fetch(apiEndpoints.footer, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            ...options.headers
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
           }
         });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || `Request failed with status ${response.status}`);
+        if (footerResponse.ok) {
+          const footerData = await footerResponse.json();
+          document.getElementById('home-footer-text').value = footerData.text || '';
         }
-
-        return await response.json();
       } catch (error) {
-        console.error(`API request to ${url} failed:`, error);
-        showStatus('global-error', `API Error: ${error.message}`, false);
-        throw error;
+        console.error("Error loading content:", error);
+        showStatus('global-error', 'Failed to load content', false);
       }
     }
 
-    // Unified Update Function
-    async function updateContent(type, id, formData) {
-      let buttonId, spinnerId, statusId;
+    // Enhanced Update Function
+    async function updateContent(type, id, data) {
+      let buttonId, spinnerId, statusId, endpoint;
       
-      // Set element IDs based on content type
       switch(type) {
         case 'service':
           buttonId = 'update-service1-btn';
           spinnerId = 'service-spinner';
           statusId = 'service-status';
+          endpoint = apiEndpoints.services.update(id);
           break;
         case 'header':
           buttonId = 'update-header-btn';
           spinnerId = 'header-spinner';
           statusId = 'header-status';
+          endpoint = apiEndpoints.header;
           break;
         case 'footer':
           buttonId = 'update-footer-btn';
           spinnerId = 'footer-spinner';
           statusId = 'footer-status';
+          endpoint = apiEndpoints.footer;
           break;
         default:
           throw new Error('Invalid content type');
@@ -223,36 +223,22 @@
       try {
         toggleLoading(true, buttonId, spinnerId, statusId);
         
-        // Determine the endpoint based on type
-        let endpoint;
-        switch(type) {
-          case 'service':
-            endpoint = apiEndpoints.services.update(id);
-            break;
-          case 'header':
-            endpoint = apiEndpoints.header;
-            break;
-          case 'footer':
-            endpoint = apiEndpoints.footer;
-            break;
-        }
-
         const response = await fetch(endpoint, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
           },
-          body: formData
+          body: data
         });
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.message || 'Update failed');
+          throw new Error(error.message || `Failed to update ${type}`);
         }
 
-        const data = await response.json();
+        const result = await response.json();
         showStatus(statusId, `${type} updated successfully!`, true);
-        return data;
+        return result;
       } catch (error) {
         showStatus(statusId, error.message, false);
         throw error;
