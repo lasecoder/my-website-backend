@@ -161,24 +161,38 @@ mongoose.connection.once('open', initializeDefaultData);
 
 // Authentication middleware
 function authenticateAdmin(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
+  // Get token from header
+  const authHeader = req.headers.authorization;
   
-  if (!token) {
-    return res.status(401).json({ message: 'Authentication required' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ 
+      success: false,
+      message: 'Authentication required' 
+    });
   }
 
+  const token = authHeader.split(' ')[1];
+  
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Additional check for admin role
     if (decoded.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
+      return res.status(403).json({ 
+        success: false,
+        message: 'Admin access required' 
+      });
     }
+    
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
+    return res.status(401).json({ 
+      success: false,
+      message: 'Invalid or expired token' 
+    });
   }
 }
-
 // ==================== API Routes ====================
 
 // Admin login
@@ -433,11 +447,6 @@ app.get('/admin/healthcheck', async (req, res) => {
     });
   }
 });
-
-
-
-
-
 
 //===============Blog===
 // ========== POSTS API ROUTES ==========

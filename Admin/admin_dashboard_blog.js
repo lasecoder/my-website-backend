@@ -63,7 +63,52 @@ document.getElementById('blog-header-form')?.addEventListener('submit', async (e
       alert('Error saving blog post');
     }
   });
+  async function addPost(event) {
+    event.preventDefault();
+    
+    // Get JWT token from where you stored it after login
+    const token = localStorage.getItem('adminToken');
+    
+    if (!token) {
+      alert('Please login first');
+      window.location.href = '/admin_dashboard.html';
+      return;
+    }
   
+    const title = document.getElementById('post-title').value;
+    const content = document.getElementById('post-content').value;
+    const image = document.getElementById('post-image').files[0];
+    const video = document.getElementById('post-video').files[0];
+  
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    if (image) formData.append('image', image);
+    if (video) formData.append('video', video);
+  
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`  // Add auth header
+        },
+        body: formData
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add post');
+      }
+  
+      const result = await response.json();
+      alert('Post added successfully!');
+      fetchPosts();
+      cancelAddPost();
+    } catch (error) {
+      console.error('Error adding post:', error);
+      alert(`Error: ${error.message}`);
+    }
+  }
   // ----------------------
   // Load and Manage Blog Posts
   async function loadBlogPosts() {
