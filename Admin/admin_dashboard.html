@@ -247,21 +247,11 @@ async function updateContent(section, formData, buttonId, spinnerId, statusId) {
 
 // Updated event listener for service update
 document.getElementById('update-service1-btn').addEventListener('click', async () => {
-  const formData = {
-    textFields: {
-      title: document.getElementById('service1-title').value,
-      description: document.getElementById('service1-description').value
-    },
-    file: document.getElementById('service1-image').files[0]
-  };
-  
-  await updateContent(
-    'services',
-    formData,
-    'update-service1-btn',
-    'service-spinner',
-    'service-status'
-  );
+  try {
+    await updateService(1); // Using service ID 1
+  } catch (error) {
+    console.error('Failed to update service:', error);
+  }
 });
 
     // Event Listeners Setup
@@ -307,7 +297,7 @@ document.getElementById('update-service1-btn').addEventListener('click', async (
       formData.append('image', imageFile);
     }
 
-    const response = await fetch(`${backendUrl}${apiEndpoints.services.update(serviceId)}`, {
+    const response = await fetch(apiEndpoints.services.update(serviceId), {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
