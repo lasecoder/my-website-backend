@@ -93,28 +93,30 @@
   </div>
 
   <script>
- // Replace your current apiEndpoints with this:
-const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
-const apiEndpoints = {
-  services: {
-    get: (id) => `${backendUrl}/api/services/${id}`,
-    update: (id) => `${backendUrl}/api/services/${id}`
-  },
-  header: `${backendUrl}/api/header`,
-  footer: `${backendUrl}/api/footer`
-};
+    // Configuration
+    const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
+    const apiEndpoints = {
+      services: {
+        get: (id) => `${backendUrl}/api/services/${id}`,
+        update: (id) => `${backendUrl}/api/services/${id}`
+      },
+      header: `${backendUrl}/api/header`,
+      footer: `${backendUrl}/api/footer`
+    };
+
     // Utility Functions
     function showStatus(elementId, message, isSuccess) {
-  const element = document.getElementById(elementId);
-  if (element) {
-    element.textContent = message;
-    element.style.color = isSuccess ? 'green' : 'red';
-    element.style.display = 'block';
-    setTimeout(() => {
-      element.style.display = 'none';
-    }, 5000);
-  }
-}
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.textContent = message;
+        element.style.color = isSuccess ? 'green' : 'red';
+        element.style.display = 'block';
+        setTimeout(() => {
+          element.style.display = 'none';
+        }, 5000);
+      }
+    }
+
     function setupImagePreview(inputId, previewId) {
       try {
         const input = document.getElementById(inputId);
@@ -150,386 +152,170 @@ const apiEndpoints = {
       if (status && !isLoading) status.style.display = 'none';
     }
 
-// Enhanced apiFetch function
-async function apiFetch(url, options = {}) {
-  try {
-    // Validate URL
-    if (typeof url !== 'string') {
-      throw new Error('Invalid URL provided');
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        ...options.headers
-      }
-    });
-
-    // Handle non-JSON responses
-    const contentType = response.headers.get('content-type');
-    if (!contentType?.includes('application/json')) {
-      const text = await response.text();
-      throw new Error(`Expected JSON but got: ${text.substring(0, 100)}`);
-    }
-
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || `Request failed with status ${response.status}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.error(`API request to ${url} failed:`, error);
-    showStatus('global-error', `API Error: ${error.message}`, false);
-    throw error;
-  }
-}
-// Updated loadCurrentContent function
-async function loadCurrentContent() {
-  try {
-    // Load service with ID 1
-    const serviceData = await apiFetch(apiEndpoints.services.get(1));
-    if (serviceData) {
-      document.getElementById('service1-title').value = serviceData.title || '';
-      document.getElementById('service1-description').value = serviceData.description || '';
-      if (serviceData.image) {
-        document.getElementById('service-image-preview').src = serviceData.image;
-        document.getElementById('service-image-preview').style.display = 'block';
+    // Content Loading
+    async function loadCurrentContent() {
+      try {
+        // Load service with ID 1
+        const serviceData = await apiFetch(apiEndpoints.services.get(1));
+        if (serviceData) {
+          document.getElementById('service1-title').value = serviceData.title || '';
+          document.getElementById('service1-description').value = serviceData.description || '';
+          if (serviceData.image) {
+            document.getElementById('service-image-preview').src = serviceData.image;
+            document.getElementById('service-image-preview').style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.error("Error loading service content:", error);
+        showStatus('service-status', error.message, false);
       }
     }
-  } catch (error) {
-    console.error("Error loading service content:", error);
-    showStatus('service-status', error.message, false);
-  }
-}
-// Enhanced updateContent function for Cloudinary
-async function updateContent(section, formData, buttonId, spinnerId, statusId) {
-  try {
-    toggleLoading(true, buttonId, spinnerId, statusId);
-    
-    const endpoint = apiEndpoints[section];
-    const method = 'PUT';
-    const formDataObj = new FormData();
 
-    // Add text fields
-    for (const key in formData.textFields) {
-      formDataObj.append(key, formData.textFields[key]);
-    }
+    // API Fetch Function
+    async function apiFetch(url, options = {}) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            ...options.headers
+          }
+        });
 
-    // Add file if exists
-    if (formData.file) {
-      formDataObj.append('media', formData.file);
-    }
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || `Request failed with status ${response.status}`);
+        }
 
-    const response = await fetch(endpoint, {
-      method,
-      body: formDataObj,
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        return await response.json();
+      } catch (error) {
+        console.error(`API request to ${url} failed:`, error);
+        showStatus('global-error', `API Error: ${error.message}`, false);
+        throw error;
       }
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || `Failed to update ${section}`);
     }
 
-    showStatus(statusId, data.message, true);
-    return data;
-  } catch (error) {
-    showStatus(statusId, error.message, false);
-    throw error;
-  } finally {
-    toggleLoading(false, buttonId, spinnerId, statusId);
-  }
-}
+    // Unified Update Function
+    async function updateContent(type, id, formData) {
+      let buttonId, spinnerId, statusId;
+      
+      // Set element IDs based on content type
+      switch(type) {
+        case 'service':
+          buttonId = 'update-service1-btn';
+          spinnerId = 'service-spinner';
+          statusId = 'service-status';
+          break;
+        case 'header':
+          buttonId = 'update-header-btn';
+          spinnerId = 'header-spinner';
+          statusId = 'header-status';
+          break;
+        case 'footer':
+          buttonId = 'update-footer-btn';
+          spinnerId = 'footer-spinner';
+          statusId = 'footer-status';
+          break;
+        default:
+          throw new Error('Invalid content type');
+      }
 
-// Updated event listener for service update
-document.getElementById('update-service1-btn').addEventListener('click', async () => {
-  try {
-    await updateService(1); // Using service ID 1
-  } catch (error) {
-    console.error('Failed to update service:', error);
-  }
-});
+      try {
+        toggleLoading(true, buttonId, spinnerId, statusId);
+        
+        // Determine the endpoint based on type
+        let endpoint;
+        switch(type) {
+          case 'service':
+            endpoint = apiEndpoints.services.update(id);
+            break;
+          case 'header':
+            endpoint = apiEndpoints.header;
+            break;
+          case 'footer':
+            endpoint = apiEndpoints.footer;
+            break;
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Update failed');
+        }
+
+        const data = await response.json();
+        showStatus(statusId, `${type} updated successfully!`, true);
+        return data;
+      } catch (error) {
+        showStatus(statusId, error.message, false);
+        throw error;
+      } finally {
+        toggleLoading(false, buttonId, spinnerId, statusId);
+      }
+    }
+
+    // Update Handlers
+    async function handleServiceUpdate() {
+      const formData = new FormData();
+      formData.append('title', document.getElementById('service1-title').value);
+      formData.append('description', document.getElementById('service1-description').value);
+      
+      const imageFile = document.getElementById('service1-image').files[0];
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+      
+      await updateContent('service', 1, formData);
+    }
+
+    async function handleHeaderUpdate() {
+      const formData = new FormData();
+      formData.append('title', document.getElementById('home-header-title').value);
+      
+      const imageFile = document.getElementById('home-header-image').files[0];
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+      
+      await updateContent('header', null, formData);
+    }
+
+    async function handleFooterUpdate() {
+      const formData = new FormData();
+      formData.append('text', document.getElementById('home-footer-text').value);
+      
+      await updateContent('footer', null, formData);
+    }
 
     // Event Listeners Setup
     function setupEventListeners() {
-      // Header Update
-      const updateHeaderBtn = document.getElementById("update-header-btn");
-      if (updateHeaderBtn) {
-        updateHeaderBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          
-          const formData = new FormData();
-          formData.append("section", "header");
-          formData.append("title", document.getElementById("home-header-title").value);
-          
-          const imageFile = document.getElementById("home-header-image").files[0];
-          if (imageFile) formData.append("image", imageFile);
-          
-          await updateContent(
-            "header", 
-            formData, 
-            "update-header-btn", 
-            "header-spinner", 
-            "header-status"
-          );
-        });
-      }
-
-      // Service Update
-      async function updateService(serviceId) {
-  const buttonId = 'update-service1-btn';
-  const spinnerId = 'service-spinner';
-  const statusId = 'service-status';
-  
-  try {
-    toggleLoading(true, buttonId, spinnerId, statusId);
-    
-    const formData = new FormData();
-    formData.append('title', document.getElementById('service1-title').value);
-    formData.append('description', document.getElementById('service1-description').value);
-    
-    const imageFile = document.getElementById('service1-image').files[0];
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
-
-    const response = await fetch(apiEndpoints.services.update(serviceId), {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Update failed');
-    }
-
-    const data = await response.json();
-    showStatus(statusId, 'Service updated successfully!', true);
-    return data;
-  } catch (error) {
-    showStatus(statusId, error.message, false);
-    throw error;
-  } finally {
-    toggleLoading(false, buttonId, spinnerId, statusId);
-  }
-}
-      const updateServiceBtn = document.getElementById("update-service1-btn");
-      if (updateServiceBtn) {
-        updateServiceBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          
-          const formData = new FormData();
-          formData.append("section", "services");
-          formData.append("serviceId", "1");
-          formData.append("title", document.getElementById("service1-title").value);
-          formData.append("description", document.getElementById("service1-description").value);
-          
-          const imageFile = document.getElementById("service1-image").files[0];
-          if (imageFile) formData.append("image", imageFile);
-          
-          await updateContent(
-            "service", 
-            formData, 
-            "update-service1-btn", 
-            "service-spinner", 
-            "service-status"
-          );
-        });
-      }
-//===
-// Configuration
-const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
-const apiEndpoints = {
-  services: {
-    get: (id) => `${backendUrl}/api/services/${id}`,
-    update: (id) => `${backendUrl}/api/services/${id}`
-  },
-  header: `${backendUrl}/api/header`,
-  footer: `${backendUrl}/api/footer`
-};
-
-// Unified update function
-async function updateContent(type, id, formData) {
-  let buttonId, spinnerId, statusId;
-  
-  // Set element IDs based on content type
-  switch(type) {
-    case 'service':
-      buttonId = 'update-service1-btn';
-      spinnerId = 'service-spinner';
-      statusId = 'service-status';
-      break;
-    case 'header':
-      buttonId = 'update-header-btn';
-      spinnerId = 'header-spinner';
-      statusId = 'header-status';
-      break;
-    case 'footer':
-      buttonId = 'update-footer-btn';
-      spinnerId = 'footer-spinner';
-      statusId = 'footer-status';
-      break;
-    default:
-      throw new Error('Invalid content type');
-  }
-
-  try {
-    toggleLoading(true, buttonId, spinnerId, statusId);
-    
-    // Determine the endpoint based on type
-    let endpoint;
-    switch(type) {
-      case 'service':
-        endpoint = apiEndpoints.services.update(id);
-        break;
-      case 'header':
-        endpoint = apiEndpoints.header;
-        break;
-      case 'footer':
-        endpoint = apiEndpoints.footer;
-        break;
-    }
-
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Update failed');
-    }
-
-    const data = await response.json();
-    showStatus(statusId, `${type} updated successfully!`, true);
-    return data;
-  } catch (error) {
-    showStatus(statusId, error.message, false);
-    throw error;
-  } finally {
-    toggleLoading(false, buttonId, spinnerId, statusId);
-  }
-}
-
-// Service update handler
-async function handleServiceUpdate() {
-  const formData = new FormData();
-  formData.append('title', document.getElementById('service1-title').value);
-  formData.append('description', document.getElementById('service1-description').value);
-  
-  const imageFile = document.getElementById('service1-image').files[0];
-  if (imageFile) {
-    formData.append('image', imageFile);
-  }
-  
-  await updateContent('service', 1, formData);
-}
-
-// Header update handler
-async function handleHeaderUpdate() {
-  const formData = new FormData();
-  formData.append('title', document.getElementById('home-header-title').value);
-  
-  const imageFile = document.getElementById('home-header-image').files[0];
-  if (imageFile) {
-    formData.append('image', imageFile);
-  }
-  
-  await updateContent('header', null, formData);
-}
-
-// Footer update handler
-async function handleFooterUpdate() {
-  const formData = new FormData();
-  formData.append('text', document.getElementById('home-footer-text').value);
-  
-  await updateContent('footer', null, formData);
-}
-
-// Event Listeners Setup
-function setupEventListeners() {
-  document.getElementById('update-service1-btn').addEventListener('click', handleServiceUpdate);
-  document.getElementById('update-header-btn').addEventListener('click', handleHeaderUpdate);
-  document.getElementById('update-footer-btn').addEventListener('click', handleFooterUpdate);
-  
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    localStorage.removeItem('authToken');
-    window.location.href = '/admin-login.html';
-  });
-}
-
-// Initialization
-document.addEventListener("DOMContentLoaded", function() {
-  if (!localStorage.getItem('authToken')) {
-    window.location.href = '/admin-login.html';
-    return;
-  }
-
-  setupImagePreview('home-header-image', 'header-image-preview');
-  setupImagePreview('service1-image', 'service-image-preview');
-  loadCurrentContent();
-  setupEventListeners();
-});
-//===
-      // Footer Update
-      const updateFooterBtn = document.getElementById("update-footer-btn");
-      if (updateFooterBtn) {
-        updateFooterBtn.addEventListener("click", async (e) => {
-          e.preventDefault();
-          
-          const formData = new FormData();
-          formData.append("section", "footer");
-          formData.append("footerText", document.getElementById("home-footer-text").value);
-          
-          await updateContent(
-            "footer", 
-            formData, 
-            "update-footer-btn", 
-            "footer-spinner", 
-            "footer-status"
-          );
-        });
-      }
-
-      // Logout
-      const logoutBtn = document.getElementById("logout-btn");
-      if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-          localStorage.removeItem('authToken');
-          window.location.href = '/admin-login.html';
-        });
-      }
+      document.getElementById('update-service1-btn').addEventListener('click', handleServiceUpdate);
+      document.getElementById('update-header-btn').addEventListener('click', handleHeaderUpdate);
+      document.getElementById('update-footer-btn').addEventListener('click', handleFooterUpdate);
+      
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('authToken');
+        window.location.href = '/admin-login.html';
+      });
     }
 
     // Initialization
     document.addEventListener("DOMContentLoaded", function() {
-      // Check authentication
       if (!localStorage.getItem('authToken')) {
         window.location.href = '/admin-login.html';
         return;
       }
 
-      // Setup image previews
       setupImagePreview('home-header-image', 'header-image-preview');
       setupImagePreview('service1-image', 'service-image-preview');
-
-      // Load content
       loadCurrentContent();
-
-      // Setup event listeners
       setupEventListeners();
     });
   </script>
