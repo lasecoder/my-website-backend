@@ -346,7 +346,144 @@ document.getElementById('update-service1-btn').addEventListener('click', async (
           );
         });
       }
+//===
+// Configuration
+const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
+const apiEndpoints = {
+  services: {
+    get: (id) => `${backendUrl}/api/services/${id}`,
+    update: (id) => `${backendUrl}/api/services/${id}`
+  },
+  header: `${backendUrl}/api/header`,
+  footer: `${backendUrl}/api/footer`
+};
 
+// Unified update function
+async function updateContent(type, id, formData) {
+  let buttonId, spinnerId, statusId;
+  
+  // Set element IDs based on content type
+  switch(type) {
+    case 'service':
+      buttonId = 'update-service1-btn';
+      spinnerId = 'service-spinner';
+      statusId = 'service-status';
+      break;
+    case 'header':
+      buttonId = 'update-header-btn';
+      spinnerId = 'header-spinner';
+      statusId = 'header-status';
+      break;
+    case 'footer':
+      buttonId = 'update-footer-btn';
+      spinnerId = 'footer-spinner';
+      statusId = 'footer-status';
+      break;
+    default:
+      throw new Error('Invalid content type');
+  }
+
+  try {
+    toggleLoading(true, buttonId, spinnerId, statusId);
+    
+    // Determine the endpoint based on type
+    let endpoint;
+    switch(type) {
+      case 'service':
+        endpoint = apiEndpoints.services.update(id);
+        break;
+      case 'header':
+        endpoint = apiEndpoints.header;
+        break;
+      case 'footer':
+        endpoint = apiEndpoints.footer;
+        break;
+    }
+
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Update failed');
+    }
+
+    const data = await response.json();
+    showStatus(statusId, `${type} updated successfully!`, true);
+    return data;
+  } catch (error) {
+    showStatus(statusId, error.message, false);
+    throw error;
+  } finally {
+    toggleLoading(false, buttonId, spinnerId, statusId);
+  }
+}
+
+// Service update handler
+async function handleServiceUpdate() {
+  const formData = new FormData();
+  formData.append('title', document.getElementById('service1-title').value);
+  formData.append('description', document.getElementById('service1-description').value);
+  
+  const imageFile = document.getElementById('service1-image').files[0];
+  if (imageFile) {
+    formData.append('image', imageFile);
+  }
+  
+  await updateContent('service', 1, formData);
+}
+
+// Header update handler
+async function handleHeaderUpdate() {
+  const formData = new FormData();
+  formData.append('title', document.getElementById('home-header-title').value);
+  
+  const imageFile = document.getElementById('home-header-image').files[0];
+  if (imageFile) {
+    formData.append('image', imageFile);
+  }
+  
+  await updateContent('header', null, formData);
+}
+
+// Footer update handler
+async function handleFooterUpdate() {
+  const formData = new FormData();
+  formData.append('text', document.getElementById('home-footer-text').value);
+  
+  await updateContent('footer', null, formData);
+}
+
+// Event Listeners Setup
+function setupEventListeners() {
+  document.getElementById('update-service1-btn').addEventListener('click', handleServiceUpdate);
+  document.getElementById('update-header-btn').addEventListener('click', handleHeaderUpdate);
+  document.getElementById('update-footer-btn').addEventListener('click', handleFooterUpdate);
+  
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    localStorage.removeItem('authToken');
+    window.location.href = '/admin-login.html';
+  });
+}
+
+// Initialization
+document.addEventListener("DOMContentLoaded", function() {
+  if (!localStorage.getItem('authToken')) {
+    window.location.href = '/admin-login.html';
+    return;
+  }
+
+  setupImagePreview('home-header-image', 'header-image-preview');
+  setupImagePreview('service1-image', 'service-image-preview');
+  loadCurrentContent();
+  setupEventListeners();
+});
+//===
       // Footer Update
       const updateFooterBtn = document.getElementById("update-footer-btn");
       if (updateFooterBtn) {
