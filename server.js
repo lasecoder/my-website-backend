@@ -91,7 +91,7 @@ const User = require('./models/User');
 const Header = require('./models/Header');
 const Service = require('./models/Service');
 const Footer = require('./models/Footer');
-const Post = require('./models/Post');
+const Post = require('./models/post');
 
 // Initialize Express app
 const app = express();
