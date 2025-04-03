@@ -458,11 +458,11 @@ app.get('/admin/healthcheck', async (req, res) => {
 // Get all posts - ensure this returns an array
 app.get('/api/posts', async (req, res) => {
   try {
-    const posts = await Post.find().lean(); // .lean() converts to plain JS objects
-    if (!posts || !Array.isArray(posts)) {
-      return res.status(200).json({ success: true, data: [] });
-    }
-    res.status(200).json({ success: true, data: posts });
+    const posts = await Post.find();
+    res.json({ 
+      success: true, 
+      data: posts 
+    });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
@@ -472,6 +472,7 @@ app.get('/api/posts', async (req, res) => {
 });
 
 // Create a new post
+// POST new post
 app.post('/api/posts', 
   authenticateAdmin,
   upload.fields([
@@ -482,14 +483,13 @@ app.post('/api/posts',
   async (req, res) => {
     try {
       const { title, content } = req.body;
-      const image = req.files?.image?.[0]?.path || null;
-      const video = req.files?.video?.[0]?.path || null;
+      const image = req.files?.image?.[0]?.path;
+      const video = req.files?.video?.[0]?.path;
 
-      const newPost = await Post.create({ title, content, image, video });
-      
+      const post = await Post.create({ title, content, image, video });
       res.status(201).json({ 
         success: true, 
-        data: newPost 
+        data: post 
       });
     } catch (error) {
       res.status(500).json({ 
