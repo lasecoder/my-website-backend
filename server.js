@@ -59,23 +59,7 @@ const upload = multer({
   }
 });
 
-// Error handling middleware for uploads
-const handleUploadErrors = (err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    return res.status(400).json({
-      success: false,
-      message: err.code === 'LIMIT_FILE_SIZE' 
-        ? 'File too large (max 10MB)' 
-        : 'File upload error'
-    });
-  } else if (err) {
-    return res.status(400).json({ 
-      success: false, 
-      message: err.message 
-    });
-  }
-  next();
-};
+
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
@@ -418,7 +402,24 @@ app.use((err, req, res, next) => {
     message: 'Internal server error'
   });
 });
-
+//===============
+// Error handling middleware for uploads
+const handleUploadErrors = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      message: err.code === 'LIMIT_FILE_SIZE' 
+        ? 'File too large (max 10MB)' 
+        : 'File upload error'
+    });
+  } else if (err) {
+    return res.status(400).json({ 
+      success: false, 
+      message: err.message 
+    });
+  }
+  next();
+};
 // Start server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
