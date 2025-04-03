@@ -19,8 +19,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true // Ensure HTTPS
 });
-
-// Optimized Cloudinary Storage Configuration
+///
+// Optimized Cloudinary Storage Configuration=====
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: (req, file) => {
