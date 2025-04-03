@@ -97,16 +97,21 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware setup
+// Replace your current CORS middleware with this:
 app.use(cors({
   origin: [
-    'https://your-frontend-domain.com', // Your production frontend
-    'http://localhost:3000'            // Local development
+    'https://my-website-backend-ixzh.onrender.com', // Your Render frontend
+    'http://localhost:3000'                         // Local development
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
+// Handle preflight requests
+app.options('*', cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'Admin')));
 app.use(express.static(path.join(__dirname, 'public')));
