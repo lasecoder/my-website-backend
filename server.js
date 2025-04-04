@@ -11,7 +11,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const fs = require('fs');
 const path = require('path');
 
-/* Debug deployment structure
+//Debug deployment structure
 console.log('=== Server Starting ===');
 console.log('Current directory:', __dirname);
 console.log('Directory contents:', fs.readdirSync(__dirname));
@@ -19,7 +19,7 @@ try {
   console.log('Models directory contents:', fs.readdirSync(path.join(__dirname, 'models')));
 } catch (err) {
   console.error('Error reading models directory:', err);
-}*/
+}
 dotenv.config();
 
 // Enhanced Cloudinary Configuration
@@ -56,23 +56,47 @@ cloudinary.api.ping()
   .then(() => console.log('✅ Cloudinary connection OK'))
   .catch(err => console.error('❌ Cloudinary connection failed:', err));
 
-// Configure Multer with better error handling
+/////////////
+// Add this at the top of your routes
 const upload = multer({
-  storage: storage,
-  limits: { 
-    fileSize: 10 * 1024 * 1024, // 10MB
-    files: 1 
-  },
-  fileFilter: (req, file, cb) => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4'];
-    if (validTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'), false);
+  storage: new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'blog-posts',
+      allowed_formats: ['jpg', 'png', 'jpeg', 'gif']
     }
-  }
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+// Then modify your POST route
+app.post('/api/posts', 
+  authenticateAdmin,
+  upload.single('image'), // 'image' must match your FormData field name
+  async (req, res) => {
+    try {
+      console.log('Uploaded file:', req.file); // Debug Cloudinary upload
+      console.log('Text fields:', req.body); // Debug title/content
+
+      const newPost = await Post.create({
+        title: req.body.title,
+        content: req.body.content,
+        image: req.file?.path // Cloudinary URL
+      });
+
+      res.status(201).json({ 
+        success: true, 
+        data: newPost 
+      });
+    } catch (error) {
+      console.error('Post creation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  }
+);
 //=========
 // Error handling middleware for uploads (now properly placed after initialization)
 const handleUploadErrors = (err, req, res, next) => {
