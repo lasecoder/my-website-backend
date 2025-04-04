@@ -134,13 +134,6 @@ app.get('/admin_dashboard.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'Admin', 'admin_dashboard.html'));
 });
 
-// Debug: List all files in models directory
-try {
-  const modelDir = path.join(__dirname, 'models');
-  console.log('Models directory contents:', fs.readdirSync(modelDir));
-} catch (err) {
-  console.error('Error reading models directory:', err);
-}
 // Initialize default data
 async function initializeDefaultData() {
   try {
