@@ -7,8 +7,9 @@ const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+// Use absolute path and consistent naming
 const path = require('path');
-const Post = require(path.join(__dirname, 'models', 'post'));
+const Post = require(path.join(__dirname, 'models', 'post')); // lowercase filename
 // Load environment variables
 dotenv.config();
 

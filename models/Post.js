@@ -46,4 +46,5 @@ postSchema.pre('save', function(next) {
   next();
 });
 
-module.exports = mongoose.model('post', postSchema);
+// Key change: Ensure model name matches filename
+module.exports = mongoose.model('Post', postSchema); // Changed to 'Post' to match standard convention
