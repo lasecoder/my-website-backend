@@ -459,11 +459,6 @@ app.get('/admin/healthcheck', async (req, res) => {
 });
 
 //===============Blog===
-// ========== POSTS API ROUTES ==========
-
-// Post model (add this near your other models)
-
-
 // Get all posts
 // Get all posts - ensure this returns an array
 app.get('/api/posts', async (req, res) => {
