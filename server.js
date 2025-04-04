@@ -5,32 +5,33 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
+// 1. Import dependencies FIRST
+const express = require('express');
+const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-// Add at the top of server.js
-const fs = require('fs');
+const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
-//Debug deployment structure
-/*console.log('=== Server Starting ===');
-console.log('Current directory:', __dirname);
-console.log('Directory contents:', fs.readdirSync(__dirname));
-try {
-  console.log('Models directory contents:', fs.readdirSync(path.join(__dirname, 'models')));
-} catch (err) {
-  console.error('Error reading models directory:', err);
-}*/
+
+// 3. Load environment variables
 dotenv.config();
 
-// Enhanced Cloudinary Configuration
+// 4. Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true // Ensure HTTPS
+  secure: true
 });
 
-// Optimized Cloudinary Storage Configuration=====
+// Verify Cloudinary connection
+cloudinary.api.ping()
+  .then(() => console.log('✅ Cloudinary connection OK'))
+  .catch(err => console.error('❌ Cloudinary connection failed:', err));
+
+// 5. Configure Multer storage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: (req, file) => {
@@ -51,37 +52,30 @@ const storage = new CloudinaryStorage({
     };
   }
 });
-// After cloudinary.config()
-cloudinary.api.ping()
-  .then(() => console.log('✅ Cloudinary connection OK'))
-  .catch(err => console.error('❌ Cloudinary connection failed:', err));
 
-/////////////
-// Add this at the top of your routes
 const upload = multer({
-  storage: new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-      folder: 'blog-posts',
-      allowed_formats: ['jpg', 'png', 'jpeg', 'gif']
-    }
-  }),
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
-// Then modify your POST route
+// 6. Add middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 7. Define routes AFTER all configurations
 app.post('/api/posts', 
   authenticateAdmin,
-  upload.single('image'), // 'image' must match your FormData field name
+  upload.single('image'),
   async (req, res) => {
     try {
-      console.log('Uploaded file:', req.file); // Debug Cloudinary upload
-      console.log('Text fields:', req.body); // Debug title/content
+      console.log('Uploaded file:', req.file);
+      console.log('Text fields:', req.body);
 
       const newPost = await Post.create({
         title: req.body.title,
         content: req.body.content,
-        image: req.file?.path // Cloudinary URL
+        image: req.file?.path
       });
 
       res.status(201).json({ 
@@ -97,6 +91,8 @@ app.post('/api/posts',
     }
   }
 );
+
+
 //=========
 // Error handling middleware for uploads (now properly placed after initialization)
 const handleUploadErrors = (err, req, res, next) => {
