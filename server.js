@@ -97,7 +97,7 @@ mongoose.connect(process.env.MONGO_URI)
   });
 
 // Models
-const Post = require(path.join(__dirname, 'models', 'post'));
+const Post = require(path.join(__dirname, 'models', 'Post'));  // Match exact filename
 const User = require(path.join(__dirname, 'models', 'User'));
 const Header = require(path.join(__dirname, 'models', 'Header'));
 const Service = require(path.join(__dirname, 'models', 'Service'));

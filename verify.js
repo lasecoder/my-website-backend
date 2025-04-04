@@ -1,20 +1,30 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('=== Deployment Verification ===');
+console.log('=== Verifying Deployment Structure ===');
 console.log('Current directory:', __dirname);
 
-const modelPath = path.join(__dirname, 'models', 'post.js');
-const exists = fs.existsSync(modelPath);
+// Check for both possible filenames
+const possiblePaths = [
+  path.join('models', 'post.js'),
+  path.join('models', 'Post.js'),
+  'post.js',
+  'Post.js'
+];
 
-console.log(`post.js exists: ${exists}`);
-console.log('Models directory contents:', fs.existsSync(path.join(__dirname, 'models')) 
-  ? fs.readdirSync(path.join(__dirname, 'models')) 
-  : 'Models directory does not exist');
+let foundPath = null;
+possiblePaths.forEach(file => {
+  const fullPath = path.join(__dirname, file);
+  if (fs.existsSync(fullPath)) {
+    foundPath = fullPath;
+    console.log(`✅ Found model at: ${file}`);
+  }
+});
 
-if (!exists) {
-  console.error('❌ Error: post.js not found in models directory');
+if (!foundPath) {
+  console.error('❌ Error: Could not find Post model file');
+  console.log('Searched in:', possiblePaths);
   process.exit(1);
 }
 
-console.log('✅ All files verified successfully');
+console.log('✅ All required files present');
