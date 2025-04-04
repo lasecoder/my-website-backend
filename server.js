@@ -51,6 +51,10 @@ const storage = new CloudinaryStorage({
     };
   }
 });
+// After cloudinary.config()
+cloudinary.api.ping()
+  .then(() => console.log('✅ Cloudinary connection OK'))
+  .catch(err => console.error('❌ Cloudinary connection failed:', err));
 
 // Configure Multer with better error handling
 const upload = multer({
@@ -113,10 +117,11 @@ const port = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'https://my-website-backend-ixzh.onrender.com',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'http://localhost:5000' // Add your admin dashboard origin
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 204
@@ -205,6 +210,15 @@ function authenticateAdmin(req, res, next) {
     });
   }
 }
+
+/////////////////
+// Add this middleware before your routes
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log('Headers:', req.headers);
+  console.log('Body:', req.body);
+  next();
+});
 // ==================== API Routes ====================
 
 // Admin login
