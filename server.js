@@ -11,7 +11,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const fs = require('fs');
 const path = require('path');
 
-// Debug deployment structure
+/* Debug deployment structure
 console.log('=== Server Starting ===');
 console.log('Current directory:', __dirname);
 console.log('Directory contents:', fs.readdirSync(__dirname));
@@ -19,7 +19,7 @@ try {
   console.log('Models directory contents:', fs.readdirSync(path.join(__dirname, 'models')));
 } catch (err) {
   console.error('Error reading models directory:', err);
-}
+}*/
 dotenv.config();
 
 // Enhanced Cloudinary Configuration
