@@ -7,10 +7,19 @@ const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-// Use absolute path and consistent naming
+// Add at the top of server.js
+const fs = require('fs');
 const path = require('path');
-const Post = require(path.join(__dirname, 'models', 'post')); // lowercase filename
-// Load environment variables
+
+// Debug deployment structure
+console.log('=== Server Starting ===');
+console.log('Current directory:', __dirname);
+console.log('Directory contents:', fs.readdirSync(__dirname));
+try {
+  console.log('Models directory contents:', fs.readdirSync(path.join(__dirname, 'models')));
+} catch (err) {
+  console.error('Error reading models directory:', err);
+}
 dotenv.config();
 
 // Enhanced Cloudinary Configuration
@@ -88,10 +97,11 @@ mongoose.connect(process.env.MONGO_URI)
   });
 
 // Models
-const User = require('./models/User');
-const Header = require('./models/Header');
-const Service = require('./models/Service');
-const Footer = require('./models/Footer');
+const Post = require(path.join(__dirname, 'models', 'post'));
+const User = require(path.join(__dirname, 'models', 'User'));
+const Header = require(path.join(__dirname, 'models', 'Header'));
+const Service = require(path.join(__dirname, 'models', 'Service'));
+const Footer = require(path.join(__dirname, 'models', 'Footer'));
 
 
 // Initialize Express app

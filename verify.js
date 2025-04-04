@@ -8,7 +8,9 @@ const modelPath = path.join(__dirname, 'models', 'post.js');
 const exists = fs.existsSync(modelPath);
 
 console.log(`post.js exists: ${exists}`);
-console.log('Models directory contents:', fs.readdirSync(path.join(__dirname, 'models')));
+console.log('Models directory contents:', fs.existsSync(path.join(__dirname, 'models')) 
+  ? fs.readdirSync(path.join(__dirname, 'models')) 
+  : 'Models directory does not exist');
 
 if (!exists) {
   console.error('❌ Error: post.js not found in models directory');
