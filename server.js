@@ -10,7 +10,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 
-
+const app = express();
 // 3. Load environment variables
 dotenv.config();
 
@@ -131,7 +131,7 @@ const Footer = require(path.join(__dirname, 'models', 'Footer'));
 
 
 // Initialize Express app
-const app = express();
+
 const port = process.env.PORT || 5000;
 
 // Middleware setup
