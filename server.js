@@ -9,7 +9,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
-
+const favicon = require('serve-favicon');
 const app = express();
 // 3. Load environment variables
 dotenv.config();
