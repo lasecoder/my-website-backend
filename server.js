@@ -92,7 +92,10 @@ app.post('/api/posts',
   }
 );
 
-
+///===========
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end(); // No Content
+});
 //=========
 // Error handling middleware for uploads (now properly placed after initialization)
 const handleUploadErrors = (err, req, res, next) => {
