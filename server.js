@@ -14,7 +14,7 @@ const fs = require('fs');
 // 3. Load environment variables
 dotenv.config();
 
-// 4. Configure Cloudinary
+//4. CONFIGURE CLOUDINARY (AFTER DOTENV)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -22,42 +22,45 @@ cloudinary.config({
   secure: true
 });
 
-// Verify Cloudinary connection
-cloudinary.api.ping()
-  .then(() => console.log('✅ Cloudinary connection OK'))
-  .catch(err => console.error('❌ Cloudinary connection failed:', err));
-
-// 5. Configure Multer storage
+// 5. SETUP MULTER STORAGE
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: (req, file) => {
-    const resourceType = file.mimetype.startsWith('video') ? 'video' : 'image';
-    const publicId = `${req.params.section || 'general'}_${Date.now()}`;
-    
-    return {
-      folder: 'future_tech_talent',
-      public_id: publicId,
-      resource_type: resourceType,
-      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'webp'],
-      transformation: [
-        { width: 1000, height: 1000, crop: 'limit' },
-        { quality: 'auto:best' }
-      ],
-      overwrite: false,
-      tags: ['admin_dashboard', req.params.section]
-    };
+  params: {
+    folder: 'blog-posts',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'gif']
   }
 });
 
-const upload = multer({
+const upload = multer({ 
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
-// 6. Add middleware
+// 6. MIDDLEWARE (AFTER APP INIT)
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 7. ROUTES (AFTER MIDDLEWARE)
+app.post('/api/posts', upload.single('image'), async (req, res) => {
+  try {
+    const newPost = await Post.create({
+      title: req.body.title,
+      content: req.body.content,
+      image: req.file?.path
+    });
+    res.status(201).json(newPost);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. ERROR HANDLER (AFTER ROUTES)
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
 
 // 7. Define routes AFTER all configurations
 app.post('/api/posts', 
