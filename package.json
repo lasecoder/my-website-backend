@@ -29,6 +29,4 @@
     "models",
     "models/Post.js",
     "server.js",
-    "verify.js"
-  ]
-}
+    "veri
