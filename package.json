@@ -1,39 +1,16 @@
 {
   "name": "my-website-backend",
   "version": "1.0.0",
-<<<<<<< HEAD
   "main": "server.js",
   "scripts": {
     "start": "NODE_ENV=production node server.js",
-  "dev": "node server.js"
-=======
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
->>>>>>> 1cf3fa5 (add server-favicon and lock files)
+    "dev": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-<<<<<<< HEAD
-    
-    "cloudinary": "1.41.3",
-    "express": "^4.18.2",
-    "multer": "^1.4.5",
-    "multer-storage-cloudinary": "4.0.0",
-    "serve-favicon": "^2.5.0"
-  },
-  "files": [
-    "models",
-    "models/Post.js",
-    "server.js",
-    "verify.js"
-  ]
-  
-  
-=======
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.0",
     "cors": "^2.8.5",
@@ -47,6 +24,11 @@
     "multer-storage-cloudinary": "^4.0.0",
     "serve-favicon": "^2.5.0",
     "validator": "^13.15.0"
-  }
->>>>>>> 1cf3fa5 (add server-favicon and lock files)
+  },
+  "files": [
+    "models",
+    "models/Post.js",
+    "server.js",
+    "verify.js"
+  ]
 }
