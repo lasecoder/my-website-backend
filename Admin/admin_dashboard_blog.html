@@ -112,7 +112,8 @@
     const response = await fetch('/api/posts', {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        'Authorization': `Bearer ${localStorage.getItem('authToken')
+}`
       }
     });
     
@@ -156,12 +157,13 @@
     `;
   }
 }
+
 //////////////
 async function addPost(event) {
     event.preventDefault();
     
-    const token = localStorage.getItem('adminToken'); // Make sure you store this on login
-    
+    // Make sure you store this on login
+    const token = localStorage.getItem('authToken'); // ✅ fix here
     const title = document.getElementById("post-title").value;
     const content = document.getElementById("post-content").value;
     const image = document.getElementById("post-image").files[0];
