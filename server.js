@@ -34,7 +34,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 } 
 });
 
 // 6. MIDDLEWARE (AFTER APP INIT
