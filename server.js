@@ -9,8 +9,9 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
-const favicon = require('serve-favicon');
 const app = express();
+const favicon = require('serve-favicon');
+
 // 3. Load environment variables
 dotenv.config();
 
@@ -36,11 +37,11 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
-// 6. MIDDLEWARE (AFTER APP INIT)
-app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+// 6. MIDDLEWARE (AFTER APP INIT
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 // 7. ROUTES (AFTER MIDDLEWARE)
 app.post('/api/posts', upload.single('image'), async (req, res) => {
