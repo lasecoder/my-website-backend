@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Services</title>
-    <link rel="stylesheet" href=".\admin_dashboard_services.css"> <!-- Corrected path -->
+    <link rel="stylesheet" href="./admin_dashboard_services.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
@@ -31,10 +31,10 @@
             <textarea id="service-description" name="service-description" required></textarea>
             
             <label for="service-image">Image:</label>
-            <input type="file" id="service-image" name="service-image">
+            <input type="file" id="service-image" name="service-image" accept="image/*">
             
             <label for="service-video">Video:</label>
-            <input type="file" id="service-video" name="service-video">
+            <input type="file" id="service-video" name="service-video" accept="video/*">
 
             <button type="submit">Add Service</button>
         </form>
@@ -50,15 +50,25 @@
         </form>
     </section>
     <script>
+        // Set base URL for API
+        const API_BASE_URL = "https://my-website-backend-ixzh.onrender.com";
+        
+        // Common Axios configuration
+        axios.defaults.headers.common['Content-Type'] = 'application/json';
+        
         // Fetch current header text when the page loads
-        fetch("https://my-website-backend-ixzh.onrender.com/api/header")
-            .then(response => response.json())
-            .then(data => {
-                console.log("Received data:", data);
-                // Populate the header text input field
-                document.getElementById("header-text").value = data.headerText || "";
-            })
-            .catch(error => console.error("Fetch error:", error));
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch(`${API_BASE_URL}/api/header`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received data:", data);
+                    document.getElementById("header-text").value = data.headerText || "";
+                })
+                .catch(error => console.error("Fetch error:", error));
+        });
 
         // Handle form submission to update the header text
         document.getElementById("header-form").addEventListener("submit", function(event) {
@@ -66,13 +76,17 @@
             
             const headerText = document.getElementById("header-text").value.trim();
 
-            axios.put("https://my-website-backend-ixzh.onrender.com/api/header", { headerText })
+            axios.put(`${API_BASE_URL}/api/header`, { headerText }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
                 .then(response => {
                     alert("✅ Header updated successfully!");
                 })
                 .catch(error => {
                     console.error("❌ Error updating header:", error);
-                    alert("❌ Failed to update header.");
+                    alert(`❌ Failed to update header: ${error.message}`);
                 });
         });
 
@@ -81,12 +95,18 @@
             event.preventDefault();
             
             const formData = new FormData(this);
-            axios.post("https://my-website-backend-ixzh.onrender.com/api/services", formData)
+            axios.post(`${API_BASE_URL}/api/services`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
                 .then(response => {
-                    alert("Service added successfully!");
+                    alert("✅ Service added successfully!");
+                    this.reset(); // Clear the form
                 })
                 .catch(error => {
-                    console.error("Error adding service:", error);
+                    console.error("❌ Error adding service:", error);
+                    alert(`❌ Failed to add service: ${error.message}`);
                 });
         });
 
@@ -96,15 +116,17 @@
 
             const footerText = document.getElementById("contact-footer-text").value.trim();
 
-            console.log("Footer text submitted:", footerText);  // Debug log
-
-            axios.put("https://my-website-backend-ixzh.onrender.com/api/content/footer", { "footer-text": footerText })
+            axios.put(`${API_BASE_URL}/api/content/footer`, { footerText }, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
                 .then(response => {
                     alert("✅ Footer updated successfully!");
                 })
                 .catch(error => {
                     console.error("❌ Error updating footer:", error);
-                    alert("❌ Failed to update footer. Check console.");
+                    alert(`❌ Failed to update footer: ${error.message}`);
                 });
         });
     </script>
