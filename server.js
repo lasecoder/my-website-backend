@@ -496,6 +496,417 @@ app.get('/admin/healthcheck', async (req, res) => {
     });
   }
 });
+///////////////////////////////////////////
+///========service===================
+app.put("/api/content/services-header", upload.single('services-header-image'), async (req, res) => {
+  console.log("Updating Services Header:", req.body);  // Log incoming request
+
+  // Validate 'services-header-title' exists
+  if (!req.body["services-header-title"]) {
+    return res.status(400).json({ error: "services-header-title is required" });
+  }
+
+  try {
+    const headerImage = req.file ? req.file.path : "";  // Set image path if file exists
+
+    const servicesHeader = new ServicesHeader({
+      servicesHeaderTitle: req.body["services-header-title"],
+      servicesHeaderImage: headerImage
+    });
+
+    await servicesHeader.save();
+    console.log("Services Header updated:", servicesHeader);
+
+    res.status(200).json({ message: "Services header updated successfully" });
+  } catch (error) {
+    console.error("Error updating services header:", error);
+    res.status(500).json({ error: "Failed to update services header", details: error.message });
+  }
+});
+
+// ------------------------
+// Route to update Default Services Content
+// ------------------------
+app.put('/api/content/services', upload.single('default-services-image'), async (req, res) => {
+  console.log('Updating Default Services Content:', req.body);  // Log incoming request
+
+  // Validate that required data exists
+  if (!req.body["default-services-title"] || !req.body["default-services-content"]) {
+    return res.status(400).json({ error: "Both 'default-services-title' and 'default-services-content' are required" });
+  }
+
+  try {
+    const defaultImage = req.file ? req.file.path : "";
+
+    const defaultServicesContent = new DefaultServicesContent({
+      title: req.body["default-services-title"],
+      content: req.body["default-services-content"],
+      image: defaultImage
+    });
+
+    await defaultServicesContent.save();
+    console.log('Default Services Content updated:', defaultServicesContent);
+
+    res.status(200).json({ message: 'Default services content updated successfully' });
+  } catch (error) {
+    console.error("Error updating default services content:", error);
+    res.status(500).json({ error: "Failed to update default services content", details: error.message });
+  }
+});
+
+// ------------------------
+// Route to update Service 1
+// ------------------------
+app.put('/api/services/1', upload.single('service-img-1'), async (req, res) => {
+  console.log('Updating Service 1:', req.body);  // Log incoming request
+
+  if (!req.body["service-title-1"] || !req.body["service-description-1"]) {
+    return res.status(400).json({ error: "Both 'service-title-1' and 'service-description-1' are required" });
+  }
+
+  try {
+    const serviceImage1 = req.file ? req.file.path : "";
+
+    const service1Data = new Service1({
+      title: req.body["service-title-1"],
+      description: req.body["service-description-1"],
+      image: serviceImage1
+    });
+
+    await service1Data.save();
+    console.log('Service 1 updated:', service1Data);
+
+    res.status(200).json({ message: 'Service 1 updated successfully' });
+  } catch (error) {
+    console.error("Error updating service 1:", error);
+    res.status(500).json({ error: "Failed to update service 1", details: error.message });
+  }
+});
+
+// ------------------------
+// Route to update Service 2
+// ------------------------
+app.put('/api/services/2', upload.single('service-img-2'), async (req, res) => {
+  console.log('Updating Service 2:', req.body);  // Log incoming request
+  
+  // Validate required fields: title and description
+  if (!req.body["service-title-2"] || !req.body["service-description-2"]) {
+    return res.status(400).json({ error: "Both 'service-title-2' and 'service-description-2' are required" });
+  }
+
+  try {
+    // Get the image path if file is uploaded
+    const serviceImage2 = req.file ? req.file.path : "";
+
+    // Handle the optional link field: if it's not provided, set it to null or an empty string
+    const serviceLink2 = req.body["service-link-2"] || "";  // Default to empty string if not provided
+
+    // Create data object for service 2
+    const service2Data = {
+      title: req.body["service-title-2"],
+      description: req.body["service-description-2"],
+      image: serviceImage2,
+      link: serviceLink2  // Add the optional field to the data
+    };
+
+    // Example: Replace with your model logic to save the data to the database
+    // await Service2Model.create(service2Data);
+
+    console.log('Service 2 updated:', service2Data);
+
+    res.status(200).json({ message: 'Service 2 updated successfully' });
+  } catch (error) {
+    console.error("Error updating service 2:", error);
+    res.status(500).json({ error: "Failed to update service 2", details: error.message });
+  }
+});
+
+// ------------------------
+// Route to update Footer
+// ------------------------
+app.put('/api/content/footer', async (req, res) => {
+  console.log('Updating Footer:', req.body);
+
+  if (!req.body["footer-text"]) {
+    return res.status(400).json({ error: "Footer text is required" });
+  }
+
+  try {
+    const footerData = new Footer({
+      footerText: req.body["footer-text"]
+    });
+
+    await footerData.save();
+    console.log('Footer updated:', footerData);
+
+    res.status(200).json({ message: 'Footer updated successfully' });
+  } catch (error) {
+    console.error("Error updating footer:", error);
+    res.status(500).json({ error: "Failed to update footer", details: error.message });
+  }
+});
+
+///==========End service code =======
+///////////////////////////////////////////
+////=======Blog========
+// Create Post (with Image and Video Upload Support)
+app.post("/api/posts", upload.fields([{ name: "image" }, { name: "video" }]), async (req, res) => {
+  try {
+      const { title, content } = req.body;
+      const image = req.files["image"] ? req.files["image"][0].filename : null;
+      const video = req.files["video"] ? req.files["video"][0].filename : null;
+      const newPost = new Post({ title, content, image, video });
+      await newPost.save();
+      res.status(201).json({ message: "Post created successfully!", post: newPost });
+  } catch (error) {
+      res.status(500).json({ message: "Error creating post", error });
+  }
+});
+
+// Get All Posts
+app.get("/api/posts", async (req, res) => {
+  try {
+      const posts = await Post.find();
+      res.json(posts);
+  } catch (error) {
+      res.status(500).json({ message: "Error fetching posts", error });
+  }
+});
+
+// Update Post
+app.put("/api/posts/:id", async (req, res) => {
+  try {
+      const updatedPost = await Post.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      res.json({ message: "Post updated successfully!", post: updatedPost });
+  } catch (error) {
+      res.status(500).json({ message: "Error updating post", error });
+  }
+});
+
+// Delete Post
+app.delete("/api/posts/:id", async (req, res) => {
+  try {
+      await Post.findByIdAndDelete(req.params.id);
+      res.json({ message: "Post deleted successfully!" });
+  } catch (error) {
+      res.status(500).json({ message: "Error deleting post", error });
+  }
+});
+// Endpoint to get posts with search functionality
+app.get("/api/posts", async (req, res) => {
+  const searchQuery = req.query.search || ''; // Get the search query from the URL
+
+  // Find posts that match the search query in either title or content
+  const posts = await Post.find({
+      $or: [
+          { title: { $regex: searchQuery, $options: 'i' } },  // Case-insensitive search on title
+          { content: { $regex: searchQuery, $options: 'i' } } // Case-insensitive search on content
+      ]
+  });
+
+  res.json(posts);  // Send the filtered posts as a response
+});
+////=======End Blog====
+/////////////////////////////////////////////////////////////////////////////////////////////////
+////=========vacancy and scholar===========
+// 🎯 VACANCY ROUTES
+app.get('/api/vacancies', async (req, res) => {
+  try {
+      const vacancies = await Vacancy.find();
+      res.json(vacancies);
+  } catch (error) {
+      res.status(500).json({ error: 'Error fetching vacancies' });
+  }
+});
+
+app.post('/api/vacancies', upload.single('image'), async (req, res) => {
+  try {
+      const { title, description } = req.body;
+      const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+      const newVacancy = new Vacancy({ title, description, imageUrl });
+      await newVacancy.save();
+      res.status(201).json(newVacancy);
+  } catch (error) {
+      res.status(500).json({ error: 'Error creating vacancy' });
+  }
+});
+
+app.delete('/api/vacancies/:id', async (req, res) => {
+  try {
+      await Vacancy.findByIdAndDelete(req.params.id);
+      res.status(200).json({ message: 'Vacancy deleted successfully' });
+  } catch (error) {
+      res.status(500).json({ error: 'Error deleting vacancy' });
+  }
+});
+
+// 🎯 SCHOLARSHIP ROUTES
+app.get('/api/scholarships', async (req, res) => {
+  try {
+      const scholarships = await Scholarship.find();
+      res.json(scholarships);
+  } catch (err) {
+      res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/scholarships', upload.single('image'), async (req, res) => {
+  try {
+      const { title, description } = req.body;
+      const image = req.file ? `/uploads/${req.file.filename}` : null;
+      const newScholarship = new Scholarship({ title, description, image });
+      const savedScholarship = await newScholarship.save();
+      res.status(201).json(savedScholarship);
+  } catch (err) {
+      console.error("❌ Error creating scholarship:", err);
+      res.status(400).json({ message: err.message });
+  }
+});
+
+app.put('/api/scholarships/:id', upload.single('image'), async (req, res) => {
+  try {
+      const scholarship = await Scholarship.findById(req.params.id);
+      if (!scholarship) return res.status(404).json({ message: "Scholarship not found" });
+
+      scholarship.title = req.body.title || scholarship.title;
+      scholarship.description = req.body.description || scholarship.description;
+
+      if (req.file) {
+          if (scholarship.image) fs.unlinkSync("." + scholarship.image);
+          scholarship.image = "/uploads/" + req.file.filename;
+      }
+
+      const updatedScholarship = await scholarship.save();
+      res.json(updatedScholarship);
+  } catch (err) {
+      console.error("❌ Error updating scholarship:", err);
+      res.status(400).json({ message: err.message });
+  }
+});
+
+app.delete('/api/scholarships/:id', async (req, res) => {
+  try {
+      const scholarship = await Scholarship.findByIdAndDelete(req.params.id);
+      if (!scholarship) return res.status(404).json({ message: "Scholarship not found" });
+      if (scholarship.image) fs.unlinkSync("." + scholarship.image);
+      res.json({ message: 'Scholarship deleted' });
+  } catch (err) {
+      console.error("❌ Error deleting scholarship:", err);
+      res.status(400).json({ message: err.message });
+  }
+});
+
+// 🎯 HEADER ROUTES
+app.get("/api/header", async (req, res) => {
+  try {
+      let header = await Header.findOne();
+      if (!header) {
+          header = new Header();
+          await header.save();
+      }
+      res.json(header);
+  } catch (error) {
+      console.error("❌ Error fetching header:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/api/header", upload.single("logo"), async (req, res) => {
+  try {
+      let header = await Header.findOne() || new Header();
+      if (req.body.title) header.title = req.body.title;
+      if (req.file) {
+          if (header.logoUrl !== "/uploads/default-logo.png") fs.unlinkSync("." + header.logoUrl);
+          header.logoUrl = "/uploads/" + req.file.filename;
+      }
+      await header.save();
+      res.json({ message: "✅ Header updated successfully", header });
+  } catch (error) {
+      console.error("❌ Error updating header:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// 🎯 FOOTER ROUTES
+app.get('/api/footer', async (req, res) => {
+  try {
+      const footer = await Footer.findOne().sort({ _id: -1 });
+      res.json({ footerContent: footer ? footer.content : "Default footer content" });
+  } catch (error) {
+      res.status(500).json({ error: 'Error fetching footer content' });
+  }
+});
+
+app.post('/api/footer', async (req, res) => {
+  try {
+      const { footerContent } = req.body;
+      await Footer.deleteMany({});
+      const newFooter = new Footer({ content: footerContent });
+      await newFooter.save();
+      res.json({ message: "Footer updated successfully!" });
+  } catch (error) {
+      res.status(500).json({ error: 'Error saving footer content' });
+  }
+});
+// API routes
+
+// Get header and footer content
+
+// API Routes for Scholar Header and Footer
+app.get("/api/scholar-header", async (req, res) => {
+  try {
+    const data = await ScholarHeader.findOne({});
+    res.json(data || { header: "" });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching scholar header" });
+  }
+});
+
+app.post("/api/scholar-header", async (req, res) => {
+  const { header } = req.body;
+  try {
+    let data = await ScholarHeader.findOne({});
+    if (data) {
+      data.header = header || data.header;
+      await data.save();
+    } else {
+      data = new ScholarHeader({ header });
+      await data.save();
+    }
+    res.json({ message: "Scholar Header updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving scholar header" });
+  }
+});
+
+app.get("/api/scholar-footer", async (req, res) => {
+  try {
+    const data = await ScholarFooter.findOne({});
+    res.json(data || { footer: "" });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching scholar footer" });
+  }
+});
+
+app.post("/api/scholar-footer", async (req, res) => {
+  const { footer } = req.body;
+  try {
+    let data = await ScholarFooter.findOne({});
+    if (data) {
+      data.footer = footer || data.footer;
+      await data.save();
+    } else {
+      data = new ScholarFooter({ footer });
+      await data.save();
+    }
+    res.json({ message: "Scholar Footer updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving scholar footer" });
+  }
+});
+
+
+///==========End of vacancy and scholar====
 // Start server
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
