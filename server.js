@@ -140,8 +140,7 @@ const port = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'https://my-website-backend-ixzh.onrender.com',
-    'http://localhost:3000',
-    'http://localhost:5000' // Add your admin dashboard origin
+     // Add your admin dashboard origin
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
