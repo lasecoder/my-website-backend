@@ -28,7 +28,8 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'blog-posts',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'gif']
+    allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'mov', 'avi']
+
   }
 });
 
