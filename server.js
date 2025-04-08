@@ -28,8 +28,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'blog-posts',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'mov', 'avi']
-
+    allowed_formats: ['jpg', 'png', 'jpeg', 'gif']
   }
 });
 
@@ -44,11 +43,55 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
+// 7. ROUTES (AFTER MIDDLEWARE)
+app.post('/api/posts', upload.single('image'), async (req, res) => {
+  try {
+    const newPost = await Post.create({
+      title: req.body.title,
+      content: req.body.content,
+      image: req.file?.path
+    });
+    res.status(201).json(newPost);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 8. ERROR HANDLER (AFTER ROUTES)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
+
+// 7. Define routes AFTER all configurations
+app.post('/api/posts', 
+  authenticateAdmin,
+  upload.single('image'),
+  async (req, res) => {
+    try {
+      console.log('Uploaded file:', req.file);
+      console.log('Text fields:', req.body);
+
+      const newPost = await Post.create({
+        title: req.body.title,
+        content: req.body.content,
+        image: req.file?.path
+      });
+
+      res.status(201).json({ 
+        success: true, 
+        data: newPost 
+      });
+    } catch (error) {
+      console.error('Post creation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  }
+);
+
 ///===========
 app.get('/favicon.ico', (req, res) => {
   res.status(204).end(); // No Content
@@ -255,6 +298,344 @@ app.post('/admin/login', async (req, res) => {
   }
 });
 
+// Header routes
+app.get('/api/header', authenticateAdmin, async (req, res) => {
+  try {
+    const header = await Header.findOne() || { 
+      title: 'FutureTechTalent - Professional Business Solutions',
+      image: '' 
+    };
+    res.json({
+      success: true,
+      data: header
+    });
+  } catch (error) {
+    console.error('Header fetch error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch header'
+    });
+  }
+});
+
+app.put('/api/header', 
+  authenticateAdmin,
+  upload.single('image'),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const updateData = {
+        title: req.body.title
+      };
+
+      if (req.file) {
+        updateData.image = req.file.path;
+      }
+
+      const header = await Header.findOneAndUpdate(
+        {},
+        updateData,
+        { upsert: true, new: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Header updated successfully',
+        data: header
+      });
+    } catch (error) {
+      console.error('Header update error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+);
+
+// Service routes
+// Ensure these routes exist in your server.js
+app.get('/api/services', async (req, res) => {
+  try {
+    const services = await Service.find();
+    res.json({ success: true, data: services });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Service routes
+app.get('/api/services/:id', async (req, res) => {
+  try {
+    const service = await Service.findOne({ serviceId: req.params.id });
+    if (!service) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Service not found' 
+      });
+    }
+    res.json({
+      success: true,
+      data: service
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// Add proper error handling middleware
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  
+  // Always return JSON, even for errors
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
+});
+// In server.js
+app.put('/api/services/:id', 
+  authenticateAdmin,
+  upload.single('image'),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = {
+        title: req.body.title,
+        description: req.body.description
+      };
+
+      if (req.file) {
+        updateData.image = req.file.path;
+      }
+
+      const service = await Service.findOneAndUpdate(
+        { serviceId: id },
+        updateData,
+        { new: true }
+      );
+
+      if (!service) {
+        return res.status(404).json({
+          success: false,
+          message: 'Service not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: service,
+        message: 'Service updated successfully'
+      });
+    } catch (error) {
+      console.error('Service update error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+);
+// Footer routes
+app.get('/api/footer', authenticateAdmin, async (req, res) => {
+  try {
+    const footer = await Footer.findOne() || { text: '' };
+    res.json({
+      success: true,
+      data: footer
+    });
+  } catch (error) {
+    console.error('Footer fetch error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch footer'
+    });
+  }
+});
+
+app.put('/api/footer', authenticateAdmin, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const footer = await Footer.findOneAndUpdate(
+      {}, 
+      { text },
+      { new: true, upsert: true }
+    );
+    res.json({
+      success: true,
+      message: 'Footer updated successfully',
+      data: footer
+    });
+  } catch (error) {
+    console.error('Footer update error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update footer'
+    });
+  }
+});
+
+// Health check endpoint
+app.get('/admin/healthcheck', async (req, res) => {
+  try {
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    res.json({
+      status: 'OK',
+      database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      adminUsersExist: adminCount > 0,
+      cloudinary: !!cloudinary.config().cloud_name
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      error: error.message
+    });
+  }
+});
+
+//===============Blog===
+// Get all posts
+// Get all posts - ensure this returns an array
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await Post.find();
+    res.json({ 
+      success: true, 
+      data: posts 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+});
+
+// Create a new post
+// POST new post
+app.post('/api/posts', 
+  authenticateAdmin,
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+  ]),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { title, content } = req.body;
+      const image = req.files?.image?.[0]?.path;
+      const video = req.files?.video?.[0]?.path;
+
+      const post = await Post.create({ title, content, image, video });
+      res.status(201).json({ 
+        success: true, 
+        data: post 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  }
+);
+
+// Update a post
+app.put('/api/posts/:id', 
+  authenticateAdmin,
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+  ]),
+  handleUploadErrors,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { title, content } = req.body;
+      const image = req.files?.image?.[0]?.path || null;
+      const video = req.files?.video?.[0]?.path || null;
+
+      const updatedPost = await Post.findByIdAndUpdate(
+        id,
+        { title, content, image, video },
+        { new: true }
+      );
+
+      if (!updatedPost) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Post not found' 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        data: updatedPost 
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  }
+);
+
+// Delete a post
+app.delete('/api/posts/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedPost = await Post.findByIdAndDelete(id);
+
+    if (!deletedPost) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Post not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Post deleted successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+});
+//=================end blog ===
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({ 
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: Object.values(err.errors).map(e => e.message)
+    });
+  }
+
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error'
+  });
+});
+//===============
 
 // Start server
 app.listen(port, "0.0.0.0", () => {
