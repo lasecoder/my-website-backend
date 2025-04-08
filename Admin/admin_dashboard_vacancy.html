@@ -150,7 +150,7 @@
             if (logoFile) formData.append("logo", logoFile);
 
             try {
-                const response = await fetch("http://localhost:5000/api/header", {
+                const response = await fetch("https://my-website-backend-ixzh.onrender.com/api/header", {
                     method: "POST",
                     body: formData,
                 });
@@ -171,7 +171,7 @@
         // Fetch Header Data
         async function fetchHeader() {
             try {
-                const response = await fetch("http://localhost:5000/api/header");
+                const response = await fetch("https://my-website-backend-ixzh.onrender.com/api/header");
                 if (!response.ok) {
                     throw new Error("Error fetching header data");
                 }
@@ -179,7 +179,7 @@
                 const data = await response.json();
                 document.getElementById("site-title").innerText = data.title || "Admin Dashboard - Vacancy Management";
                 if (data.logoUrl) {
-                    document.getElementById("site-logo").src = "http://localhost:5000" + data.logoUrl;
+                    document.getElementById("site-logo").src = "https://my-website-backend-ixzh.onrender.com" + data.logoUrl;
                 }
             } catch (error) {
                 console.error("❌ Error fetching header:", error);
@@ -204,7 +204,7 @@
             formData.append("image", image);
             
             try {
-                const response = await fetch("http://localhost:5000/api/vacancies", {
+                const response = await fetch("https://my-website-backend-ixzh.onrender.com/api/vacancies", {
                     method: "POST",
                     body: formData,
                 });
@@ -235,7 +235,7 @@
             if (image) formData.append("image", image);
 
             try {
-                const response = await fetch(`http://localhost:5000/api/vacancies/${id}`, {
+                const response = await fetch(`https://my-website-backend-ixzh.onrender.com/api/vacancies/${id}`, {
                     method: "PUT",
                     body: formData,
                 });
@@ -255,7 +255,7 @@
         async function deleteVacancy(id) {
             if (confirm("Are you sure you want to delete this vacancy?")) {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/vacancies/${id}`, {
+                    const response = await fetch(`https://my-website-backend-ixzh.onrender.com/api/vacancies/${id}`, {
                         method: "DELETE",
                     });
 
@@ -273,7 +273,7 @@
         // Fetch all vacancies from backend
         async function fetchVacancies() {
             try {
-                const response = await fetch("http://localhost:5000/api/vacancies");
+                const response = await fetch("https://my-website-backend-ixzh.onrender.com/api/vacancies");
                 if (!response.ok) {
                     throw new Error("Error fetching vacancies");
                 }
@@ -290,7 +290,7 @@
                             <div class="job" id="vacancy-${vacancy._id}">
                                 <h2>${vacancy.title}</h2>
                                 <p>${vacancy.description}</p>
-                                ${vacancy.imageUrl ? `<img src="http://localhost:5000${vacancy.imageUrl}" alt="Vacancy Image" style="width: 200px;">` : ""}
+                                ${vacancy.imageUrl ? `<img src="https://my-website-backend-ixzh.onrender.com${vacancy.imageUrl}" alt="Vacancy Image" style="width: 200px;">` : ""}
                                 <button class="btn" onclick="editVacancyForm('${vacancy._id}')">Edit</button>
                                 <button class="btn" onclick="deleteVacancy('${vacancy._id}')">Delete</button>
                             </div>
@@ -352,7 +352,7 @@
         // Function to save footer content to the backend
         async function saveFooterToBackend(footerContent) {
             try {
-                const response = await fetch("http://localhost:5000/api/footer", {
+                const response = await fetch("https://my-website-backend-ixzh.onrender.com/api/footer", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -372,7 +372,7 @@
         // Fetch footer content on page load
         async function fetchFooterContent() {
             try {
-                const response = await fetch("http://localhost:5000/api/footer");
+                const response = await fetch("https://my-website-backend-ixzh.onrender.com/api/footer");
                 if (!response.ok) {
                     throw new Error("Error fetching footer content");
                 }

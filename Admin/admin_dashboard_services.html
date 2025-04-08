@@ -51,7 +51,7 @@
     </section>
     <script>
         // Fetch current header text when the page loads
-        fetch("https://my-website-backend-ixzh.onrender.com")
+        fetch("https://my-website-backend-ixzh.onrender.com/api/header")
             .then(response => response.json())
             .then(data => {
                 console.log("Received data:", data);
@@ -66,7 +66,7 @@
             
             const headerText = document.getElementById("header-text").value.trim();
 
-            axios.put("https://my-website-backend-ixzh.onrender.com", { headerText })
+            axios.put("https://my-website-backend-ixzh.onrender.com/api/header", { headerText })
                 .then(response => {
                     alert("✅ Header updated successfully!");
                 })
@@ -81,7 +81,7 @@
             event.preventDefault();
             
             const formData = new FormData(this);
-            axios.post("https://my-website-backend-ixzh.onrender.com", formData)
+            axios.post("https://my-website-backend-ixzh.onrender.com/api/services", formData)
                 .then(response => {
                     alert("Service added successfully!");
                 })
@@ -98,7 +98,7 @@
 
             console.log("Footer text submitted:", footerText);  // Debug log
 
-            axios.put("https://my-website-backend-ixzh.onrender.com", { "footer-text": footerText })
+            axios.put("https://my-website-backend-ixzh.onrender.com/api/content/footer", { "footer-text": footerText })
                 .then(response => {
                     alert("✅ Footer updated successfully!");
                 })
