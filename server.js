@@ -623,6 +623,9 @@ app.use((err, req, res, next) => {
   });
 });
 //===============
+app.post("/api/posts", authenticateAdmin, async (req, res) => {
+  // logic to save blog post
+});
 
 // Start server
 app.listen(port, "0.0.0.0", () => {

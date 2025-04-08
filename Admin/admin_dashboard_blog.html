@@ -188,7 +188,7 @@
             if (postDraft.video) formData.append("video", postDraft.video);
 
             try {
-                const response = await fetch("/api/posts", {
+                const response = await fetch("http://localhost:3000/api/posts", {
                     method: "POST",
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem("adminToken")}`
