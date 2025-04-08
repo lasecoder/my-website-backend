@@ -27,27 +27,23 @@
   
   <div id="global-error" class="status-message" style="display: none;"></div>
   <button id="logout-btn" class="logout-btn">Logout</button>
-  
+  <main>
   <!-- Main Content Area -->
   <div class="main-content">
     <!-- Home Header Section -->
-    <section id="home-header">
-      <h2>Edit Home Header</h2>
-      <form id="home-header-form" enctype="multipart/form-data">
-        <label for="home-header-title">Header Title:</label>
-        <input type="text" id="home-header-title" name="home-header-title" value="FutureTechTalent - Professional Business Solutions" />
-        
-        <label for="home-header-image">Header Image:</label>
-        <input type="file" id="home-header-image" name="home-header-image" accept="image/*" />
-        <img id="header-image-preview" class="preview-image" src="" alt="Current header image">
-        
-        <div id="header-status" class="status-message"></div>
-        <button type="button" id="update-header-btn">
-          Update Header 
-          <span id="header-spinner" class="loading" style="display: none;"></span>
-        </button>
-      </form>
-    </section>
+    <section class="header-edit">
+      <h2>Edit Header</h2>
+      
+      <!-- Edit Title -->
+      <label for="header-title">Home Title:</label>
+      <input type="text" id="header-title" placeholder="Enter new title">
+      <button class="btn" onclick="saveHeaderTitle()">Save Title</button>
+      
+      <!-- Edit Logo -->
+      <label for="logo-upload">Upload Logo:</label>
+      <input type="file" id="logo-upload" accept="image/*">
+      <button class="btn" onclick="saveLogo()">Save Logo</button>
+  </section>
 
     <!-- Service 1 Section -->
     <section id="home-services">
@@ -90,6 +86,7 @@
       </form>
     </section>
   </div>
+</main>
   <script>
 
     // Utility Functions
