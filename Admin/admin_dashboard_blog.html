@@ -107,7 +107,8 @@
                 const response = await fetch('/api/posts', {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+
                     }
                 });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -190,7 +191,8 @@
                 const response = await fetch("/api/posts", {
                     method: "POST",
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem("authToken")}`
+                        'Authorization': `Bearer ${localStorage.getItem("adminToken")}`
+
                     },
                     body: formData
                 });

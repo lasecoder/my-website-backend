@@ -44,20 +44,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
-// 7. ROUTES (AFTER MIDDLEWARE)
-app.post('/api/posts', upload.single('image'), async (req, res) => {
-  try {
-    const newPost = await Post.create({
-      title: req.body.title,
-      content: req.body.content,
-      image: req.file?.path
-    });
-    res.status(201).json(newPost);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // 8. ERROR HANDLER (AFTER ROUTES)
 app.use((err, req, res, next) => {
   console.error(err.stack);
