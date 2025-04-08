@@ -136,19 +136,19 @@ const Footer = require(path.join(__dirname, 'models', 'Footer'));
 const port = process.env.PORT || 5000;
 
 // Middleware setup
-// Replace your current CORS middleware with this:
+// Configure CORS properly (place this after express initialization but before routes)
 app.use(cors({
   origin: [
     'https://my-website-backend-ixzh.onrender.com',
-     // Add your admin dashboard origin
+    'http://localhost:3000' // Add your frontend origin
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
+// Handle preflight requests
+app.options('*', cors());
 // Handle preflight requests
 app.options('*', cors());
 
@@ -497,6 +497,31 @@ app.get('/admin/healthcheck', async (req, res) => {
 });
 ///////////////////////////////////////////
 ///========service===================
+// Header routes (consolidated)
+app.route('/api/header')
+  .get(async (req, res) => {
+    try {
+      const header = await Header.findOne() || { 
+        headerText: 'Default Header Text' 
+      };
+      res.json(header);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+  .put(authenticateAdmin, async (req, res) => {
+    try {
+      const { headerText } = req.body;
+      const header = await Header.findOneAndUpdate(
+        {},
+        { headerText },
+        { upsert: true, new: true }
+      );
+      res.json(header);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 app.put("/api/content/services-header", upload.single('services-header-image'), async (req, res) => {
   console.log("Updating Services Header:", req.body);  // Log incoming request
 
@@ -623,6 +648,52 @@ app.put('/api/services/2', upload.single('service-img-2'), async (req, res) => {
 // ------------------------
 // Route to update Footer
 // ------------------------
+// Add these missing routes
+app.route('/api/content/footer')
+  .get(async (req, res) => {
+    try {
+      const footer = await Footer.findOne() || { 
+        text: '© 2025 My Blog. All Rights Reserved.' 
+      };
+      res.json(footer);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+  .put(authenticateAdmin, async (req, res) => {
+    try {
+      const { text } = req.body;
+      const footer = await Footer.findOneAndUpdate(
+        {},
+        { text },
+        { upsert: true, new: true }
+      );
+      res.json(footer);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+// Services routes
+app.route('/api/services')
+  .get(async (req, res) => {
+    try {
+      const services = await Service.find();
+      res.json(services);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+  .post(authenticateAdmin, upload.single('image'), async (req, res) => {
+    try {
+      const { title, description } = req.body;
+      const image = req.file ? req.file.path : '';
+      const service = await Service.create({ title, description, image });
+      res.status(201).json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 app.put('/api/content/footer', async (req, res) => {
   console.log('Updating Footer:', req.body);
 
