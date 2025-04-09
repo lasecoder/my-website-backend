@@ -563,7 +563,7 @@ app.put('/api/content/services', upload.single('default-services-image'), async 
     const defaultImage = req.file ? req.file.path : "";
 
     const defaultServicesContent = new DefaultServicesContent({
-      title: req.body["default-services-title"],
+      title: req.body.defaultServicesTitle,
       content: req.body["default-services-content"],
       image: defaultImage
     });
@@ -632,6 +632,7 @@ app.put('/api/services/2', upload.single('service-img-2'), async (req, res) => {
       image: serviceImage2,
       link: serviceLink2  // Add the optional field to the data
     };
+    const savedService = await Service2.create(service2Data);
 
     // Example: Replace with your model logic to save the data to the database
     // await Service2Model.create(service2Data);
@@ -694,28 +695,6 @@ app.route('/api/services')
       res.status(500).json({ error: error.message });
     }
   });
-app.put('/api/content/footer', async (req, res) => {
-  console.log('Updating Footer:', req.body);
-
-  if (!req.body["footer-text"]) {
-    return res.status(400).json({ error: "Footer text is required" });
-  }
-
-  try {
-    const footerData = new Footer({
-      footerText: req.body["footer-text"]
-    });
-
-    await footerData.save();
-    console.log('Footer updated:', footerData);
-
-    res.status(200).json({ message: 'Footer updated successfully' });
-  } catch (error) {
-    console.error("Error updating footer:", error);
-    res.status(500).json({ error: "Failed to update footer", details: error.message });
-  }
-});
-
 ///==========End service code =======
 ///////////////////////////////////////////
 ////=======Blog========
