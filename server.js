@@ -560,8 +560,7 @@ app.put('/api/content/services', upload.single('default-services-image'), async 
   }
 
   try {
-    const defaultImage = req.file ? req.file.path : "";
-
+    const defaultImage = req.file ? `/uploads/${req.file.filename}` : "";
     const defaultServicesContent = new DefaultServicesContent({
       title: req.body.defaultServicesTitle,
       content: req.body["default-services-content"],
