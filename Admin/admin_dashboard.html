@@ -48,6 +48,11 @@
   <label for="home-header-image">Upload Logo:</label>
   <input type="file" id="home-header-image" accept="image/*">
   <img id="header-image-preview" class="preview-image" src="" alt="Header image preview" style="display: none;">
+   <!-- Button to save header image -->
+  <button type="button" id="update-header-logo-btn">
+    Save Logo
+    <span id="header-logo-spinner" class="loading" style="display: none;"></span>
+  </button>
 </section>
 
 
@@ -348,6 +353,7 @@ async function handleFooterUpdate() {
     function setupEventListeners() {
       document.getElementById('update-service1-btn').addEventListener('click', handleServiceUpdate);
       document.getElementById('update-header-btn').addEventListener('click', handleHeaderUpdate);
+      document.getElementById('update-header-logo-btn').addEventListener('click', handleHeaderUpdate); 
       document.getElementById('update-footer-btn').addEventListener('click', handleFooterUpdate);
       
       document.getElementById('logout-btn').addEventListener('click', () => {
