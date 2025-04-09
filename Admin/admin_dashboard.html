@@ -287,11 +287,12 @@ async function handleHeaderUpdate() {
     formData.append('title', document.getElementById('home-header-title').value);
     
     const imageFile = document.getElementById('home-header-image').files[0];
-    if (imageFile) {
-      formData.append('image', imageFile); // Ensure the field name matches what the backend expects
-    } else {
-      console.log('No image file selected for header');
-    }
+  if (imageFile) {
+  formData.append('image', imageFile);  
+  } else {
+  console.log('No image file selected for header');
+ }
+
     
     await updateContent('header', null, formData);
   } catch (error) {
