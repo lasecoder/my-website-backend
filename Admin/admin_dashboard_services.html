@@ -24,23 +24,17 @@
     <div class="main-content">
         <h2>Manage Services</h2>
         <form id="service-form" enctype="multipart/form-data">
-            <label for="default-services-title">Default Services Title:</label>
-            <input type="text" id="default-services-title" name="default-services-title" required>
-            
-            <label for="service-title-1">Service Title:</label>
-            <input type="text" id="service-title-1" name="service-title-1" required>
-            
-            <label for="service-description-1">Description:</label>
-            <textarea id="service-description-1" name="service-description-1" required></textarea>
-            
-            <label for="service-image-1">Image:</label>
-            <input type="file" id="service-image-1" name="service-image-1" accept="image/*">
-            
-            <label for="service-video-1">Video:</label>
-            <input type="file" id="service-video-1" name="service-video-1" accept="video/*">
-    
+            <label for="title">Service Title:</label>
+            <input type="text" id="title" name="title" required>
+          
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" required></textarea>
+          
+            <label for="image">Image:</label>
+            <input type="file" id="image" name="image" accept="image/*">
+          
             <button type="submit">Add Service</button>
-        </form>
+          </form>          
     </div>
     
     <section id="contact-footer">
@@ -87,38 +81,35 @@
         });
     
         // Add Service
-        document.getElementById("service-form").addEventListener("submit", function (event) {
-            event.preventDefault();
-    
-            const form = event.target;
-            const formData = new FormData(form);
-    
-            axios.post(`${API_BASE_URL}/api/services`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            })
-                .then(() => {
-                    alert("✅ Service added successfully!");
-                    form.reset(); // Clear the form after success
-                })
-                .catch(error => {
-                    console.error("❌ Error adding service:", error);
-                    alert(`❌ Failed to add service: ${error.message}`);
-                });
-        });
-    
+      // Handles form submission for services
+document.getElementById("service-form").addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const formData = new FormData(this);
+  
+  axios.post(`${API_BASE_URL}/api/services`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+  .then(() => {
+    alert("✅ Service added successfully!");
+    this.reset();
+  })
+  .catch(error => {
+    console.error("❌ Error adding service:", error);
+    alert(`❌ Failed to add service: ${error.message}`);
+  });
+});
+
         // Update Footer Text
         document.getElementById("contact-footer-form").addEventListener("submit", function (event) {
             event.preventDefault();
-            const footerText = document.getElementById("contact-footer-text").value.trim();
+            const text = document.getElementById("contact-footer-text").value.trim();
     
-            axios.put(`${API_BASE_URL}/api/content/footer`, { footerText })
-                .then(() => alert("✅ Footer updated successfully!"))
-                .catch(error => {
-                    console.error("❌ Error updating footer:", error);
-                    alert(`❌ Failed to update footer: ${error.message}`);
-                });
+            axios.put(`${API_BASE_URL}/api/content/footer`, { text }, {
+                   headers: { 'Content-Type': 'application/json' }
+           })
         });
     </script>
     
