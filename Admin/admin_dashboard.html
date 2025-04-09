@@ -107,13 +107,14 @@
         element.style.display = 'block';
         setTimeout(() => {
           element.style.display = 'none';
-        }, 5000);
+        }, 5000); // Hide after 5 seconds
       }
     }
-  
+
     function setupImagePreview(inputId, previewId) {
       const input = document.getElementById(inputId);
       const preview = document.getElementById(previewId);
+      
       if (input && preview) {
         input.addEventListener('change', function() {
           if (this.files && this.files[0]) {
@@ -127,17 +128,68 @@
         });
       }
     }
-  
+
     function toggleLoading(isLoading, buttonId, spinnerId, statusId) {
       const button = document.getElementById(buttonId);
       const spinner = document.getElementById(spinnerId);
       const status = document.getElementById(statusId);
-  
+      
       if (button) button.disabled = isLoading;
       if (spinner) spinner.style.display = isLoading ? 'inline-block' : 'none';
       if (status && !isLoading) status.style.display = 'none';
     }
-  
+
+    // Content Loading
+    async function loadCurrentContent() {
+      try {
+        // Load header content
+        const headerResponse = await fetch(apiEndpoints.header, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        if (headerResponse.ok) {
+          const headerData = await headerResponse.json();
+          document.getElementById('home-header-title').value = headerData.title || '';
+          if (headerData.image) {
+            document.getElementById('header-image-preview').src = headerData.image;
+            document.getElementById('header-image-preview').style.display = 'block';
+          }
+        }
+
+        // Load service with ID 1
+        const serviceResponse = await fetch(apiEndpoints.services.get(1), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        if (serviceResponse.ok) {
+          const serviceData = await serviceResponse.json();
+          document.getElementById('service1-title').value = serviceData.title || '';
+          document.getElementById('service1-description').value = serviceData.description || '';
+          if (serviceData.image) {
+            document.getElementById('service-image-preview').src = serviceData.image;
+            document.getElementById('service-image-preview').style.display = 'block';
+          }
+        }
+
+        // Load footer content
+        const footerResponse = await fetch(apiEndpoints.footer, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        if (footerResponse.ok) {
+          const footerData = await footerResponse.json();
+          document.getElementById('home-footer-text').value = footerData.text || '';
+        }
+      } catch (error) {
+        console.error("Error loading content:", error);
+        showStatus('global-error', 'Failed to load content', false);
+      }
+    }
+
+    // Configuration
     const backendUrl = 'https://my-website-backend-ixzh.onrender.com';
     const apiEndpoints = {
       services: {
@@ -147,11 +199,12 @@
       header: `${backendUrl}/api/header`,
       footer: `${backendUrl}/api/footer`
     };
-  
+
+    // Enhanced Update Function with better file handling
     async function updateContent(type, id, formData) {
       let buttonId, spinnerId, statusId, endpoint;
-  
-      switch (type) {
+      
+      switch(type) {
         case 'service':
           buttonId = 'update-service1-btn';
           spinnerId = 'service-spinner';
@@ -173,13 +226,15 @@
         default:
           throw new Error('Invalid content type');
       }
-  
+
       try {
         toggleLoading(true, buttonId, spinnerId, statusId);
-  
+        
         const token = localStorage.getItem('authToken');
-        if (!token) throw new Error('No authentication token found. Please login again.');
-  
+        if (!token) {
+          throw new Error('No authentication token found. Please login again.');
+        }
+
         const response = await fetch(endpoint, {
           method: 'PUT',
           headers: {
@@ -187,12 +242,17 @@
           },
           body: formData
         });
-  
+
         if (!response.ok) {
-          const errorData = await response.json();
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (e) {
+            errorData = { message: await response.text() };
+          }
           throw new Error(errorData.message || `Server responded with status ${response.status}`);
         }
-  
+
         const result = await response.json();
         showStatus(statusId, `${type} updated successfully!`, true);
         return result;
@@ -204,103 +264,32 @@
         toggleLoading(false, buttonId, spinnerId, statusId);
       }
     }
-  
-    // ✅ MISSING FUNCTIONS: Now included here!
-    async function handleServiceUpdate() {
-      const formData = new FormData();
-      const title = document.getElementById('service1-title').value;
-      const description = document.getElementById('service1-description').value;
-      const imageFile = document.getElementById('service1-image').files[0];
-  
-      formData.append('title', title);
-      formData.append('description', description);
-      if (imageFile) formData.append('image', imageFile);
-  
-      await updateContent('service', 1, formData);
-    }
-  
-    async function handleHeaderUpdate() {
-      const formData = new FormData();
-      const title = document.getElementById('home-header-title').value;
-      const imageFile = document.getElementById('home-header-image').files[0];
-  
-      formData.append('title', title);
-      if (imageFile) formData.append('image', imageFile);
-  
-      await updateContent('header', null, formData);
-    }
-  
-    async function handleFooterUpdate() {
-      const formData = new FormData();
-      const text = document.getElementById('home-footer-text').value;
-  
-      formData.append('text', text);
-      await updateContent('footer', null, formData);
-    }
-  
-    async function loadCurrentContent() {
-      try {
-        const headerRes = await fetch(apiEndpoints.header, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (headerRes.ok) {
-          const data = await headerRes.json();
-          document.getElementById('home-header-title').value = data.title || '';
-          if (data.image) {
-            document.getElementById('header-image-preview').src = data.image;
-            document.getElementById('header-image-preview').style.display = 'block';
-          }
-        }
-  
-        const serviceRes = await fetch(apiEndpoints.services.get(1), {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (serviceRes.ok) {
-          const data = await serviceRes.json();
-          document.getElementById('service1-title').value = data.title || '';
-          document.getElementById('service1-description').value = data.description || '';
-          if (data.image) {
-            document.getElementById('service-image-preview').src = data.image;
-            document.getElementById('service-image-preview').style.display = 'block';
-          }
-        }
-  
-        const footerRes = await fetch(apiEndpoints.footer, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (footerRes.ok) {
-          const data = await footerRes.json();
-          document.getElementById('home-footer-text').value = data.text || '';
-        }
-      } catch (error) {
-        console.error("Error loading content:", error);
-        showStatus('global-error', 'Failed to load content', false);
-      }
-    }
-  
+
+    // Event Listeners Setup
     function setupEventListeners() {
       document.getElementById('update-service1-btn').addEventListener('click', handleServiceUpdate);
       document.getElementById('update-header-btn').addEventListener('click', handleHeaderUpdate);
-      document.getElementById('update-header-logo-btn').addEventListener('click', handleHeaderUpdate);
+      document.getElementById('update-header-logo-btn').addEventListener('click', handleHeaderUpdate); 
       document.getElementById('update-footer-btn').addEventListener('click', handleFooterUpdate);
+      
       document.getElementById('logout-btn').addEventListener('click', () => {
         localStorage.removeItem('authToken');
         window.location.href = '/admin-login.html';
       });
     }
-  
+
+    // Initialization
     document.addEventListener("DOMContentLoaded", function() {
       if (!localStorage.getItem('authToken')) {
         window.location.href = '/admin-login.html';
         return;
       }
-  
+
       setupImagePreview('home-header-image', 'header-image-preview');
       setupImagePreview('service1-image', 'service-image-preview');
       loadCurrentContent();
       setupEventListeners();
     });
   </script>
-  
 </body>
 </html>
