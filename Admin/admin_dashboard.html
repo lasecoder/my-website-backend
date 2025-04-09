@@ -31,19 +31,25 @@
   <!-- Main Content Area -->
   <div class="main-content">
     <!-- Home Header Section -->
-    <section class="header-edit">
-      <h2>Edit Header</h2>
-      
-      <!-- Edit Title -->
-      <label for="header-title">Home Title:</label>
-      <input type="text" id="header-title" placeholder="Enter new title">
-      <button class="btn" onclick="saveHeaderTitle()">Save Title</button>
-      
-      <!-- Edit Logo -->
-      <label for="logo-upload">Upload Logo:</label>
-      <input type="file" id="logo-upload" accept="image/*">
-      <button class="btn" onclick="saveLogo()">Save Logo</button>
-  </section>
+<section class="header-edit">
+  <h2>Edit Header</h2>
+
+  <!-- Edit Title -->
+  <label for="home-header-title">Home Title:</label>
+  <input type="text" id="home-header-title" placeholder="Enter new title">
+  <button type="button" id="update-header-btn">
+    Save Title 
+    <span id="header-spinner" class="loading" style="display: none;"></span>
+  </button>
+
+  <div id="header-status" class="status-message"></div>
+
+  <!-- Edit Logo -->
+  <label for="home-header-image">Upload Logo:</label>
+  <input type="file" id="home-header-image" accept="image/*">
+  <img id="header-image-preview" class="preview-image" src="" alt="Header image preview" style="display: none;">
+</section>
+
 
     <!-- Service 1 Section -->
     <section id="home-services">
