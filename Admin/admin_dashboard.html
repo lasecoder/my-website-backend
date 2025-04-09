@@ -272,28 +272,17 @@ async function updateContent(type, id, formData) {
 }
 
 // Enhanced Header Update Handler
+// Enhanced Header Update Handler
 async function handleHeaderUpdate() {
   try {
     const formData = new FormData();
-    
-    // Add title - use the exact field name your backend expects
     formData.append('title', document.getElementById('home-header-title').value);
     
-    // Handle file upload
     const imageFile = document.getElementById('home-header-image').files[0];
     if (imageFile) {
-      // Use the exact field name your backend expects for the image
-      formData.append('headerImage', imageFile);
-      
-      // Validate file size (example: limit to 2MB)
-      if (imageFile.size > 2 * 1024 * 1024) {
-        throw new Error('Image size must be less than 2MB');
-      }
-      
-      // Validate file type
-      if (!imageFile.type.match('image.*')) {
-        throw new Error('Only image files are allowed');
-      }
+      formData.append('image', imageFile); // Ensure the field name matches what the backend expects
+    } else {
+      console.log('No image file selected for header');
     }
     
     await updateContent('header', null, formData);
@@ -307,26 +296,14 @@ async function handleHeaderUpdate() {
 async function handleServiceUpdate() {
   try {
     const formData = new FormData();
-    
-    // Add service data - use exact field names your backend expects
     formData.append('title', document.getElementById('service1-title').value);
     formData.append('description', document.getElementById('service1-description').value);
     
-    // Handle file upload
     const imageFile = document.getElementById('service1-image').files[0];
     if (imageFile) {
-      // Use the exact field name your backend expects for the image
-      formData.append('serviceImage', imageFile);
-      
-      // Validate file size (example: limit to 2MB)
-      if (imageFile.size > 2 * 1024 * 1024) {
-        throw new Error('Image size must be less than 2MB');
-      }
-      
-      // Validate file type
-      if (!imageFile.type.match('image.*')) {
-        throw new Error('Only image files are allowed');
-      }
+      formData.append('image', imageFile); // Ensure the field name matches what the backend expects
+    } else {
+      console.log('No image file selected for service');
     }
     
     await updateContent('service', 1, formData);
