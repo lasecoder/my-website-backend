@@ -236,7 +236,10 @@ async function updateContent(type, id, formData) {
     }
 
     // Debug: Log what we're sending
-    console.log(`Updating ${type} with data:`, Array.from(formData.entries()));
+    for (const [key, value] of formData.entries()) {
+  console.log(`${key}:`, value);
+}
+
 
     const response = await fetch(endpoint, {
       method: 'PUT',
