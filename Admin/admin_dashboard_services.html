@@ -24,21 +24,25 @@
     <div class="main-content">
         <h2>Manage Services</h2>
         <form id="service-form" enctype="multipart/form-data">
-            <label for="service-title">Service Title:</label>
-            <input type="text" id="service-title" name="service-title" required>
+            <label for="default-services-title">Default Services Title:</label>
+            <input type="text" id="default-services-title" name="default-services-title" required>
             
-            <label for="service-description">Description:</label>
-            <textarea id="service-description" name="service-description" required></textarea>
+            <label for="service-title-1">Service Title:</label>
+            <input type="text" id="service-title-1" name="service-title-1" required>
             
-            <label for="service-image">Image:</label>
-            <input type="file" id="service-image" name="service-image" accept="image/*">
+            <label for="service-description-1">Description:</label>
+            <textarea id="service-description-1" name="service-description-1" required></textarea>
             
-            <label for="service-video">Video:</label>
-            <input type="file" id="service-video" name="service-video" accept="video/*">
-
+            <label for="service-image-1">Image:</label>
+            <input type="file" id="service-image-1" name="service-image-1" accept="image/*">
+            
+            <label for="service-video-1">Video:</label>
+            <input type="file" id="service-video-1" name="service-video-1" accept="video/*">
+    
             <button type="submit">Add Service</button>
         </form>
     </div>
+    
     <section id="contact-footer">
         <h2>Edit Contact Footer</h2>
         <form id="contact-footer-form">
@@ -52,83 +56,71 @@
     <script>
         // Set base URL for API
         const API_BASE_URL = "https://my-website-backend-ixzh.onrender.com";
-        
-        // Common Axios configuration
+    
+        // Common Axios config
         axios.defaults.headers.common['Content-Type'] = 'application/json';
-        
-        // Fetch current header text when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
+    
+        // Fetch current header text on load
+        document.addEventListener('DOMContentLoaded', function () {
             fetch(`${API_BASE_URL}/api/header`)
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');
                     return response.json();
                 })
                 .then(data => {
-                    console.log("Received data:", data);
                     document.getElementById("header-text").value = data.headerText || "";
                 })
                 .catch(error => console.error("Fetch error:", error));
         });
-
-        // Handle form submission to update the header text
-        document.getElementById("header-form").addEventListener("submit", function(event) {
+    
+        // Update Header Text
+        document.getElementById("header-form").addEventListener("submit", function (event) {
             event.preventDefault();
-            
             const headerText = document.getElementById("header-text").value.trim();
-
-            axios.put(`${API_BASE_URL}/api/header`, { headerText }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => {
-                    alert("✅ Header updated successfully!");
-                })
+    
+            axios.put(`${API_BASE_URL}/api/header`, { headerText })
+                .then(() => alert("✅ Header updated successfully!"))
                 .catch(error => {
                     console.error("❌ Error updating header:", error);
                     alert(`❌ Failed to update header: ${error.message}`);
                 });
         });
-
-        // Handle service form submission
-        document.getElementById("service-form").addEventListener("submit", function(event) {
+    
+        // Add Service
+        document.getElementById("service-form").addEventListener("submit", function (event) {
             event.preventDefault();
-            
-            const formData = new FormData(this);
+    
+            const form = event.target;
+            const formData = new FormData(form);
+    
             axios.post(`${API_BASE_URL}/api/services`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             })
-                .then(response => {
+                .then(() => {
                     alert("✅ Service added successfully!");
-                    this.reset(); // Clear the form
+                    form.reset(); // Clear the form after success
                 })
                 .catch(error => {
                     console.error("❌ Error adding service:", error);
                     alert(`❌ Failed to add service: ${error.message}`);
                 });
         });
-
-        // Handle footer text update
-        document.getElementById("contact-footer-form").addEventListener("submit", function(event) {
+    
+        // Update Footer Text
+        document.getElementById("contact-footer-form").addEventListener("submit", function (event) {
             event.preventDefault();
-
             const footerText = document.getElementById("contact-footer-text").value.trim();
-
-            axios.put(`${API_BASE_URL}/api/content/footer`, { footerText }, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => {
-                    alert("✅ Footer updated successfully!");
-                })
+    
+            axios.put(`${API_BASE_URL}/api/content/footer`, { footerText })
+                .then(() => alert("✅ Footer updated successfully!"))
                 .catch(error => {
                     console.error("❌ Error updating footer:", error);
                     alert(`❌ Failed to update footer: ${error.message}`);
                 });
         });
     </script>
+    
 </body>
 </html>
