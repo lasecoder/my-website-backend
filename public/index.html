@@ -183,27 +183,28 @@
     }
 
     async function loadHomeContent() {
-      try {
-        const data = await safeFetch('/api/home-content');
-        
-        // Update header
-        elements.headerTitle.textContent = data.header?.title || config.defaultContent.header.title;
-        elements.logo.src = data.header?.image || config.defaultContent.header.image;
-        elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
+  try {
+    const data = await safeFetch('/api/home-content');
+    
+    // Update header
+    elements.headerTitle.textContent = data.header?.title || config.defaultContent.header.title;
+    elements.logo.src = data.header?.image || config.defaultContent.header.image;
+    elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
 
-        // Update services
-        const services = data.services || config.defaultContent.services;
-        renderServices(Array.isArray(services) ? services : [services]);
+    // Update services
+    const services = data.services || config.defaultContent.services;
+    renderServices(Array.isArray(services) ? services : [services]);
 
-        // Update footer
-        elements.footerText.textContent = data.footer?.footerText || config.defaultContent.footer.footerText;
+    // Update footer
+    elements.footerText.textContent = data.footer?.footerText || config.defaultContent.footer.footerText;
 
-      } catch (error) {
-        console.error('Using default content due to error:', error);
-        renderServices(config.defaultContent.services);
-        elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
-      }
-    }
+  } catch (error) {
+    console.error('Using default content due to error:', error);
+    renderServices(config.defaultContent.services);
+    elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
+  }
+}
+
 
     // Chat Functions
     function addChatMessage(sender, message, isUser = false) {
