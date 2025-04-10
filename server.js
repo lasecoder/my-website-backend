@@ -201,10 +201,12 @@ async function initializeDefaultData() {
       const hashedPassword = await bcrypt.hash(adminPassword, 12);
       await User.create({
         name: 'Admin',
-        email: adminEmail,
-        password: hashedPassword,
+        email: 'admin@example.com',
+        password: 'admin123',
+        passwordConfirm: 'admin123',
         role: 'admin'
       });
+      ;
       console.log('✅ Default admin user created');
     }
 
