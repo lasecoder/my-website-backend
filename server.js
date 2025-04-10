@@ -11,7 +11,7 @@ const path = require('path');
 const fs = require('fs');
 const app = express();
 const favicon = require('serve-favicon');
-
+const HomeContent = require('./models/HomeContent');
 // 3. Load environment variables
 dotenv.config();
 
@@ -92,31 +92,27 @@ app.post('/api/posts',
     }
   }
 );
+// Route to get home page content
 app.get('/api/home-content', async (req, res) => {
   try {
-    const homeContent = {
-      header: {
-        title: "FutureTechTalent - Business Solutions",
-        image: "/images/logo.png"
-      },
-      services: [
-        {
-          title: "Our Services",
-          description: "Discover our innovative solutions",
-          image: "/images/service-placeholder.jpg"
-        }
-      ],
-      footer: {
-        footerText: "© 2024 FutureTechTalent. All rights reserved."
-      }
-    };
+    const homeContent = await HomeContent.findOne(); // Assuming only one document
+    if (!homeContent) {
+      return res.status(404).json({ success: false, message: "Home content not found" });
+    }
 
-    res.json(homeContent);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
+    res.json({
+      header: {
+        title: homeContent.headerTitle,
+        image: homeContent.headerImage, // Cloudinary URL
+      },
+      services: homeContent.services, // Should be an array of service objects
+      footer: {
+        footerText: homeContent.footerText,
+      }
     });
+  } catch (err) {
+    console.error('Error fetching home content:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
