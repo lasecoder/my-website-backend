@@ -424,49 +424,32 @@ app.use((err, req, res, next) => {
   });
 });
 // In server.js
-app.put('/api/services/:id', 
-  authenticateAdmin,
-  upload.single('image'),
-  handleUploadErrors,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = {
-        title: req.body.title,
-        description: req.body.description
-      };
+app.put('/api/services/:id', authenticateAdmin, upload.single('media'), async (req, res) => {
+  try {
+    const updateData = {
+      title: req.body.title,
+      description: req.body.description
+    };
 
-      if (req.file) {
-        updateData.image = req.file.path;
-      }
-
-      const service = await Service.findOneAndUpdate(
-        { serviceId: id },
-        updateData,
-        { new: true }
-      );
-
-      if (!service) {
-        return res.status(404).json({
-          success: false,
-          message: 'Service not found'
-        });
-      }
-
-      res.json({
-        success: true,
-        data: service,
-        message: 'Service updated successfully'
-      });
-    } catch (error) {
-      console.error('Service update error:', error);
-      res.status(500).json({
-        success: false,
-        message: error.message
-      });
+    if (req.file && req.file.path) {
+      updateData.mediaUrl = req.file.path; // This is the Cloudinary URL
     }
+
+    const service = await Service.findOneAndUpdate(
+      { serviceId: req.params.id },
+      updateData,
+      { new: true }
+    );
+
+    if (!service) {
+      return res.status(404).json({ success: false, message: 'Service not found' });
+    }
+
+    res.json({ success: true, data: service, message: 'Service updated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
-);
+});
 // Footer routes
 app.get('/api/footer', authenticateAdmin, async (req, res) => {
   try {
