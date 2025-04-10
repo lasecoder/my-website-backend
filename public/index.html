@@ -95,30 +95,31 @@
   <script>
     // Configuration
     const config = {
-      backendUrl: window.location.hostname === "localhost" 
-        ? "http://localhost:3000" 
-        : "https://my-website-backend-ixzh.onrender.com",
-      defaultContent: {
-        header: {
-          title: "FutureTechTalent - Business Solutions",
-          image: "/images/logo.png"
-        },
-        services: [
-          {
-            title: "Our Services",
-            description: "Discover our innovative solutions",
-            image: "/images/service-placeholder.jpg"
-          }
-        ],
-        footer: {
-          footerText: "© 2024 FutureTechTalent. All rights reserved."
-        }
-      },
-      fallbackImages: {
-        logo: "/images/fallback-logo.png",
-        service: "/images/fallback-service.jpg"
+  backendUrl: window.location.hostname === "localhost" 
+    ? "http://localhost:3000" 
+    : "https://my-website-backend-ixzh.onrender.com",
+  defaultContent: {
+    header: {
+      title: "FutureTechTalent - Business Solutions",
+      image: "/images/logo.png"
+    },
+    services: [
+      {
+        title: "Our Services",
+        description: "Discover our innovative solutions",
+        image: "/images/service-placeholder.jpg"
       }
-    };
+    ],
+    footer: {
+      footerText: "© 2024 FutureTechTalent. All rights reserved."
+    }
+  },
+  fallbackImages: {
+    logo: "/images/fallback-logo.png",
+    service: "/images/fallback-service.jpg"
+  }
+};
+
 
     // DOM Elements
     const elements = {

@@ -92,6 +92,33 @@ app.post('/api/posts',
     }
   }
 );
+app.get('/api/home-content', async (req, res) => {
+  try {
+    const homeContent = {
+      header: {
+        title: "FutureTechTalent - Business Solutions",
+        image: "/images/logo.png"
+      },
+      services: [
+        {
+          title: "Our Services",
+          description: "Discover our innovative solutions",
+          image: "/images/service-placeholder.jpg"
+        }
+      ],
+      footer: {
+        footerText: "© 2024 FutureTechTalent. All rights reserved."
+      }
+    };
+
+    res.json(homeContent);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
 
 ///===========
 app.get('/favicon.ico', (req, res) => {
