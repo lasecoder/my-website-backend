@@ -12,8 +12,9 @@ const fs = require('fs');
 const app = express();
 const favicon = require('serve-favicon');
 const HomeContent = require('./models/HomeContent');
-// 3. Load environment variables
-dotenv.config();
+require('dotenv').config();
+
+
 
 //4. CONFIGURE CLOUDINARY (AFTER DOTENV)
 cloudinary.config({
@@ -36,13 +37,36 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 } 
 });
+// Initialize Express app
 
+const port = process.env.PORT || 5000;
 // 6. MIDDLEWARE (AFTER APP INIT
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log('MongoDB connected successfully');
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+  });
+
+// Models
+const Post = require(path.join(__dirname, 'models', 'Post'));  // Match exact filename
+const User = require(path.join(__dirname, 'models', 'User'));
+const Header = require(path.join(__dirname, 'models', 'Header'));
+const Service = require(path.join(__dirname, 'models', 'Service'));
+const Footer = require(path.join(__dirname, 'models', 'Footer'));
+
+
+
 
 // 7. ROUTES (AFTER MIDDLEWARE)
 app.post('/api/posts', upload.single('image'), async (req, res) => {
@@ -138,26 +162,6 @@ const handleUploadErrors = (err, req, res, next) => {
   }
   next();
 };
-
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch(err => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1);
-  });
-
-// Models
-const Post = require(path.join(__dirname, 'models', 'Post'));  // Match exact filename
-const User = require(path.join(__dirname, 'models', 'User'));
-const Header = require(path.join(__dirname, 'models', 'Header'));
-const Service = require(path.join(__dirname, 'models', 'Service'));
-const Footer = require(path.join(__dirname, 'models', 'Footer'));
-
-
-// Initialize Express app
-
-const port = process.env.PORT || 5000;
 
 // Middleware setup
 // Configure CORS properly (place this after express initialization but before routes)
