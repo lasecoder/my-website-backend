@@ -100,16 +100,18 @@
   <script>
     // Utility Functions
     function showStatus(elementId, message, isSuccess) {
-      const element = document.getElementById(elementId);
-      if (element) {
-        element.textContent = message;
-        element.style.color = isSuccess ? 'green' : 'red';
-        element.style.display = 'block';
-        setTimeout(() => {
-          element.style.display = 'none';
-        }, 5000);
-      }
-    }
+  console.log(`Status message for #${elementId}: ${message}`); // <-- Debug log
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.textContent = message;
+    element.style.color = isSuccess ? 'green' : 'red';
+    element.style.display = 'block';
+    setTimeout(() => {
+      element.style.display = 'none';
+    }, 5000);
+  }
+}
+
   
     function setupImagePreview(inputId, previewId) {
       const input = document.getElementById(inputId);
