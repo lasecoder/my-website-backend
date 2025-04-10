@@ -326,7 +326,41 @@ app.post('/admin/login', async (req, res) => {
     });
   }
 });
+/////////////
+app.get('/api/seed-home', async (req, res) => {
+  try {
+    const HomeContent = require('./models/HomeContent');
 
+    // Check if data already exists
+    const exists = await HomeContent.findOne();
+    if (exists) return res.send("HomeContent already exists");
+
+    const newContent = await HomeContent.create({
+      headerTitle: "Welcome to Our Site!",
+      headerImage: "https://via.placeholder.com/600x200.png?text=Header+Image",
+      services: [
+        {
+          title: "Web Development",
+          description: "Building responsive and modern websites.",
+          image: "https://via.placeholder.com/150"
+        },
+        {
+          title: "SEO Optimization",
+          description: "Improve your search rankings and traffic.",
+          image: "https://via.placeholder.com/150"
+        }
+      ],
+      footerText: "© 2025 MyWebsite. All rights reserved."
+    });
+
+    res.json({ success: true, data: newContent });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+///////////////
 // Header routes
 app.get('/api/header', authenticateAdmin, async (req, res) => {
   try {
