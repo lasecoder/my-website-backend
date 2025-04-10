@@ -13,8 +13,7 @@
   <header>
     <div class="container">
       <div class="header-left">
-        <img id="logo" src="" alt="FutureTechTalent - Business Solutions" 
-             onerror="this.src=''" />
+        <img id="logo" src="" alt="FutureTechTalent Logo" />
       </div>
       <div class="register">
         <button class="btn" onclick="location.href='login.html'">Login</button>
@@ -52,7 +51,7 @@
 
     <section class="services">
       <div id="services-container">
-        <!-- Services will load here dynamically -->
+        <!-- Dynamic services go here -->
       </div>
     </section>
 
@@ -93,34 +92,32 @@
   </footer>
 
   <script>
-    // Configuration
+    // Config
     const config = {
-  backendUrl: window.location.hostname === "localhost" 
-    ? "http://localhost:3000" 
-    : "https://my-website-backend-ixzh.onrender.com",
-  defaultContent: {
-    header: {
-      title: "FutureTechTalent - Business Solutions",
-      image: "https://res.cloudinary.com/dl7af18e1/image/upload/v1744271215/blog-posts/bcwbe4juoue4ncd5w9ou.png"
-    },
-    services: [
-      {
-        title: "Our Services",
-        description: "Discover our innovative solutions",
-        image: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/service-placeholder.jpg"
+      backendUrl: window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : "https://my-website-backend-ixzh.onrender.com",
+      defaultContent: {
+        header: {
+          title: "FutureTechTalent - Business Solutions",
+          image: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/logo.png"
+        },
+        services: [
+          {
+            title: "Our Services",
+            description: "Discover our innovative solutions",
+            image: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/service-placeholder.jpg"
+          }
+        ],
+        footer: {
+          footerText: "© 2024 FutureTechTalent. All rights reserved."
+        }
+      },
+      fallbackImages: {
+        logo: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/fallback-logo.png",
+        service: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/fallback-service.jpg"
       }
-    ],
-    footer: {
-      footerText: "© 2024 FutureTechTalent. All rights reserved."
-    }
-  },
-  fallbackImages: {
-    logo: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/fallback-logo.png",
-    service: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/fallback-service.jpg"
-  }
-};
-
-
+    };
 
     // DOM Elements
     const elements = {
@@ -135,146 +132,107 @@
       chatWindow: document.getElementById("chat-window")
     };
 
-    // Utility Functions
-    async function safeFetch(url, options = {}) {
+    function handleImageError(img, fallback) {
+      img.onerror = null;
+      img.src = fallback;
+    }
+
+    async function safeFetch(url) {
       try {
-        const fullUrl = url.startsWith('http') ? url : `${config.backendUrl}${url}`;
-        const response = await fetch(fullUrl, {
-          ...options,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            ...options.headers
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        const response = await fetch(`${config.backendUrl}${url}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
-      } catch (error) {
-        console.error('Fetch error:', error);
-        throw error;
+      } catch (err) {
+        console.error("Fetch error:", err);
+        throw err;
       }
     }
 
-    function handleImageError(imgElement, fallbackPath) {
-      imgElement.onerror = null;
-      imgElement.src = fallbackPath.startsWith('http') 
-        ? fallbackPath 
-        : `${config.backendUrl}${fallbackPath}`;
-    }
-
-    // Content Rendering
     function renderServices(services) {
-      if (!services || services.length === 0) {
-        elements.servicesContainer.innerHTML = '<p>No services available at this time.</p>';
-        return;
-      }
+      if (!Array.isArray(services)) return;
 
-      elements.servicesContainer.innerHTML = services.map(service => `
-        <div class="service-card">
-          <h3>${service.title || 'Our Service'}</h3>
-          <img src="${service.image.startsWith('http') ? service.image : config.backendUrl + service.image}" 
-               alt="${service.title || 'Service'}"
-               onerror="handleImageError(this, '${config.fallbackImages.service}')">
-          <p>${service.description || ''}</p>
-        </div>
-      `).join('');
+      elements.servicesContainer.innerHTML = services.map(service => {
+        const imageUrl = service.image?.startsWith('http')
+          ? service.image
+          : config.fallbackImages.service;
+
+        return `
+          <div class="service-card">
+            <h3>${service.title || 'Service'}</h3>
+            <img src="${imageUrl}" alt="${service.title}" onerror="this.onerror=null;this.src='${config.fallbackImages.service}'" />
+            <p>${service.description || ''}</p>
+          </div>
+        `;
+      }).join('');
     }
 
     async function loadHomeContent() {
-  try {
-    const data = await safeFetch('/api/home-content');
-    
-    // Update header
-    elements.headerTitle.textContent = data.header?.title || config.defaultContent.header.title;
-    elements.logo.src = data.header?.image || config.defaultContent.header.image;
-    elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
+      try {
+        const data = await safeFetch("/api/home-content");
 
-    // Update services
-    const services = data.services || config.defaultContent.services;
-    renderServices(Array.isArray(services) ? services : [services]);
+        elements.headerTitle.textContent = data.header?.title || config.defaultContent.header.title;
+        elements.logo.src = data.header?.image || config.defaultContent.header.image;
+        elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
 
-    // Update footer
-    elements.footerText.textContent = data.footer?.footerText || config.defaultContent.footer.footerText;
+        renderServices(data.services || config.defaultContent.services);
 
-  } catch (error) {
-    console.error('Using default content due to error:', error);
-    renderServices(config.defaultContent.services);
-    elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
-  }
-}
+        elements.footerText.textContent = data.footer?.footerText || config.defaultContent.footer.footerText;
+      } catch (err) {
+        console.warn("Using fallback content");
+        elements.headerTitle.textContent = config.defaultContent.header.title;
+        elements.logo.src = config.defaultContent.header.image;
+        elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
+        renderServices(config.defaultContent.services);
+        elements.footerText.textContent = config.defaultContent.footer.footerText;
+      }
+    }
 
-
-    // Chat Functions
+    // Chat
     function addChatMessage(sender, message, isUser = false) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `chat-message ${isUser ? 'user-message' : 'bot-message'}`;
-      messageDiv.innerHTML = `<strong>${sender}:</strong> ${message}`;
-      elements.chatMessages.appendChild(messageDiv);
+      const msg = document.createElement("div");
+      msg.className = `chat-message ${isUser ? 'user-message' : 'bot-message'}`;
+      msg.innerHTML = `<strong>${sender}:</strong> ${message}`;
+      elements.chatMessages.appendChild(msg);
       elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
     }
 
     async function sendMessage() {
-      const message = elements.chatInput.value.trim();
-      if (!message) return;
+      const text = elements.chatInput.value.trim();
+      if (!text) return;
 
-      addChatMessage('You', message, true);
-      elements.chatInput.value = '';
+      addChatMessage("You", text, true);
+      elements.chatInput.value = "";
       elements.sendButton.disabled = true;
 
       try {
-        await axios.post(`${config.backendUrl}/api/messages`, {
-          sender: 'User',
-          content: message
-        });
+        await axios.post(`${config.backendUrl}/api/messages`, { sender: "User", content: text });
 
-        // Simulate bot response
         setTimeout(() => {
-          const responses = [
-            "Thanks for your message!",
-            "We'll get back to you soon.",
-            "How can we assist you further?",
-            "Our team will contact you shortly."
-          ];
-          addChatMessage('Support', responses[Math.floor(Math.random() * responses.length)]);
+          const replies = ["Thanks!", "How can we assist?", "We'll get back to you.", "Appreciate your message."];
+          addChatMessage("Support", replies[Math.floor(Math.random() * replies.length)]);
         }, 1000);
-      } catch (error) {
-        console.error('Error sending message:', error);
-        addChatMessage('System', 'Sorry, there was an error sending your message.');
+      } catch {
+        addChatMessage("System", "Failed to send message.");
       }
     }
 
-    // Event Listeners
-    function setupEventListeners() {
-      // Chat toggle
-      elements.chatToggle.addEventListener('click', () => {
-        elements.chatWindow.style.display = elements.chatWindow.style.display === 'block' ? 'none' : 'block';
+    // Init
+    document.addEventListener("DOMContentLoaded", () => {
+      elements.chatToggle.addEventListener("click", () => {
+        elements.chatWindow.style.display = elements.chatWindow.style.display === "block" ? "none" : "block";
       });
 
-      // Chat input
-      elements.chatInput.addEventListener('input', () => {
-        elements.sendButton.disabled = elements.chatInput.value.trim() === '';
+      elements.chatInput.addEventListener("input", () => {
+        elements.sendButton.disabled = elements.chatInput.value.trim() === "";
       });
 
-      elements.chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !elements.sendButton.disabled) {
-          sendMessage();
-        }
+      elements.chatInput.addEventListener("keypress", e => {
+        if (e.key === "Enter" && !elements.sendButton.disabled) sendMessage();
       });
 
-      elements.sendButton.addEventListener('click', sendMessage);
-    }
+      elements.sendButton.addEventListener("click", sendMessage);
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      setupEventListeners();
       loadHomeContent();
-      
-      // Set logo fallback
-      elements.logo.onerror = () => handleImageError(elements.logo, config.fallbackImages.logo);
     });
   </script>
 </body>
