@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: { 
@@ -62,7 +63,10 @@ const userSchema = new mongoose.Schema({
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
+  // Hash the password
   this.password = await bcrypt.hash(this.password, 12);
+  
+  // Remove passwordConfirm after hashing
   this.passwordConfirm = undefined;
   next();
 });
@@ -70,7 +74,7 @@ userSchema.pre('save', async function(next) {
 // Update passwordChangedAt when password is modified
 userSchema.pre('save', function(next) {
   if (!this.isModified('password') || this.isNew) return next();
-  this.passwordChangedAt = Date.now() - 1000;
+  this.passwordChangedAt = Date.now() - 1000; // To make sure token is issued after password change
   next();
 });
 
@@ -100,6 +104,7 @@ userSchema.methods.correctPassword = async function(candidatePassword) {
   }
   return await bcrypt.compare(candidatePassword, this.password);
 };
+
 // Password changed after token was issued
 userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   if (this.passwordChangedAt) {
