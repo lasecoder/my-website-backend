@@ -153,69 +153,31 @@
     };
   
     // Update Functions
-    async function updateContent(type, id, formData) {
-      let buttonId, spinnerId, statusId, endpoint;
-  
-      switch (type) {
-        case 'service':
-          buttonId = 'update-service1-btn';
-          spinnerId = 'service-spinner';
-          statusId = 'service-status';
-          endpoint = apiEndpoints.services.update(id);
-          break;
-        case 'header':
-          buttonId = 'update-header-btn';
-          spinnerId = 'header-spinner';
-          statusId = 'header-status';
-          endpoint = apiEndpoints.header;
-          break;
-        case 'footer':
-          buttonId = 'update-footer-btn';
-          spinnerId = 'footer-spinner';
-          statusId = 'footer-status';
-          endpoint = apiEndpoints.footer;
-          break;
-        default:
-          throw new Error('Invalid content type');
-      }
-  
-      try {
-        toggleLoading(true, buttonId, spinnerId, statusId);
-  
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          throw new Error('No authentication token found. Please login again.');
-        }
-  
-        const response = await fetch(endpoint, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        });
-  
-        if (!response.ok) {
-          let errorData;
-          try {
-            errorData = await response.json();
-          } catch (e) {
-            errorData = { message: await response.text() };
-          }
-          throw new Error(errorData.message || `Server responded with status ${response.status}`);
-        }
-  
-        const result = await response.json();
-        showStatus(statusId, `${type} updated successfully!`, true);
-        return result;
-      } catch (error) {
-        console.error(`Error updating ${type}:`, error);
-        showStatus(statusId, error.message || `Failed to update ${type}`, false);
-        throw error;
-      } finally {
-        toggleLoading(false, buttonId, spinnerId, statusId);
-      }
+    async function updateContent(updatedData) {
+  try {
+    const response = await fetch('/api/update-service', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updatedData)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text(); // ✅ only reading once
+      console.error('Server error:', errorText);
+      showStatus('#service-status', 'Update failed: ' + errorText, true);
+      return;
     }
+
+    const result = await response.json(); // ✅ only use if you haven't already read the body
+    showStatus('#service-status', 'Service updated successfully!');
+  } catch (err) {
+    console.error('Error updating service:', err);
+    showStatus('#service-status', 'Error: ' + err.message, true);
+  }
+}
+
   
     // Content Loading
     async function loadCurrentContent() {
