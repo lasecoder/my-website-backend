@@ -85,7 +85,8 @@ app.post('/api/posts', upload.single('image'), async (req, res) => {
 // 8. ERROR HANDLER (AFTER ROUTES)
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).json({ message: 'Something broke!' });
+
 });
 
 // 7. Define routes AFTER all configurations
