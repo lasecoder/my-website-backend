@@ -264,28 +264,33 @@ function authenticateAdmin(req, res, next) {
   }
 }
 /////////////////
-app.post('/api/update-service', async (req, res) => {
+app.post('/api/update-service', upload.single('image'), async (req, res) => {
   try {
-    const { serviceId, title, description, image } = req.body;
-    
-    const service = await HomeContent.findOne(); // assuming only one doc
-    const targetService = service.services.id(serviceId); // check this line!
-    
-    if (!targetService) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
+    const { serviceId, title, description } = req.body;
+    const imagePath = req.file?.path; // Only if new image is uploaded
+
+    const homeContent = await HomeContent.findOne();
+    if (!homeContent) return res.status(404).json({ message: 'Home content not found' });
+
+    const targetService = homeContent.services.id(serviceId);
+    if (!targetService) return res.status(404).json({ message: 'Service not found' });
 
     targetService.title = title;
     targetService.description = description;
-    targetService.image = image;
 
-    await service.save();
+    if (imagePath) {
+      targetService.image = imagePath; // update only if new image uploaded
+    }
+
+    await homeContent.save();
+
     res.json({ message: 'Service updated successfully' });
   } catch (err) {
-    console.error('Error updating service:', err); // this logs to server console
+    console.error('Error updating service:', err);
     res.status(500).json({ message: 'Something broke!' });
   }
 });
+
 
 /////////////////
 // Add this middleware before your routes
