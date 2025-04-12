@@ -262,6 +262,29 @@ function authenticateAdmin(req, res, next) {
     });
   }
 }
+/////////////////
+app.post('/api/update-service', async (req, res) => {
+  try {
+    const { serviceId, title, description, image } = req.body;
+    
+    const service = await HomeContent.findOne(); // assuming only one doc
+    const targetService = service.services.id(serviceId); // check this line!
+    
+    if (!targetService) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    targetService.title = title;
+    targetService.description = description;
+    targetService.image = image;
+
+    await service.save();
+    res.json({ message: 'Service updated successfully' });
+  } catch (err) {
+    console.error('Error updating service:', err); // this logs to server console
+    res.status(500).json({ message: 'Something broke!' });
+  }
+});
 
 /////////////////
 // Add this middleware before your routes
@@ -329,7 +352,6 @@ app.post('/admin/login', async (req, res) => {
 /////////////
 app.get('/api/seed-home', async (req, res) => {
   try {
-    const HomeContent = require('./models/HomeContent');
 
     // Check if data already exists
     const exists = await HomeContent.findOne();
