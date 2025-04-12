@@ -157,26 +157,23 @@
   try {
     const response = await fetch('/api/update-service', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedData)
     });
 
+    const result = await response.json();
     if (!response.ok) {
-      const errorText = await response.text(); // ✅ only reading once
-      console.error('Server error:', errorText);
-      showStatus('#service-status', 'Update failed: ' + errorText, true);
+      showStatus('service-status', 'Update failed: ' + result.message, false);
       return;
     }
 
-    const result = await response.json(); // ✅ only use if you haven't already read the body
-    showStatus('#service-status', 'Service updated successfully!');
+    showStatus('service-status', 'Service updated successfully!', true);
   } catch (err) {
     console.error('Error updating service:', err);
-    showStatus('#service-status', 'Error: ' + err.message, true);
+    showStatus('service-status', 'Error: ' + err.message, false);
   }
 }
+
 
   
     // Content Loading
@@ -224,20 +221,18 @@
   
     // ✅ Define missing handlers here
     async function handleServiceUpdate() {
-      const title = document.getElementById('service1-title').value;
-      const description = document.getElementById('service1-description').value;
-      const imageFile = document.getElementById('service1-image').files[0];
-  
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('description', description);
-      if (imageFile) {
-        formData.append('image', imageFile);
-      }
-  
-      await updateContent('service', 'PUT_YOUR_REAL_SERVICE_ID_HERE', formData);
+  const title = document.getElementById('service1-title').value;
+  const description = document.getElementById('service1-description').value;
 
-    }
+  const updatedData = {
+    title,
+    description,
+    serviceId: "REAL_SERVICE_ID" // Replace this with a real value or fetch it
+  };
+
+  await updateContent(updatedData);
+}
+
   
     async function handleHeaderUpdate() {
       const title = document.getElementById('home-header-title').value;
