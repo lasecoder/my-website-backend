@@ -267,20 +267,26 @@ function authenticateAdmin(req, res, next) {
 app.post('/api/update-service', upload.single('image'), async (req, res) => {
   try {
     const { serviceId, title, description } = req.body;
-    const imagePath = req.file?.path; // Only if new image is uploaded
+    const imagePath = req.file?.path; // Only if image is uploaded
+
+    console.log('serviceId:', serviceId);
+    console.log('title:', title);
+    console.log('description:', description);
+    console.log('imagePath:', imagePath);
 
     const homeContent = await HomeContent.findOne();
-    if (!homeContent) return res.status(404).json({ message: 'Home content not found' });
+    if (!homeContent) {
+      return res.status(404).json({ message: 'Home content not found' });
+    }
 
-    const targetService = homeContent.services.id(serviceId);
-    if (!targetService) return res.status(404).json({ message: 'Service not found' });
+    const targetService = homeContent.services.id(serviceId); // ← this needs the _id of the subdocument!
+    if (!targetService) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
 
     targetService.title = title;
     targetService.description = description;
-
-    if (imagePath) {
-      targetService.image = imagePath; // update only if new image uploaded
-    }
+    if (imagePath) targetService.image = imagePath;
 
     await homeContent.save();
 
@@ -290,6 +296,7 @@ app.post('/api/update-service', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Something broke!' });
   }
 });
+
 
 
 /////////////////
